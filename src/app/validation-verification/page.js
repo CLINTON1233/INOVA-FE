@@ -187,7 +187,7 @@ export default function ValidationVerificationPage() {
   };
 
   return (
-    <LayoutDashboard>
+     <LayoutDashboard activeMenu={3}> 
       <div className="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-6 space-y-6">
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
