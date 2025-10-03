@@ -164,7 +164,7 @@ export default function SerialScanningPage() {
   };
 
   return (
-    <LayoutDashboard>
+    <LayoutDashboard activeMenu={2}> 
       <div className="max-w-4xl mx-auto px-3 md:px-4 py-4 md:py-6 space-y-6">
         <h1 className="text-2xl font-bold text-gray-800 flex items-center">
           <Scan className="w-6 h-6 mr-3 text-blue-600" /> Serial Number Scanning

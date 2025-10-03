@@ -17,13 +17,14 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-export default function LayoutDashboard({ children }) {
-  const [activeMenu, setActiveMenu] = useState(null);
+export default function LayoutDashboard({ children, activeMenu }) {
+  const [activeMenuIndex, setActiveMenuIndex] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const router = useRouter();
 
   const menuItems = [
-    { icon: Home, label: "Home", hasDropdown: false },
+{ icon: Home, label: "Home", hasDropdown: false, href: "/dashboard" },
     { icon: FileText, label: "Inventory Data", hasDropdown: true },
     {
       icon: Shield,
@@ -31,7 +32,7 @@ export default function LayoutDashboard({ children }) {
       hasDropdown: true,
       href: "/scanning",
     },
-    { icon: HelpCircle, label: "Validation & Verification", hasDropdown: true },
+    { icon: HelpCircle, label: "Validation & Verification", hasDropdown: true , href: "/validation-verification" },
     { icon: Calendar, label: "History & Activity Log", hasDropdown: true },
     { icon: Settings, label: "Reports & Analytics", hasDropdown: true },
     { icon: Settings, label: "User Management", hasDropdown: true },
@@ -83,25 +84,32 @@ export default function LayoutDashboard({ children }) {
 
         <div className="hidden md:block bg-blue-600 px-4">
           <div className="flex flex-wrap items-center gap-1 py-2">
-            {menuItems.map((item, index) => (
-              <button
-                key={index}
-                className={`flex items-center space-x-1 px-3 py-2 text-white hover:bg-blue-700 whitespace-nowrap text-sm transition ${
-                  index === 0 ? "bg-blue-700" : ""
-                }`}
-                onClick={() => {
-                  if (item.href) {
-                    router.push(item.href);
-                  } else {
-                    setActiveMenu(activeMenu === index ? null : index);
-                  }
-                }}
-              >
-                <item.icon className="w-4 h-4" />
-                <span>{item.label}</span>
-                {item.hasDropdown && <ChevronDown className="w-3 h-3" />}
-              </button>
-            ))}
+            {menuItems.map((item, index) => {
+              const isActive =
+                activeMenu !== undefined
+                  ? index === activeMenu
+                  : index === activeMenuIndex;
+
+              return (
+                <button
+                  key={index}
+                  className={`flex items-center space-x-1 px-3 py-2 text-white hover:bg-blue-700 whitespace-nowrap text-sm transition ${
+                    isActive ? "bg-blue-700" : ""
+                  }`}
+                  onClick={() => {
+                    if (item.href) {
+                      router.push(item.href);
+                    } else {
+                      setActiveMenuIndex(activeMenuIndex === index ? null : index);
+                    }
+                  }}
+                >
+                  <item.icon className="w-4 h-4" />
+                  <span>{item.label}</span>
+                  {item.hasDropdown && <ChevronDown className="w-3 h-3" />}
+                </button>
+              );
+            })}
 
             <div className="ml-auto text-white text-sm py-2 px-3 opacity-80">
               Monday, 29 September 2025
@@ -148,25 +156,33 @@ export default function LayoutDashboard({ children }) {
             </div>
 
             <div className="py-2">
-              {menuItems.map((item, index) => (
-                <button
-                  key={index}
-                  className={`flex items-center space-x-1 px-3 py-3 text-white hover:bg-blue-700 whitespace-nowrap text-sm transition ${
-                    index === 0 ? "bg-blue-700" : ""
-                  }`}
-                  onClick={() => {
-                    if (item.href) {
-                      router.push(item.href);
-                    } else {
-                      setActiveMenu(activeMenu === index ? null : index);
-                    }
-                  }}
-                >
-                  <item.icon className="w-4 h-4" />
-                  <span>{item.label}</span>
-                  {item.hasDropdown && <ChevronDown className="w-3 h-3" />}
-                </button>
-              ))}
+              {menuItems.map((item, index) => {
+                const isActive =
+                  activeMenu !== undefined
+                    ? index === activeMenu
+                    : index === activeMenuIndex;
+                return (
+                  <button
+                    key={index}
+                    className={`flex items-center space-x-1 px-3 py-2 text-white hover:bg-blue-700 whitespace-nowrap text-sm transition ${
+                      isActive ? "bg-blue-700" : ""
+                    }`}
+                    onClick={() => {
+                      if (item.href) {
+                        router.push(item.href);
+                      } else {
+                        setActiveMenuIndex(
+                          activeMenuIndex === index ? null : index
+                        );
+                      }
+                    }}
+                  >
+                    <item.icon className="w-4 h-4" />
+                    <span>{item.label}</span>
+                    {item.hasDropdown && <ChevronDown className="w-3 h-3" />}
+                  </button>
+                );
+              })}
             </div>
 
             <div className="absolute bottom-0 left-0 right-0 bg-blue-700 px-4 py-3 text-white text-xs text-center">
