@@ -13,7 +13,7 @@ export default function LoginPage() {
   const router = useRouter()
 
   // Carousel gambar
-  const images = ['/smoe.jpg', '/core_values.jpg', '/it_smoe.jpg']
+  const images = ['/bg_seatrium 3.png', '/seatrium_offshore.jpeg', '/offshore 3.jpg']
 
   useEffect(() => {
     const interval = setInterval(() => {
