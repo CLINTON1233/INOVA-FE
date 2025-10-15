@@ -14,7 +14,7 @@ export default function RegisterPage() {
   const [showSnackbar, setShowSnackbar] = useState(false)
   const router = useRouter()
 
-  const images = ['/smoe.jpg', '/core_values.jpg', '/it_smoe.jpg']
+    const images = ['/bg_seatrium 3.png', '/seatrium_offshore.jpg', '/offshore.jpg']
 
   useEffect(() => {
     const interval = setInterval(() => {
