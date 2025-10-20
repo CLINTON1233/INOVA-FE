@@ -17,6 +17,19 @@ import {
   User,
   Calendar,
   MapPin,
+  Shield,
+  Cpu,
+  Cable,
+  Camera,
+  Eye,
+  Zap,
+  BarChart3,
+  Database,
+  Brain,
+  ScanLine,
+  Menu,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import LayoutDashboard from "../components/LayoutDashboard";
 
@@ -26,101 +39,183 @@ export default function ValidationVerificationPage() {
   const [selectedItems, setSelectedItems] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [scanData, setScanData] = useState(null);
+  const [activeTab, setActiveTab] = useState("pending");
+  const [isMobile, setIsMobile] = useState(false);
+  const [expandedItem, setExpandedItem] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
 
   const router = useRouter();
 
+  // Deteksi ukuran layar
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
+
   // Ambil data dari localStorage saat komponen mount
   useEffect(() => {
-    const savedScanData = localStorage.getItem('lastSubmittedScan');
+    const savedScanData = localStorage.getItem("lastSubmittedScan");
     if (savedScanData) {
       setScanData(JSON.parse(savedScanData));
     }
   }, []);
 
-  // Data dummy untuk validation items
+  // Data sesuai dengan proposal - Perangkat dan Material IT
   const validationItems = [
     {
       id: 1,
-      serialNumber: scanData?.serial || "PC-00456-SN",
-      assetType: "Desktop Computer",
-      location: scanData?.location || "IT Room 2F",
-      department: "IT Infrastructure",
+      serialNumber: scanData?.serial || "PC-IT-2025-001",
+      assetType: "Komputer",
+      kategori: "Perangkat",
+      location: scanData?.location || "Infrastruktur & Jaringan",
+      department: "IT Infrastructure & Networking",
       lastVerified: "2025-09-20",
       status: "pending",
       uniqueCode: scanData?.uniqueCode || "V-901-XYZ-A",
-      scanDate: scanData?.date || "2025-09-29",
-      scanTime: scanData?.time || "14:30",
-      verifiedBy: "Clinton Alfaro"
+      scanDate: scanData?.date || "2025-10-28",
+      scanTime: scanData?.time || "14:30:15",
+      verifiedBy: "Clinton Alfaro",
+      buktiFoto: "/api/placeholder/80/60",
+      jenisID: "Nomor Seri",
+      idValue: scanData?.serial || "NS-PC-887632",
     },
     {
       id: 2,
-      serialNumber: "LPT-8891-SN",
-      assetType: "Laptop",
-      location: "Finance L3",
-      department: "Finance",
+      serialNumber: "MAT-KBL-045",
+      assetType: "Kabel RJ45",
+      kategori: "Material",
+      location: "Workshop 2",
+      department: "Facilities & Networking",
       lastVerified: "2025-09-18",
       status: "valid",
       uniqueCode: "V-902-ABC-B",
-      scanDate: "2025-09-29",
-      scanTime: "14:25",
-      verifiedBy: "Sarah Johnson"
+      scanDate: "2025-10-28",
+      scanTime: "14:25:40",
+      verifiedBy: "Wahyu Hidayat",
+      buktiFoto: "/api/placeholder/80/60",
+      jenisID: "Barcode",
+      idValue: "BC-RJ45-554321",
     },
     {
       id: 3,
-      serialNumber: "MOU-7742-SN",
-      assetType: "Mouse",
-      location: "HR L2",
-      department: "Human Resources",
+      serialNumber: "SRV-NET-012",
+      assetType: "Server",
+      kategori: "Perangkat",
+      location: "Ruang Server L3",
+      department: "System Operation",
       lastVerified: "2025-09-15",
       status: "error",
       uniqueCode: "V-903-DEF-C",
-      scanDate: "2025-09-29",
-      scanTime: "14:20",
-      verifiedBy: "Mike Chen"
+      scanDate: "2025-10-28",
+      scanTime: "14:18:22",
+      verifiedBy: "Ikhsan Kurniawan",
+      buktiFoto: "/api/placeholder/80/60",
+      jenisID: "Nomor Seri",
+      idValue: "NS-SRV-992345",
     },
     {
       id: 4,
-      serialNumber: "KBD-5566-SN",
-      assetType: "Keyboard",
-      location: "Marketing L1",
-      department: "Marketing",
+      serialNumber: "MAT-TRK-987",
+      assetType: "Trunking",
+      kategori: "Material",
+      location: "Kantor Utama L1",
+      department: "Operations & End User Service",
       lastVerified: "2025-09-22",
       status: "pending",
       uniqueCode: "V-904-GHI-D",
-      scanDate: "2025-09-29",
-      scanTime: "14:15",
-      verifiedBy: "Emily Davis"
+      scanDate: "2025-10-28",
+      scanTime: "14:10:05",
+      verifiedBy: "Mahmud Amma Rizki",
+      buktiFoto: "/api/placeholder/80/60",
+      jenisID: "Barcode",
+      idValue: "BC-TRK-773216",
     },
     {
       id: 5,
-      serialNumber: "MON-3321-SN",
-      assetType: "Monitor",
-      location: "Operations L4",
-      department: "Operations",
+      serialNumber: "CCTV-SEC-003",
+      assetType: "CCTV",
+      kategori: "Perangkat",
+      location: "Pintu Gerbang",
+      department: "Facilities & Networking",
       lastVerified: "2025-09-19",
       status: "valid",
       uniqueCode: "V-905-JKL-E",
-      scanDate: "2025-09-29",
-      scanTime: "14:10",
-      verifiedBy: "Robert Wilson"
-    }
+      scanDate: "2025-10-28",
+      scanTime: "14:05:33",
+      verifiedBy: "Yovan Sakti",
+      buktiFoto: "/api/placeholder/80/60",
+      jenisID: "Nomor Seri",
+      idValue: "NS-CCTV-661234",
+    },
+    {
+      id: 6,
+      serialNumber: "LPT-IT-2025-002",
+      assetType: "Laptop",
+      kategori: "Perangkat",
+      location: "Main Office L2",
+      department: "IT Infrastructure & Networking",
+      lastVerified: "2025-09-25",
+      status: "pending",
+      uniqueCode: "V-906-MNO-F",
+      scanDate: "2025-10-28",
+      scanTime: "13:55:20",
+      verifiedBy: "Clinton Alfaro",
+      buktiFoto: "/api/placeholder/80/60",
+      jenisID: "Nomor Seri",
+      idValue: "NS-LPT-445321",
+    },
+    {
+      id: 7,
+      serialNumber: "MAT-PIP-056",
+      assetType: "Pipa Jaringan",
+      kategori: "Material",
+      location: "Workshop 1",
+      department: "Facilities & Networking",
+      lastVerified: "2025-09-28",
+      status: "error",
+      uniqueCode: "V-907-PQR-G",
+      scanDate: "2025-10-28",
+      scanTime: "13:45:10",
+      verifiedBy: "Wahyu Hidayat",
+      buktiFoto: "/api/placeholder/80/60",
+      jenisID: "Barcode",
+      idValue: "BC-PIP-998765",
+    },
   ];
 
-  // Filter data berdasarkan search dan status
-  const filteredItems = validationItems.filter(item => {
-    const matchesSearch = item.serialNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         item.assetType.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         item.location.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = selectedStatus === "all" || item.status === selectedStatus;
-    return matchesSearch && matchesStatus;
+  // Filter data berdasarkan search, status, dan tab aktif
+  const filteredItems = validationItems.filter((item) => {
+    const matchesSearch =
+      item.serialNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.assetType.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.idValue.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus =
+      selectedStatus === "all" || item.status === selectedStatus;
+    const matchesTab = activeTab === "all" || item.status === activeTab;
+    return matchesSearch && matchesStatus && matchesTab;
   });
+
+  // Hitung statistik
+  const stats = {
+    total: validationItems.length,
+    valid: validationItems.filter((item) => item.status === "valid").length,
+    pending: validationItems.filter((item) => item.status === "pending").length,
+    error: validationItems.filter((item) => item.status === "error").length,
+  };
 
   // Toggle select item
   const toggleSelectItem = (id) => {
-    setSelectedItems(prev =>
-      prev.includes(id)
-        ? prev.filter(itemId => itemId !== id)
-        : [...prev, id]
+    setSelectedItems((prev) =>
+      prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]
     );
   };
 
@@ -129,7 +224,7 @@ export default function ValidationVerificationPage() {
     if (selectedItems.length === filteredItems.length) {
       setSelectedItems([]);
     } else {
-      setSelectedItems(filteredItems.map(item => item.id));
+      setSelectedItems(filteredItems.map((item) => item.id));
     }
   };
 
@@ -138,25 +233,31 @@ export default function ValidationVerificationPage() {
     if (selectedItems.length === 0) return;
 
     setIsSubmitting(true);
-    
+
     // Simulasi API call
     setTimeout(() => {
       console.log(`Performing ${action} on items:`, selectedItems);
       alert(`${action} berhasil dilakukan pada ${selectedItems.length} item`);
       setSelectedItems([]);
       setIsSubmitting(false);
+
+      // Redirect ke laporan setelah verifikasi massal
+      if (action === "approve") {
+        router.push("/reports");
+      }
     }, 2000);
   };
 
   // Handle individual verification
   const handleVerifyItem = (itemId, status) => {
     setIsSubmitting(true);
-    
+
     // Simulasi API call
     setTimeout(() => {
       console.log(`Verifying item ${itemId} as ${status}`);
       alert(`Item berhasil diverifikasi sebagai ${status}`);
       setIsSubmitting(false);
+      setExpandedItem(null); // Tutup expanded item setelah verifikasi
     }, 1500);
   };
 
@@ -186,98 +287,292 @@ export default function ValidationVerificationPage() {
     }
   };
 
+  const getCategoryIcon = (kategori) => {
+    switch (kategori) {
+      case "Perangkat":
+        return <Cpu className="w-4 h-4 text-blue-600" />;
+      case "Material":
+        return <Cable className="w-4 h-4 text-green-600" />;
+      default:
+        return <Shield className="w-4 h-4 text-gray-600" />;
+    }
+  };
+
+  const getCategoryColor = (kategori) => {
+    switch (kategori) {
+      case "Perangkat":
+        return "bg-blue-100 text-blue-700";
+      case "Material":
+        return "bg-green-100 text-green-700";
+      default:
+        return "bg-gray-100 text-gray-700";
+    }
+  };
+
+  // Fungsi helper untuk warna tab aktif
+  const getActiveTabColor = (color) => {
+    switch (color) {
+      case "blue":
+        return "bg-blue-600 text-white shadow-md";
+      case "yellow":
+        return "bg-yellow-500 text-white shadow-md";
+      case "green":
+        return "bg-green-600 text-white shadow-md";
+      case "red":
+        return "bg-red-600 text-white shadow-md";
+      default:
+        return "bg-blue-600 text-white shadow-md";
+    }
+  };
+
+  // Fungsi helper untuk warna badge aktif
+  const getActiveBadgeColor = (color) => {
+    switch (color) {
+      case "blue":
+        return "bg-blue-500 text-white";
+      case "yellow":
+        return "bg-yellow-400 text-white";
+      case "green":
+        return "bg-green-500 text-white";
+      case "red":
+        return "bg-red-500 text-white";
+      default:
+        return "bg-blue-500 text-white";
+    }
+  };
+
+  // Toggle expand item di mobile
+  const toggleExpandItem = (itemId) => {
+    setExpandedItem(expandedItem === itemId ? null : itemId);
+  };
+
   return (
-     <LayoutDashboard activeMenu={3}> 
-      <div className="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-6 space-y-6">
-        {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800 flex items-center">
-              <CheckCircle className="w-6 h-6 mr-3 text-green-600" />
-              Validation & Verification
-            </h1>
-            <p className="text-gray-600 mt-2">
-              Verify and validate scanned asset data before final submission
-            </p>
-          </div>
-          
-          {scanData && (
-            <div className="mt-4 lg:mt-0 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex items-center text-sm text-blue-800">
-                <FileText className="w-4 h-4 mr-2" />
-                <span>Last Scan: <strong>{scanData.serial}</strong> at {scanData.time}</span>
-              </div>
+    <LayoutDashboard activeMenu={3}>
+      <div className="max-w-7xl mx-auto px-3 md:px-4 py-2 md:py-6 space-y-4 md:space-y-6">
+        {/* Header dengan gradient */}
+        <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl shadow-lg p-4 md:p-6 text-white">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h1 className="text-xl md:text-2xl font-semibold flex items-center">
+                <CheckCircle className="w-6 h-6 md:w-7 md:h-7 mr-2 md:mr-3" />
+                Validasi & Verifikasi Aset IT
+              </h1>
+              <p className="text-blue-100 mt-2 text-xs md:text-base">
+                Sistem validasi otomatis menggunakan teknologi AI untuk
+                memastikan keakuratan data serial number dan barcode
+              </p>
             </div>
-          )}
+
+            {scanData && (
+              <div className="mt-3 md:mt-0 p-3 md:p-4 bg-blue-500/30 backdrop-blur-sm rounded-lg border border-blue-400">
+                <div className="flex items-center text-blue-100 text-xs md:text-sm">
+                  <ScanLine className="w-4 h-4 mr-2" />
+                  <span className="truncate">
+                    Scan Terakhir: <strong>{scanData.serial}</strong> -{" "}
+                    {scanData.time}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Status Sistem AI */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 mt-3 md:mt-4">
+            <div className="flex items-center space-x-1 md:space-x-2 text-xs">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <span className="truncate">Deteksi AI Aktif</span>
+            </div>
+            <div className="flex items-center space-x-1 md:space-x-2 text-xs">
+              <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+              <span className="truncate">OCR Berjalan</span>
+            </div>
+            <div className="flex items-center space-x-1 md:space-x-2 text-xs">
+              <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+              <span className="truncate">Database Online</span>
+            </div>
+            <div className="flex items-center space-x-1 md:space-x-2 text-xs">
+              <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+              <span className="truncate">Validasi Real-time</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+          <div className="bg-white rounded-xl shadow-lg p-3 md:p-4 text-center border-l-4 border-green-500">
+            <div className="text-xl md:text-2xl font-bold text-gray-900">
+              {stats.valid}
+            </div>
+            <div className="text-xs md:text-sm text-gray-500">Tervalidasi</div>
+            <div className="text-xs text-green-600 font-medium mt-1">
+              ✓ Data Akurat
+            </div>
+          </div>
+          <div className="bg-white rounded-xl shadow-lg p-3 md:p-4 text-center border-l-4 border-yellow-500">
+            <div className="text-xl md:text-2xl font-bold text-gray-900">
+              {stats.pending}
+            </div>
+            <div className="text-xs md:text-sm text-gray-500">Menunggu</div>
+            <div className="text-xs text-yellow-600 font-medium mt-1">
+              ⏳ Perlu Verifikasi
+            </div>
+          </div>
+          <div className="bg-white rounded-xl shadow-lg p-3 md:p-4 text-center border-l-4 border-red-500">
+            <div className="text-xl md:text-2xl font-bold text-gray-900">
+              {stats.error}
+            </div>
+            <div className="text-xs md:text-sm text-gray-500">Error</div>
+            <div className="text-xs text-red-600 font-medium mt-1">
+              ⚠ Perlu Tindakan
+            </div>
+          </div>
+          <div className="bg-white rounded-xl shadow-lg p-3 md:p-4 text-center border-l-4 border-blue-500">
+            <div className="text-xl md:text-2xl font-bold text-gray-900">
+              {stats.total}
+            </div>
+            <div className="text-xs md:text-sm text-gray-500">Total Aset</div>
+            <div className="text-xs text-blue-600 font-medium mt-1">
+              📊 Semua Kategori
+            </div>
+          </div>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="bg-white rounded-xl shadow-lg p-1 md:p-2">
+          <div className="flex space-x-1 overflow-x-auto">
+            {[
+              { id: "all", label: "Semua", count: stats.total, color: "blue" },
+              {
+                id: "pending",
+                label: "Menunggu",
+                count: stats.pending,
+                color: "yellow",
+              },
+              {
+                id: "valid",
+                label: "Tervalidasi",
+                count: stats.valid,
+                color: "green",
+              },
+              { id: "error", label: "Error", count: stats.error, color: "red" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex-none py-2 md:py-3 px-2 md:px-4 rounded-lg text-xs md:text-sm font-medium transition-all ${
+                  activeTab === tab.id
+                    ? getActiveTabColor(tab.color)
+                    : "text-gray-600 hover:bg-gray-100"
+                }`}
+              >
+                <div className="flex items-center justify-center space-x-1 md:space-x-2">
+                  <span className="whitespace-nowrap">{tab.label}</span>
+                  <span
+                    className={`px-1.5 py-0.5 md:px-2 md:py-1 rounded-full text-xs ${
+                      activeTab === tab.id
+                        ? getActiveBadgeColor(tab.color)
+                        : "bg-gray-200 text-gray-600"
+                    }`}
+                  >
+                    {tab.count}
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Search and Filter Section */}
-        <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
-          <div className="flex flex-col lg:flex-row gap-4">
+        <div className="bg-white rounded-xl shadow-lg p-3 md:p-6">
+          <div className="flex flex-col gap-3 md:gap-4">
             {/* Search Input */}
             <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
                   type="text"
-                  placeholder="Search by serial number, asset type, or location..."
+                  placeholder="Cari berdasarkan nomor seri, barcode, jenis aset, atau lokasi..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
+                  className="w-full pl-10 pr-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
                 />
               </div>
             </div>
 
-            {/* Status Filter */}
-            <div className="flex gap-2">
-              <select
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
-              >
-                <option value="all">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="valid">Valid</option>
-                <option value="error">Error</option>
-              </select>
+            {/* Filter Section */}
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-2">
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  className="flex-1 px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
+                >
+                  <option value="all">Semua Status</option>
+                  <option value="pending">Menunggu</option>
+                  <option value="valid">Tervalidasi</option>
+                  <option value="error">Error</option>
+                </select>
 
-              <button className="flex items-center px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm">
-                <Filter className="w-4 h-4 mr-2" />
-                More Filters
-              </button>
+                <button 
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="flex items-center px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm"
+                >
+                  <Filter className="w-4 h-4 mr-2" />
+                  <span className="hidden md:inline">Filter Lainnya</span>
+                  <span className="md:hidden">Filter</span>
+                </button>
+              </div>
+
+              {/* Additional Filters (Collapsible) */}
+              {showFilters && (
+                <div className="grid grid-cols-2 gap-2 p-3 bg-gray-50 rounded-lg">
+                  <select className="px-3 py-2 border border-gray-300 rounded text-sm">
+                    <option>Semua Kategori</option>
+                    <option>Perangkat</option>
+                    <option>Material</option>
+                  </select>
+                  <select className="px-3 py-2 border border-gray-300 rounded text-sm">
+                    <option>Semua Lokasi</option>
+                    <option>Infrastruktur & Jaringan</option>
+                    <option>Workshop 2</option>
+                    <option>Ruang Server L3</option>
+                  </select>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Bulk Actions */}
           {selectedItems.length > 0 && (
-            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div className="text-blue-800 text-sm font-medium">
-                  {selectedItems.length} item(s) selected
+            <div className="mt-3 md:mt-4 p-3 md:p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex flex-col gap-3">
+                <div className="text-blue-800 text-sm font-medium flex items-center">
+                  <CheckSquare className="w-4 h-4 mr-2" />
+                  {selectedItems.length} item dipilih untuk verifikasi massal
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <button
                     onClick={() => handleBulkAction("approve")}
                     disabled={isSubmitting}
-                    className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 text-sm"
+                    className="flex items-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 text-xs md:text-sm"
                   >
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    Approve Selected
+                    <CheckCircle className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                    Setujui
                   </button>
                   <button
                     onClick={() => handleBulkAction("reject")}
                     disabled={isSubmitting}
-                    className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 text-sm"
+                    className="flex items-center px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 text-xs md:text-sm"
                   >
-                    <XCircle className="w-4 h-4 mr-2" />
-                    Reject Selected
+                    <XCircle className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                    Tolak
                   </button>
                   <button
                     onClick={() => handleBulkAction("export")}
                     disabled={isSubmitting}
-                    className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition disabled:opacity-50 text-sm"
+                    className="flex items-center px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition disabled:opacity-50 text-xs md:text-sm"
                   >
-                    <Download className="w-4 h-4 mr-2" />
+                    <Download className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
                     Export
                   </button>
                 </div>
@@ -286,403 +581,364 @@ export default function ValidationVerificationPage() {
           )}
         </div>
 
-        {/* Validation Table */}
+        {/* Validation Items */}
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left">
+          {isMobile ? (
+            /* Mobile View - Card Layout */
+            <div className="divide-y divide-gray-200">
+              {filteredItems.map((item) => (
+                <div key={item.id} className="p-4">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex items-center">
+                      <button
+                        onClick={() => toggleSelectItem(item.id)}
+                        className="mr-3"
+                      >
+                        {selectedItems.includes(item.id) ? (
+                          <CheckSquare className="w-4 h-4 text-blue-600" />
+                        ) : (
+                          <Square className="w-4 h-4 text-gray-400" />
+                        )}
+                      </button>
+                      <div>
+                        <div className="font-medium text-blue-700 text-sm">
+                          {item.serialNumber}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1 flex items-center">
+                          {getCategoryIcon(item.kategori)}
+                          <span className="ml-1">{item.kategori}</span>
+                        </div>
+                      </div>
+                    </div>
                     <button
-                      onClick={toggleSelectAll}
-                      className="flex items-center text-gray-700 font-medium"
+                      onClick={() => toggleExpandItem(item.id)}
+                      className="text-gray-400"
                     >
-                      {selectedItems.length === filteredItems.length && filteredItems.length > 0 ? (
-                        <CheckSquare className="w-4 h-4 mr-2 text-blue-600" />
+                      {expandedItem === item.id ? (
+                        <ChevronUp className="w-5 h-5" />
                       ) : (
-                        <Square className="w-4 h-4 mr-2 text-gray-400" />
+                        <ChevronDown className="w-5 h-5" />
                       )}
-                      Serial Number
                     </button>
-                  </th>
-                  <th className="px-4 py-3 text-left text-gray-700 font-medium">Asset Type</th>
-                  <th className="px-4 py-3 text-left text-gray-700 font-medium">Location</th>
-                  <th className="px-4 py-3 text-left text-gray-700 font-medium">Scan Details</th>
-                  <th className="px-4 py-3 text-left text-gray-700 font-medium">Status</th>
-                  <th className="px-4 py-3 text-left text-gray-700 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {filteredItems.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-4">
-                      <div className="flex items-center">
-                        <button
-                          onClick={() => toggleSelectItem(item.id)}
-                          className="mr-3"
-                        >
-                          {selectedItems.includes(item.id) ? (
-                            <CheckSquare className="w-4 h-4 text-blue-600" />
-                          ) : (
-                            <Square className="w-4 h-4 text-gray-400" />
-                          )}
-                        </button>
-                        <div>
-                          <div className="font-medium text-blue-700">{item.serialNumber}</div>
-                          <div className="text-xs text-gray-500 mt-1">{item.uniqueCode}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="font-medium text-gray-900">{item.assetType}</div>
-                      <div className="text-xs text-gray-500 mt-1">{item.department}</div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="flex items-center text-gray-700">
-                        <MapPin className="w-4 h-4 mr-1 text-gray-400" />
-                        {item.location}
-                      </div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="text-xs text-gray-600 space-y-1">
-                        <div className="flex items-center">
-                          <Calendar className="w-3 h-3 mr-1" />
-                          {item.scanDate} at {item.scanTime}
-                        </div>
-                        <div className="flex items-center">
-                          <User className="w-3 h-3 mr-1" />
-                          {item.verifiedBy}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(item.status)}`}>
-                        {getStatusIcon(item.status)}
-                        <span className="ml-1 capitalize">{item.status}</span>
+                  </div>
+
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="font-medium text-gray-900 text-sm">
+                      {item.assetType}
+                    </div>
+                    <span
+                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(
+                        item.status
+                      )}`}
+                    >
+                      {getStatusIcon(item.status)}
+                      <span className="ml-1 capitalize">
+                        {item.status === "valid"
+                          ? "Tervalidasi"
+                          : item.status === "pending"
+                          ? "Menunggu"
+                          : "Error"}
                       </span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="flex gap-2">
+                    </span>
+                  </div>
+
+                  {/* Expanded Content */}
+                  {expandedItem === item.id && (
+                    <div className="mt-3 space-y-3 border-t pt-3">
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <div className="text-gray-500">Lokasi</div>
+                          <div className="text-gray-900">{item.location}</div>
+                        </div>
+                        <div>
+                          <div className="text-gray-500">Departemen</div>
+                          <div className="text-gray-900">{item.department}</div>
+                        </div>
+                        <div>
+                          <div className="text-gray-500">Scan Date</div>
+                          <div className="text-gray-900">
+                            {item.scanDate} {item.scanTime}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-gray-500">Diverifikasi Oleh</div>
+                          <div className="text-gray-900">{item.verifiedBy}</div>
+                        </div>
+                      </div>
+
+                      <div className="text-xs">
+                        <div className="text-gray-500">ID Value</div>
+                        <div className="text-gray-900 font-mono">
+                          {item.idValue}
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-2 pt-2">
                         {item.status === "pending" && (
                           <>
                             <button
                               onClick={() => handleVerifyItem(item.id, "valid")}
                               disabled={isSubmitting}
-                              className="flex items-center px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 text-xs"
+                              className="flex-1 flex items-center justify-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 text-xs"
                             >
                               <CheckCircle className="w-3 h-3 mr-1" />
-                              Approve
+                              Setujui
                             </button>
                             <button
                               onClick={() => handleVerifyItem(item.id, "error")}
                               disabled={isSubmitting}
-                              className="flex items-center px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 text-xs"
+                              className="flex-1 flex items-center justify-center px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 text-xs"
                             >
                               <XCircle className="w-3 h-3 mr-1" />
-                              Reject
+                              Tolak
                             </button>
                           </>
                         )}
-                        <button className="flex items-center px-3 py-1 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition text-xs">
-                          <Send className="w-3 h-3 mr-1" />
-                          Details
+                        <button className="flex-1 flex items-center justify-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-xs">
+                          <Eye className="w-3 h-3 mr-1" />
+                          Detail
                         </button>
                       </div>
-                    </td>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            /* Desktop View - Table Layout */
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left">
+                      <button
+                        onClick={toggleSelectAll}
+                        className="flex items-center text-gray-700 font-medium"
+                      >
+                        {selectedItems.length === filteredItems.length &&
+                        filteredItems.length > 0 ? (
+                          <CheckSquare className="w-4 h-4 mr-2 text-blue-600" />
+                        ) : (
+                          <Square className="w-4 h-4 mr-2 text-gray-400" />
+                        )}
+                        ID Aset
+                      </button>
+                    </th>
+                    <th className="px-4 py-3 text-left text-gray-700 font-medium">
+                      Jenis & Kategori
+                    </th>
+                    <th className="px-4 py-3 text-left text-gray-700 font-medium">
+                      Lokasi & Departemen
+                    </th>
+                    <th className="px-4 py-3 text-left text-gray-700 font-medium">
+                      Detail Pemindaian
+                    </th>
+                    <th className="px-4 py-3 text-left text-gray-700 font-medium">
+                      Status Validasi
+                    </th>
+                    <th className="px-4 py-3 text-left text-gray-700 font-medium">
+                      Aksi
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {filteredItems.map((item) => (
+                    <tr
+                      key={item.id}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
+                      <td className="px-4 py-4">
+                        <div className="flex items-center">
+                          <button
+                            onClick={() => toggleSelectItem(item.id)}
+                            className="mr-3"
+                          >
+                            {selectedItems.includes(item.id) ? (
+                              <CheckSquare className="w-4 h-4 text-blue-600" />
+                            ) : (
+                              <Square className="w-4 h-4 text-gray-400" />
+                            )}
+                          </button>
+                          <div>
+                            <div className="font-medium text-blue-700">
+                              {item.serialNumber}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1 flex items-center">
+                              {getCategoryIcon(item.kategori)}
+                              <span className="ml-1">{item.kategori}</span>
+                            </div>
+                            <div className="text-xs text-gray-400 font-mono mt-1">
+                              {item.jenisID}: {item.idValue}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="font-medium text-gray-900">
+                          {item.assetType}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          <span
+                            className={`px-2 py-1 rounded-full ${getCategoryColor(
+                              item.kategori
+                            )}`}
+                          >
+                            {item.kategori}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="flex items-center text-gray-700">
+                          <MapPin className="w-4 h-4 mr-1 text-gray-400" />
+                          {item.location}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {item.department}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="text-xs text-gray-600 space-y-1">
+                          <div className="flex items-center">
+                            <Calendar className="w-3 h-3 mr-1" />
+                            {item.scanDate} - {item.scanTime}
+                          </div>
+                          <div className="flex items-center">
+                            <User className="w-3 h-3 mr-1" />
+                            {item.verifiedBy}
+                          </div>
+                          <div className="flex items-center text-blue-600">
+                            <Camera className="w-3 h-3 mr-1" />
+                            <span className="text-xs">Lihat Bukti Foto</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <span
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(
+                            item.status
+                          )}`}
+                        >
+                          {getStatusIcon(item.status)}
+                          <span className="ml-1 capitalize">
+                            {item.status === "valid"
+                              ? "Tervalidasi"
+                              : item.status === "pending"
+                              ? "Menunggu"
+                              : "Error"}
+                          </span>
+                        </span>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="flex gap-2">
+                          {item.status === "pending" && (
+                            <>
+                              <button
+                                onClick={() => handleVerifyItem(item.id, "valid")}
+                                disabled={isSubmitting}
+                                className="flex items-center px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 text-xs"
+                              >
+                                <CheckCircle className="w-3 h-3 mr-1" />
+                                Setujui
+                              </button>
+                              <button
+                                onClick={() => handleVerifyItem(item.id, "error")}
+                                disabled={isSubmitting}
+                                className="flex items-center px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 text-xs"
+                              >
+                                <XCircle className="w-3 h-3 mr-1" />
+                                Tolak
+                              </button>
+                            </>
+                          )}
+                          <button className="flex items-center px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-xs">
+                            <Eye className="w-3 h-3 mr-1" />
+                            Detail
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
 
           {/* Empty State */}
           {filteredItems.length === 0 && (
-            <div className="text-center py-12">
-              <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500 text-lg">No validation items found</p>
-              <p className="text-gray-400 text-sm mt-2">
-                Try adjusting your search or filter criteria
+            <div className="text-center py-8 md:py-12">
+              <AlertTriangle className="w-8 h-8 md:w-12 md:h-12 text-gray-400 mx-auto mb-3 md:mb-4" />
+              <p className="text-gray-500 text-base md:text-lg">
+                Tidak ada data validasi ditemukan
+              </p>
+              <p className="text-gray-400 text-xs md:text-sm mt-1 md:mt-2">
+                Coba sesuaikan pencarian atau kriteria filter Anda
               </p>
             </div>
           )}
         </div>
 
-        {/* Summary Section */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Verification Summary</h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
-              <div className="text-2xl font-bold text-green-700">2</div>
-              <div className="text-sm text-green-600">Valid Assets</div>
-            </div>
-            <div className="text-center p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-              <div className="text-2xl font-bold text-yellow-700">2</div>
-              <div className="text-sm text-yellow-600">Pending Review</div>
-            </div>
-            <div className="text-center p-4 bg-red-50 rounded-lg border border-red-200">
-              <div className="text-2xl font-bold text-red-700">1</div>
-              <div className="text-sm text-red-600">Errors Found</div>
-            </div>
-            <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="text-2xl font-bold text-blue-700">5</div>
-              <div className="text-sm text-blue-600">Total Assets</div>
-            </div>
+        {/* Quick Actions Footer */}
+        <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
+          <h3 className="text-base md:text-lg font-semibold text-gray-800 mb-3 md:mb-4 flex items-center">
+            <Zap className="w-4 h-4 md:w-5 md:h-5 mr-2 text-blue-600" />
+            Aksi Cepat
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            <button
+              onClick={() => router.push("/scanning")}
+              className="flex flex-col items-center justify-center p-3 md:p-4 bg-gray-100 hover:bg-gray-200 rounded-lg transition text-gray-800 hover:text-blue-700 shadow-sm"
+            >
+              <Camera className="w-5 h-5 md:w-6 md:h-6 mb-1 md:mb-2 text-blue-600" />
+              <span className="text-xs md:text-sm font-semibold text-center">
+                Mulai Pemindaian Baru
+              </span>
+              <span className="text-xs text-gray-600 mt-1 hidden md:block">
+                Tambah Data Aset Baru
+              </span>
+            </button>
+
+            <button
+              onClick={() => router.push("/reports")}
+              className="flex flex-col items-center justify-center p-3 md:p-4 bg-gray-100 hover:bg-gray-200 rounded-lg transition text-gray-800 hover:text-green-700 shadow-sm"
+            >
+              <BarChart3 className="w-5 h-5 md:w-6 md:h-6 mb-1 md:mb-2 text-green-600" />
+              <span className="text-xs md:text-sm font-semibold text-center">
+                Laporan
+              </span>
+              <span className="text-xs text-gray-600 mt-1 hidden md:block">
+                Export Excel
+              </span>
+            </button>
+
+            <button
+              onClick={() => router.push("/monitoring")}
+              className="flex flex-col items-center justify-center p-3 md:p-4 bg-gray-100 hover:bg-gray-200 rounded-lg transition text-gray-800 hover:text-purple-700 shadow-sm"
+            >
+              <Eye className="w-5 h-5 md:w-6 md:h-6 mb-1 md:mb-2 text-purple-600" />
+              <span className="text-xs md:text-sm font-semibold text-center">
+                Monitoring
+              </span>
+              <span className="text-xs text-gray-600 mt-1 hidden md:block">
+                Real-time
+              </span>
+            </button>
+
+            <button
+              onClick={() => handleBulkAction("export")}
+              className="flex flex-col items-center justify-center p-3 md:p-4 bg-gray-100 hover:bg-gray-200 rounded-lg transition text-gray-800 hover:text-orange-700 shadow-sm"
+            >
+              <Download className="w-5 h-5 md:w-6 md:h-6 mb-1 md:mb-2 text-orange-600" />
+              <span className="text-xs md:text-sm font-semibold text-center">
+                Export Data
+              </span>
+              <span className="text-xs text-gray-600 mt-1 hidden md:block">
+                Format Excel
+              </span>
+            </button>
           </div>
         </div>
       </div>
     </LayoutDashboard>
   );
 }
-
-
-// "use client";
-
-// import { useState, useEffect } from "react";
-// import Image from "next/image";
-// import { useRouter } from "next/navigation";
-// import {
-//   ChevronDown,
-//   ChevronRight,
-//   Home,
-//   FileText,
-//   Shield,
-//   Calendar,
-//   HelpCircle,
-//   Settings,
-//   Bell,
-//   User,
-//   X,
-//   Menu,
-//   ListChecks,
-//   Clock,
-//   Scan,
-//   CheckCircle,
-//   Check,
-//   Send,
-//   AlertCircle,
-// } from "lucide-react";
-
-// // Dummy
-// const DUMMY_TODAY_SCAN_COUNT = 15;
-
-// export default function ValidationVerificationPage() {
-//   const router = useRouter();
-//   const [activeMenu, setActiveMenu] = useState(3); // index menu Validation
-//   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-//   const [lastScanData, setLastScanData] = useState(null);
-//   const [isVerifying, setIsVerifying] = useState(false);
-
-//   // Ambil data terakhir dari localStorage
-//   useEffect(() => {
-//     const dataString = localStorage.getItem("lastSubmittedScan");
-//     if (dataString) {
-//       setLastScanData(JSON.parse(dataString));
-//     } else {
-//       setLastScanData({
-//         serial: "PC-00456-SN",
-//         uniqueCode: "V-901-XYZ-A",
-//         location: "IT Room 2F",
-//         date: new Date().toLocaleDateString("en-US"),
-//         time: new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
-//         isDummy: true,
-//       });
-//     }
-//   }, []);
-
-//   const menuItems = [
-//     { icon: Home, label: "Home", href: "/dashboard" },
-//     { icon: FileText, label: "Inventory Data" },
-//     { icon: Shield, label: "Serial Scanning", href: "/scanning" },
-//     { icon: ListChecks, label: "Validation & Verification", href: "/validation-verification" },
-//     { icon: Calendar, label: "History & Activity Log" },
-//     { icon: Settings, label: "Reports & Analytics" },
-//     { icon: Settings, label: "User Management" },
-//     { icon: Settings, label: "System Settings" },
-//     { icon: HelpCircle, label: "User Guide" },
-//   ];
-
-//   const getCurrentTime = () =>
-//     new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
-//   const getCurrentDate = () =>
-//     new Date().toLocaleDateString("en-US", {
-//       weekday: "long",
-//       day: "numeric",
-//       month: "long",
-//       year: "numeric",
-//     });
-
-//   const handleFinalVerification = () => {
-//     if (!lastScanData) return;
-//     setIsVerifying(true);
-//     setTimeout(() => {
-//       alert(`Verifikasi untuk ${lastScanData.serial} berhasil ✅`);
-//       localStorage.removeItem("lastSubmittedScan");
-//       router.push("/scanning");
-//     }, 2500);
-//   };
-
-//   return (
-//     <div className="min-h-screen bg-gray-100">
-//       {/* 🔹 NAVBAR */}
-//       <nav className="bg-white shadow-sm">
-//         <div className="px-4 py-3 flex items-center justify-between">
-//           <Image
-//             src="/seatrium.png"
-//             alt="Seatrium Logo"
-//             width={200}
-//             height={200}
-//             className="object-contain"
-//             priority
-//           />
-
-//           <div className="flex items-center space-x-2">
-//             <button className="hidden md:block p-2 hover:bg-gray-100 rounded-lg relative">
-//               <Bell className="w-5 h-5 text-gray-600" />
-//               <span className="absolute top-2 right-2 block h-2 w-2 rounded-full ring-2 ring-white bg-red-500"></span>
-//             </button>
-
-//             <button className="hidden md:flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition">
-//               <User className="w-4 h-4" />
-//               <span>Clinton Alfaro</span>
-//               <ChevronDown className="w-4 h-4" />
-//             </button>
-
-//             <button
-//               className="md:hidden p-2 hover:bg-gray-100 rounded-lg"
-//               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-//             >
-//               <Menu className="w-5 h-5 text-gray-800" />
-//             </button>
-//           </div>
-//         </div>
-
-//         {/* Desktop Menu */}
-//         <div className="hidden md:block bg-blue-600 px-4">
-//           <div className="flex flex-wrap items-center gap-1 py-2">
-//             {menuItems.map((item, index) => (
-//               <button
-//                 key={index}
-//                 onClick={() => item.href && router.push(item.href)}
-//                 className={`flex items-center space-x-1 px-3 py-2 text-white hover:bg-blue-700 text-sm transition ${
-//                   activeMenu === index ? "bg-blue-700" : ""
-//                 }`}
-//               >
-//                 <item.icon className="w-4 h-4" />
-//                 <span>{item.label}</span>
-//               </button>
-//             ))}
-//             <div className="ml-auto text-white text-sm py-2 px-3 opacity-80">
-//               {getCurrentDate()}
-//             </div>
-//           </div>
-//         </div>
-//       </nav>
-
-//       {/* ✅ MAIN CONTENT pakai layout dashboard */}
-//       <main className="max-w-6xl mx-auto px-4 py-6 space-y-6">
-//         <h1 className="text-2xl font-bold text-gray-800 flex items-center">
-//           <ListChecks className="w-6 h-6 mr-3 text-green-600" />
-//           Validation & Verification
-//         </h1>
-
-//         {/* 🟦 Summary Cards */}
-//         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-//           <div className="bg-white rounded-xl shadow p-4 flex flex-col items-center">
-//             <Calendar className="w-6 h-6 text-blue-600 mb-2" />
-//             <p className="text-xs text-gray-500">DATE</p>
-//             <p className="font-semibold text-gray-800 text-center text-sm">
-//               {getCurrentDate()}
-//             </p>
-//           </div>
-
-//           <div className="bg-white rounded-xl shadow p-4 flex flex-col items-center">
-//             <Clock className="w-6 h-6 text-blue-600 mb-2" />
-//             <p className="text-xs text-gray-500">TIME</p>
-//             <p className="font-bold text-gray-800 text-lg">{getCurrentTime()}</p>
-//           </div>
-
-//           <div className="bg-white rounded-xl shadow p-4 flex flex-col items-center">
-//             <Scan className="w-6 h-6 text-green-600 mb-2" />
-//             <p className="text-xs text-gray-500">TOTAL SCANNED TODAY</p>
-//             <p className="font-bold text-gray-800 text-3xl">
-//               {DUMMY_TODAY_SCAN_COUNT + (!lastScanData?.isDummy ? 1 : 0)}
-//             </p>
-//           </div>
-//         </div>
-
-//         {/* 🟨 Detail Box */}
-//         <div className="bg-white rounded-xl shadow p-6 border">
-//           <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center border-b pb-2">
-//             <CheckCircle className="w-5 h-5 mr-2 text-green-600" />
-//             Latest Submitted Data
-//           </h2>
-
-//           {lastScanData ? (
-//             <div className="space-y-3">
-//               <div className="flex justify-between border-b pb-1 text-sm">
-//                 <span className="text-gray-500">Serial Number:</span>
-//                 <span className="font-bold bg-blue-50 px-2 rounded">
-//                   {lastScanData.serial}
-//                 </span>
-//               </div>
-//               <div className="flex justify-between border-b pb-1 text-sm">
-//                 <span className="text-gray-500">Unique Code:</span>
-//                 <span className="font-semibold">{lastScanData.uniqueCode}</span>
-//               </div>
-//               <div className="flex justify-between border-b pb-1 text-sm">
-//                 <span className="text-gray-500">Location:</span>
-//                 <span className="font-semibold">{lastScanData.location}</span>
-//               </div>
-//               <div className="flex justify-between border-b pb-1 text-sm">
-//                 <span className="text-gray-500">Time Submitted:</span>
-//                 <span className="font-semibold">
-//                   {lastScanData.time} ({lastScanData.date})
-//                 </span>
-//               </div>
-//               <div className="flex justify-between border-b pb-1 text-sm">
-//                 <span className="text-gray-500">OCR Verification:</span>
-//                 <span className="font-bold text-green-600 flex items-center">
-//                   <Check className="w-4 h-4 mr-1" /> Verified
-//                 </span>
-//               </div>
-
-//               <textarea
-//                 placeholder="Manual Verification Notes (Optional)"
-//                 className="w-full border rounded-lg p-2 text-sm mt-2"
-//                 rows={3}
-//               ></textarea>
-
-//               <button
-//                 onClick={handleFinalVerification}
-//                 disabled={isVerifying}
-//                 className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition mt-2"
-//               >
-//                 {isVerifying ? "Finalizing..." : "Finalize Verification"}
-//               </button>
-//             </div>
-//           ) : (
-//             <div className="text-center py-8 text-gray-500">
-//               <AlertCircle className="w-8 h-8 mx-auto mb-2 text-yellow-500" />
-//               No submitted data found.
-//             </div>
-//           )}
-//         </div>
-
-//         {/* 📝 Instructions */}
-//         <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-//           <h3 className="text-blue-800 font-semibold text-sm flex items-center mb-2">
-//             <HelpCircle className="w-4 h-4 mr-2" />
-//             Verification Guide
-//           </h3>
-//           <ul className="list-disc list-inside text-sm text-blue-700 space-y-1">
-//             <li>Pastikan Serial Number dan Unique Code sesuai aset fisik.</li>
-//             <li>Isi catatan manual jika ada koreksi.</li>
-//             <li>Tekan Finalize untuk simpan ke sistem.</li>
-//           </ul>
-//         </div>
-//       </main>
-//     </div>
-//   );
-// }
-
-
