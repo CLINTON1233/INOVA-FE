@@ -205,8 +205,8 @@ export default function DashboardPage() {
       <div className="space-y-4 md:space-y-8">
         {/* Header Dashboard */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl shadow-lg p-6 text-white">
-          <h1 className="text-2xl md:text-2xl font-bold mb-2">
-            Sistem Inventarisasi Aset IT
+          <h1 className="text-2xl md:text-2xl font-semibold mb-2">
+            Sistem Inventaris Aset IT
           </h1>
           <p className="text-blue-100 text-xs md:text-base">
             Validasi Otomatis Serial Number atau Barcode Aset IT (Perangkat &
@@ -300,7 +300,7 @@ export default function DashboardPage() {
             </button>
 
             <button
-              onClick={() => router.push("/validation")}
+              onClick={() => router.push("/validation-verification")}
               className="flex flex-col items-center justify-center p-3 md:p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition text-gray-700 hover:text-green-700"
             >
               <CheckCircle
