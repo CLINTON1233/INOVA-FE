@@ -16,42 +16,11 @@ import {
   Cable,
   Server,
   Box,
+  MapPin,
+  X,
+  Trash2,
 } from "lucide-react";
 import LayoutDashboard from "../components/LayoutDashboard";
-
-// Data dummy sesuai dengan jenis aset di proposal
-const dummyScanHistory = [
-  {
-    id: "PC-IT-2025-001",
-    jenisAset: "Komputer",
-    kategori: "Perangkat",
-    lokasi: "Infrastruktur & Jaringan",
-    status: "Valid",
-    tanggal: "2025-10-28",
-    waktu: "14:30:15",
-    nomorSeri: "NS-PC-887632",
-  },
-  {
-    id: "MAT-KBL-045",
-    jenisAset: "Kabel RJ45",
-    kategori: "Material",
-    lokasi: "Workshop 2",
-    status: "Valid",
-    tanggal: "2025-10-28",
-    waktu: "14:25:40",
-    barcode: "BC-RJ45-554321",
-  },
-  {
-    id: "SRV-NET-012",
-    jenisAset: "Server",
-    kategori: "Perangkat",
-    lokasi: "Ruang Server L3",
-    status: "Error",
-    tanggal: "2025-10-28",
-    waktu: "14:18:22",
-    nomorSeri: "NS-SRV-992345",
-  },
-];
 
 export default function SerialScanningPage() {
   const [manualInput, setManualInput] = useState("");
@@ -59,9 +28,47 @@ export default function SerialScanningPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [cameraError, setCameraError] = useState(null);
   const [inputType, setInputType] = useState(""); // "serial" atau "barcode"
+  const [checkHistory, setCheckHistory] = useState([]);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState("");
+  const [currentScanData, setCurrentScanData] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [dataToDelete, setDataToDelete] = useState(null);
+  const [isSubmittingAll, setIsSubmittingAll] = useState(false);
+  const [showDeleteSuccessModal, setShowDeleteSuccessModal] = useState(false);
+  const [deletedDataInfo, setDeletedDataInfo] = useState(null);
   const videoRef = useRef(null);
 
   const router = useRouter();
+
+  // Daftar lokasi sesuai dengan proposal
+  const locationOptions = [
+    "Infrastruktur & Jaringan",
+    "Workshop 1",
+    "Workshop 2",
+    "Ruang Server L3",
+    "Kantor Utama L1",
+    "Pintu Gerbang",
+    "Main Office L2",
+    "Gudang Material",
+    "Operations Center",
+    "Facilities Area",
+  ];
+
+  // Load riwayat dari localStorage saat komponen mount
+  useEffect(() => {
+    const savedHistory = localStorage.getItem("scanCheckHistory");
+    if (savedHistory) {
+      setCheckHistory(JSON.parse(savedHistory));
+    }
+  }, []);
+
+  // Simpan riwayat ke localStorage setiap kali ada perubahan
+  useEffect(() => {
+    if (checkHistory.length > 0) {
+      localStorage.setItem("scanCheckHistory", JSON.stringify(checkHistory));
+    }
+  }, [checkHistory]);
 
   useEffect(() => {
     const startCamera = async () => {
@@ -91,6 +98,26 @@ export default function SerialScanningPage() {
     };
   }, []);
 
+  // Fungsi untuk menambah data ke riwayat pengecekan
+  const addToCheckHistory = (scanData) => {
+    const newCheckItem = {
+      id: `CHK-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      tanggal: new Date().toLocaleDateString("id-ID"),
+      waktu: new Date().toLocaleTimeString("id-ID", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      }),
+      ...scanData,
+      status: "Checked", // Status sementara sebelum submit
+      submitted: false,
+    };
+
+    setCheckHistory((prev) => [newCheckItem, ...prev]); // Simpan semua item tanpa batasan
+    return newCheckItem;
+  };
+
   // Fungsi simulasi scan dengan data sesuai proposal
   const handleScan = () => {
     setScanResult("loading");
@@ -101,75 +128,83 @@ export default function SerialScanningPage() {
     setTimeout(() => {
       const isError = Math.random() < 0.2; // 20% kemungkinan error
       const isPerangkat = Math.random() < 0.6; // 60% perangkat, 40% material
-      
+
       if (isError) {
-        setScanResult({
+        const errorData = {
           status: "error",
           id: "ERR-SCAN-001",
           jenisAset: "Tidak Dikenali",
           kategori: "Error",
-          lokasi: "Scan Gagal",
+          lokasi: "",
           message: "Format nomor seri/barcode tidak valid. Silakan scan ulang.",
           inputType: "scan",
-        });
+        };
+
+        setScanResult(errorData);
+        addToCheckHistory(errorData);
       } else {
-        const assets = isPerangkat ? 
-          // Data Perangkat (Nomor Seri)
-          [
-            {
-              id: "PC-IT-2025-001",
-              jenisAset: "Komputer",
-              kategori: "Perangkat",
-              lokasi: "Infrastruktur & Jaringan",
-              nomorSeri: "NS-PC-887632",
-            },
-            {
-              id: "SRV-NET-012",
-              jenisAset: "Server",
-              kategori: "Perangkat", 
-              lokasi: "Ruang Server L3",
-              nomorSeri: "NS-SRV-992345",
-            },
-            {
-              id: "CCTV-SEC-003", 
-              jenisAset: "CCTV",
-              kategori: "Perangkat",
-              lokasi: "Pintu Gerbang",
-              nomorSeri: "NS-CCTV-661234",
-            }
-          ] : 
-          // Data Material (Barcode)
-          [
-            {
-              id: "MAT-KBL-045",
-              jenisAset: "Kabel RJ45", 
-              kategori: "Material",
-              lokasi: "Workshop 2",
-              barcode: "BC-RJ45-554321",
-            },
-            {
-              id: "MAT-TRK-987",
-              jenisAset: "Trunking",
-              kategori: "Material",
-              lokasi: "Kantor Utama L1", 
-              barcode: "BC-TRK-773216",
-            },
-            {
-              id: "MAT-PIP-123",
-              jenisAset: "Pipa PVC",
-              kategori: "Material",
-              lokasi: "Gudang Material",
-              barcode: "BC-PIP-445533",
-            }
-          ];
-        
+        const assets = isPerangkat
+          ? // Data Perangkat (Nomor Seri)
+            [
+              {
+                id: "PC-IT-2025-001",
+                jenisAset: "Komputer",
+                kategori: "Perangkat",
+                lokasi: "",
+                nomorSeri: "NS-PC-887632",
+              },
+              {
+                id: "SRV-NET-012",
+                jenisAset: "Server",
+                kategori: "Perangkat",
+                lokasi: "",
+                nomorSeri: "NS-SRV-992345",
+              },
+              {
+                id: "CCTV-SEC-003",
+                jenisAset: "CCTV",
+                kategori: "Perangkat",
+                lokasi: "",
+                nomorSeri: "NS-CCTV-661234",
+              },
+            ]
+          : // Data Material (Barcode)
+            [
+              {
+                id: "MAT-KBL-045",
+                jenisAset: "Kabel RJ45",
+                kategori: "Material",
+                lokasi: "",
+                barcode: "BC-RJ45-554321",
+              },
+              {
+                id: "MAT-TRK-987",
+                jenisAset: "Trunking",
+                kategori: "Material",
+                lokasi: "",
+                barcode: "BC-TRK-773216",
+              },
+              {
+                id: "MAT-PIP-123",
+                jenisAset: "Pipa PVC",
+                kategori: "Material",
+                lokasi: "",
+                barcode: "BC-PIP-445533",
+              },
+            ];
+
         const randomAsset = assets[Math.floor(Math.random() * assets.length)];
-        setScanResult({
+        const successData = {
           status: "success",
           ...randomAsset,
-          message: `Berhasil! ${isPerangkat ? "Nomor Seri" : "Barcode"} terdeteksi. Data siap divalidasi.`,
+          message: `Berhasil! ${
+            isPerangkat ? "Nomor Seri" : "Barcode"
+          } terdeteksi.`,
           inputType: "scan",
-        });
+        };
+
+        setScanResult(successData);
+        addToCheckHistory(successData);
         setInputType(isPerangkat ? "serial" : "barcode");
       }
     }, 2000);
@@ -179,10 +214,10 @@ export default function SerialScanningPage() {
   const handleManualCheck = (e) => {
     e.preventDefault();
     if (!manualInput) return;
-    
+
     setScanResult("loading");
     setIsSubmitting(false);
-    
+
     // Deteksi apakah input nomor seri atau barcode
     const isSerial = manualInput.toUpperCase().includes("NS-");
     const isBarcode = manualInput.toUpperCase().includes("BC-");
@@ -190,81 +225,195 @@ export default function SerialScanningPage() {
 
     setTimeout(() => {
       if (manualInput.toUpperCase().includes("ERROR")) {
-        setScanResult({
+        const errorData = {
           status: "error",
           id: "INVALID-INPUT",
           jenisAset: "Tidak Valid",
           kategori: "Error",
-          lokasi: "Input Manual",
-          message: "Format input tidak valid. Pastikan format nomor seri (NS-XXX) atau barcode (BC-XXX).",
+          lokasi: "",
+          message:
+            "Format input tidak valid. Pastikan format nomor seri (NS-XXX) atau barcode (BC-XXX).",
           inputType: isSerial ? "serial" : "barcode",
-        });
+        };
+
+        setScanResult(errorData);
+        addToCheckHistory(errorData);
       } else {
         const isPerangkat = isSerial || Math.random() < 0.5;
-        const assets = isPerangkat ?
-          {
-            id: "PC-MAN-001",
-            jenisAset: "Komputer",
-            kategori: "Perangkat", 
-            lokasi: "Lokasi Manual Input",
-            nomorSeri: manualInput,
-          } :
-          {
-            id: "MAT-MAN-001", 
-            jenisAset: "Material",
-            kategori: "Material",
-            lokasi: "Lokasi Manual Input",
-            barcode: manualInput,
-          };
-        
-        setScanResult({
+        const successData = isPerangkat
+          ? {
+              id: "PC-MAN-001",
+              jenisAset: "Komputer",
+              kategori: "Perangkat",
+              lokasi: "",
+              nomorSeri: manualInput,
+            }
+          : {
+              id: "MAT-MAN-001",
+              jenisAset: "Material",
+              kategori: "Material",
+              lokasi: "",
+              barcode: manualInput,
+            };
+
+        const finalData = {
           status: "success",
-          ...assets,
-          message: `Valid! Data input manual ${isPerangkat ? "nomor seri" : "barcode"} siap divalidasi.`,
+          ...successData,
+          message: `Valid! Data input manual ${
+            isPerangkat ? "nomor seri" : "barcode"
+          } terdeteksi.`,
           inputType: isSerial ? "serial" : "barcode",
-        });
+        };
+
+        setScanResult(finalData);
+        addToCheckHistory(finalData);
+        setManualInput(""); // Reset input manual setelah berhasil
       }
     }, 1500);
   };
 
-  const handleSubmitData = () => {
-    if (!scanResult || scanResult.status !== "success" || isSubmitting) return;
+  // Fungsi untuk membuka modal lokasi
+  const handleOpenLocationModal = (scanData) => {
+    setCurrentScanData(scanData);
+    setSelectedLocation(scanData.lokasi || "");
+    setShowLocationModal(true);
+  };
+
+  // Fungsi untuk menyimpan lokasi saja
+  const handleSaveLocation = () => {
+    if (!selectedLocation || !currentScanData) return;
+
+    // Update data dengan lokasi yang dipilih
+    const updatedData = {
+      ...currentScanData,
+      lokasi: selectedLocation,
+    };
+
+    // Update riwayat dengan lokasi baru
+    setCheckHistory((prev) =>
+      prev.map((item) =>
+        item.id === currentScanData.id ? { ...item, ...updatedData } : item
+      )
+    );
+
+    setShowLocationModal(false);
+    setSelectedLocation("");
+  };
+
+  // Fungsi untuk submit data individual
+  const handleSubmitSingle = (scanData) => {
+    if (!scanData.lokasi) {
+      alert("Harap pilih lokasi terlebih dahulu sebelum mengirim data.");
+      return;
+    }
 
     setIsSubmitting(true);
 
-    console.log(`Submitting Data:`, scanResult);
+    const submittedData = {
+      ...scanData,
+      uniqueCode: `V-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+      status: "Pending Validation",
+      submitted: true,
+      submittedAt: new Date().toISOString(),
+    };
+
+    // Update riwayat dengan status submitted
+    setCheckHistory((prev) =>
+      prev.map((item) =>
+        item.id === scanData.id ? { ...item, ...submittedData } : item
+      )
+    );
+
+    console.log("Submitting Single Data:", submittedData);
 
     setTimeout(() => {
       setIsSubmitting(false);
+      alert(`Data ${submittedData.jenisAset} berhasil dikirim!`);
+    }, 1500);
+  };
 
-      // Data yang akan diteruskan ke halaman Validasi & Verifikasi
-      const submittedData = {
-        ...scanResult,
-        tanggal: new Date().toLocaleDateString("id-ID"),
-        waktu: new Date().toLocaleTimeString("id-ID", { 
-          hour: '2-digit', 
-          minute: '2-digit',
-          second: '2-digit'
-        }),
-        uniqueCode: `V-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-      };
+  // Fungsi untuk submit semua data yang sudah ada lokasi
+  const handleSubmitAll = () => {
+    const dataToSubmit = checkHistory.filter(
+      (item) => item.status === "Checked" && item.lokasi && !item.submitted
+    );
 
-      alert(`Data ${submittedData.jenisAset} berhasil dikirim! Mengalihkan ke halaman verifikasi.`);
+    if (dataToSubmit.length === 0) {
+      alert(
+        "Tidak ada data yang siap dikirim. Pastikan semua data sudah memiliki lokasi."
+      );
+      return;
+    }
 
-      localStorage.setItem('lastSubmittedScan', JSON.stringify(submittedData));
+    setIsSubmittingAll(true);
+
+    const submittedData = dataToSubmit.map((item) => ({
+      ...item,
+      uniqueCode: `V-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+      status: "Pending Validation",
+      submitted: true,
+      submittedAt: new Date().toISOString(),
+    }));
+
+    // Update semua data yang dikirim
+    setCheckHistory((prev) =>
+      prev.map((item) => {
+        const submittedItem = submittedData.find((sub) => sub.id === item.id);
+        return submittedItem ? { ...item, ...submittedItem } : item;
+      })
+    );
+
+    console.log("Submitting All Data:", submittedData);
+
+    setTimeout(() => {
+      setIsSubmittingAll(false);
+      alert(
+        `${submittedData.length} data berhasil dikirim! Mengalihkan ke halaman verifikasi.`
+      );
+
+      localStorage.setItem("lastSubmittedScan", JSON.stringify(submittedData));
 
       router.push("/validation-verification");
-    }, 2500);
+    }, 2000);
+  };
+
+  // Fungsi untuk menghapus data dari riwayat
+  const handleDeleteData = (scanData) => {
+    setDataToDelete(scanData);
+    setShowDeleteModal(true);
+  };
+
+  // Fungsi konfirmasi hapus data
+  const confirmDelete = () => {
+    if (dataToDelete) {
+      setCheckHistory((prev) =>
+        prev.filter((item) => item.id !== dataToDelete.id)
+      );
+      setShowDeleteModal(false);
+
+      // Simpan info data yang dihapus untuk modal sukses
+      setDeletedDataInfo({
+        jenisAset: dataToDelete.jenisAset,
+        id: dataToDelete.id,
+      });
+
+      // Tampilkan modal sukses
+      setShowDeleteSuccessModal(true);
+
+      setDataToDelete(null);
+    }
   };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "Valid":
+      case "success":
         return "bg-green-100 text-green-700 border-green-200";
-      case "Error":
+      case "error":
         return "bg-red-100 text-red-700 border-red-200";
-      case "Tertunda":
+      case "Pending Validation":
         return "bg-blue-100 text-blue-700 border-blue-200";
+      case "Checked":
+        return "bg-yellow-100 text-yellow-700 border-yellow-200";
       default:
         return "bg-gray-100 text-gray-700 border-gray-200";
     }
@@ -281,28 +430,50 @@ export default function SerialScanningPage() {
     }
   };
 
+  const getStatusText = (status) => {
+    switch (status) {
+      case "success":
+        return "Berhasil";
+      case "error":
+        return "Error";
+      case "Pending Validation":
+        return "Terkirim";
+      case "Checked":
+        return "Dicek";
+      default:
+        return status;
+    }
+  };
+
+  // Hitung data yang siap dikirim
+  const readyToSubmitCount = checkHistory.filter(
+    (item) => item.status === "Checked" && item.lokasi && !item.submitted
+  ).length;
+
   return (
-    <LayoutDashboard activeMenu={2}> 
-      <div className="max-w-6xl mx-auto px-3 md:px-4 py-4 md:py-2 space-y-2">
+    <LayoutDashboard activeMenu={2}>
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl shadow-lg p-6 text-white">
-          <h1 className="text-2xl font-semibold flex items-center">
-            <Scan className="w-6 h-6 mr-3" /> Scan Perangkat atau Material 
+        <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl shadow-lg p-4 sm:p-6 text-white">
+          <h1 className="text-xl sm:text-2xl font-semibold flex items-center">
+            <Scan className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3" />
+            Scan & Pengecekan Aset IT
           </h1>
-          <p className="text-blue-100 text-sm mt-2">
-           Arahkan kamera ke perangkat IT atau material untuk memindai nomor seri atau barcode secara otomatis atau masukkan secara manual jika diperlukan.
+          <p className="text-blue-100 text-xs sm:text-sm mt-1 sm:mt-2">
+            Scan perangkat IT atau material, pilih lokasi, dan kirim untuk
+            verifikasi. Data pengecekan akan tersimpan sementara sebelum
+            dikirim.
           </p>
         </div>
 
         {/* 1. Kamera / Scanner Area */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4 md:p-6">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-            <Camera className="w-5 h-5 mr-2 text-blue-600" /> 
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-3 sm:p-4 md:p-6">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center">
+            <Camera className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-600" />
             Scanner Kamera - Deteksi Perangkat & Material
           </h2>
 
-          <div className="relative w-full aspect-video bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center mb-6">
-            {/* Kamera Video */}
+          <div className="relative w-full aspect-video bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center mb-4 sm:mb-6">
             <video
               ref={videoRef}
               autoPlay
@@ -311,44 +482,46 @@ export default function SerialScanningPage() {
               className="absolute inset-0 w-full h-full object-cover"
             ></video>
 
-            {/* Scanner Overlay */}
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-4/5 h-4/5 border-4 border-dashed border-white/50 rounded-lg"></div>
               <div className="absolute top-1/2 w-4/5 h-1 bg-red-500 animate-pulse shadow-lg"></div>
             </div>
 
-            {/* Error kamera */}
             {cameraError && (
-              <div className="absolute inset-0 bg-black/70 text-white text-center flex items-center justify-center p-4">
+              <div className="absolute inset-0 bg-black/70 text-white text-center flex items-center justify-center p-3 sm:p-4">
                 <div>
-                  <AlertCircle className="w-8 h-8 mx-auto mb-2" />
-                  <p className="text-sm">{cameraError}</p>
+                  <AlertCircle className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2" />
+                  <p className="text-xs sm:text-sm">{cameraError}</p>
                 </div>
               </div>
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
             <div className="flex items-center">
-              <Cpu className="w-4 h-4 mr-2 text-blue-600" />
-              <span>Scan <strong>Nomor Seri</strong> untuk Perangkat IT</span>
+              <Cpu className="w-3 h-3 sm:w-4 sm:h-4 mr-2 text-blue-600" />
+              <span>
+                Scan <strong>Nomor Seri</strong> untuk Perangkat IT
+              </span>
             </div>
             <div className="flex items-center">
-              <Cable className="w-4 h-4 mr-2 text-green-600" />
-              <span>Scan <strong>Barcode</strong> untuk Material</span>
+              <Cable className="w-3 h-3 sm:w-4 sm:h-4 mr-2 text-green-600" />
+              <span>
+                Scan <strong>Barcode</strong> untuk Material
+              </span>
             </div>
           </div>
 
-          <div className="flex justify-center mt-6">
+          <div className="flex justify-center">
             <button
               onClick={handleScan}
-              className="flex items-center justify-center px-8 py-4 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition shadow-lg disabled:opacity-50 text-base"
-              disabled={scanResult === "loading" || isSubmitting}>
+              className="flex items-center justify-center px-6 sm:px-8 py-3 sm:py-4 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition shadow-lg disabled:opacity-50 text-sm sm:text-base w-full sm:w-auto"
+              disabled={scanResult === "loading" || isSubmitting}
+            >
               {scanResult === "loading" ? (
                 <>
                   <svg
-                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
+                    className="animate-spin -ml-1 mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 text-white"
                     fill="none"
                     viewBox="0 0 24 24"
                   >
@@ -370,7 +543,7 @@ export default function SerialScanningPage() {
                 </>
               ) : (
                 <>
-                  <Camera className="w-5 h-5 mr-2" />
+                  <Camera className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                   Mulai Pemindaian Kamera
                 </>
               )}
@@ -379,16 +552,16 @@ export default function SerialScanningPage() {
         </div>
 
         {/* 2. Input Manual & Hasil Scan */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Input Manual */}
-          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-              <Clipboard className="w-5 h-5 mr-2 text-gray-600" /> 
+          <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center">
+              <Clipboard className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-gray-600" />
               Input Manual
             </h2>
-            <form onSubmit={handleManualCheck} className="space-y-4">
+            <form onSubmit={handleManualCheck} className="space-y-3 sm:space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                   Masukkan Nomor Seri atau Barcode
                 </label>
                 <input
@@ -396,33 +569,32 @@ export default function SerialScanningPage() {
                   placeholder="Contoh: NS-PC-887632 atau BC-RJ45-554321"
                   value={manualInput}
                   onChange={(e) => setManualInput(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-xs sm:text-sm"
                   required
                 />
               </div>
               <button
                 type="submit"
-                className="w-full flex items-center justify-center px-4 py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-800 transition disabled:opacity-50"
+                className="w-full flex items-center justify-center px-3 sm:px-4 py-2 sm:py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-800 transition disabled:opacity-50 text-sm"
                 disabled={scanResult === "loading" || isSubmitting}
               >
-                <Search className="w-5 h-5 mr-2" /> 
+                <Search className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                 Cek Validitas
               </button>
             </form>
           </div>
 
-          {/* Hasil Scan */}
-          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-              <AlertCircle className="w-5 h-5 mr-2 text-gray-400" /> 
-              Hasil Pemeriksaan
+          {/* Hasil Scan Terakhir */}
+          <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center">
+              <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-gray-400" />
+              Hasil Pemeriksaan Terakhir
             </h2>
 
             {scanResult === "loading" && (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-6 sm:py-8 text-gray-500">
                 <svg
-                  className="animate-spin mx-auto h-8 w-8 text-blue-500 mb-3"
-                  xmlns="http://www.w3.org/2000/svg"
+                  className="animate-spin mx-auto h-6 w-6 sm:h-8 sm:w-8 text-blue-500 mb-2 sm:mb-3"
                   fill="none"
                   viewBox="0 0 24 24"
                 >
@@ -440,44 +612,48 @@ export default function SerialScanningPage() {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                <p className="font-medium">Memproses pemeriksaan...</p>
-                <p className="text-sm mt-1">Mendeteksi format dan validitas</p>
+                <p className="font-medium text-sm sm:text-base">Memproses pemeriksaan...</p>
+                <p className="text-xs sm:text-sm mt-1">Mendeteksi format dan validitas</p>
               </div>
             )}
 
             {scanResult && scanResult !== "loading" && (
               <div
-                className={`p-4 rounded-lg border-l-4 ${
+                className={`p-3 sm:p-4 rounded-lg border-l-4 ${
                   scanResult.status === "success"
                     ? "bg-green-50 border-green-500"
                     : "bg-red-50 border-red-500"
                 }`}
               >
                 <div
-                  className={`flex items-center mb-3 ${
+                  className={`flex items-center mb-2 sm:mb-3 ${
                     scanResult.status === "success"
                       ? "text-green-700"
                       : "text-red-700"
                   }`}
                 >
                   {scanResult.status === "success" ? (
-                    <CheckCircle className="w-6 h-6 mr-2" />
+                    <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 mr-2" />
                   ) : (
-                    <AlertTriangle className="w-6 h-6 mr-2" />
+                    <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 mr-2" />
                   )}
-                  <span className="font-bold text-lg capitalize">
-                    {scanResult.status === "success" ? "Valid" : "Error"}
+                  <span className="font-bold text-base sm:text-lg capitalize">
+                    {getStatusText(scanResult.status)}
                   </span>
                 </div>
 
-                <div className="space-y-2 text-sm">
+                <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm">
                   <div className="flex justify-between">
                     <span className="font-medium text-gray-600">ID Aset:</span>
-                    <span className="font-bold text-gray-800">{scanResult.id}</span>
+                    <span className="font-bold text-gray-800 text-xs sm:text-sm">
+                      {scanResult.id}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="font-medium text-gray-600">Jenis:</span>
-                    <span className="text-gray-800">{scanResult.jenisAset}</span>
+                    <span className="text-gray-800">
+                      {scanResult.jenisAset}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="font-medium text-gray-600">Kategori:</span>
@@ -487,35 +663,266 @@ export default function SerialScanningPage() {
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="font-medium text-gray-600">Lokasi:</span>
-                    <span className="text-gray-800">{scanResult.lokasi}</span>
-                  </div>
-                  <div className="flex justify-between">
                     <span className="font-medium text-gray-600">
                       {inputType === "serial" ? "Nomor Seri:" : "Barcode:"}
                     </span>
-                    <span className="font-mono text-blue-600">
+                    <span className="font-mono text-blue-600 text-xs sm:text-sm">
                       {scanResult.nomorSeri || scanResult.barcode}
                     </span>
                   </div>
                 </div>
 
-                <p className="text-sm text-gray-600 mt-3 border-t pt-3">
+                <p className="text-xs sm:text-sm text-gray-600 mt-2 sm:mt-3 border-t pt-2 sm:pt-3">
                   {scanResult.message}
                 </p>
+              </div>
+            )}
 
-                {/* TOMBOL SUBMIT */}
-                {scanResult.status === "success" && (
-                  <button
-                    onClick={handleSubmitData}
-                    className="mt-4 w-full flex items-center justify-center px-4 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition disabled:opacity-50"
-                    disabled={isSubmitting}
+            {!scanResult && scanResult !== "loading" && (
+              <div className="text-center py-6 sm:py-8 text-gray-500">
+                <Box className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 text-gray-400" />
+                <p className="font-medium text-sm sm:text-base">Belum ada hasil pemeriksaan</p>
+                <p className="text-xs sm:text-sm mt-1">
+                  Gunakan Scanner Kamera atau Input Manual
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 3. Riwayat Pengecekan Terbaru */}
+        <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sm:mb-4 gap-2">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center">
+              <Calendar className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-gray-600" />
+              Riwayat Pengecekan Terbaru
+            </h2>
+            <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto">
+              <span className="text-xs sm:text-sm text-gray-500">
+                {checkHistory.length} item
+              </span>
+              {readyToSubmitCount > 0 && (
+                <span className="ml-2 px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
+                  {readyToSubmitCount} siap kirim
+                </span>
+              )}
+            </div>
+          </div>
+
+          {checkHistory.length === 0 ? (
+            <div className="text-center py-6 sm:py-8 text-gray-500">
+              <Box className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 text-gray-400" />
+              <p className="font-medium text-sm sm:text-base">Belum ada riwayat pengecekan</p>
+              <p className="text-xs sm:text-sm mt-1">
+                Lakukan scan atau input manual untuk mulai
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Tampilan Desktop */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                  <thead>
+                    <tr className="text-gray-500 uppercase text-xs border-b border-gray-200">
+                      <th className="py-2 font-medium">ID Aset</th>
+                      <th className="py-2 font-medium">Jenis Aset</th>
+                      <th className="py-2 font-medium">Kategori</th>
+                      <th className="py-2 font-medium">Lokasi</th>
+                      <th className="py-2 font-medium">Status</th>
+                      <th className="py-2 font-medium">Tanggal</th>
+                      <th className="py-2 font-medium">Waktu</th>
+                      <th className="py-2 font-medium">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {checkHistory.map((item, index) => (
+                      <tr
+                        key={item.id}
+                        className="border-b border-gray-100 hover:bg-gray-50 text-gray-800"
+                      >
+                        <td className="py-3 font-medium">
+                          <div className="flex items-center">
+                            {getCategoryIcon(item.kategori)}
+                            <span className="ml-2 text-sm">{item.id}</span>
+                          </div>
+                        </td>
+                        <td className="py-3 text-gray-600 text-sm">{item.jenisAset}</td>
+                        <td className="py-3">
+                          <span
+                            className={`px-2 py-1 text-xs rounded-full font-semibold ${
+                              item.kategori === "Perangkat"
+                                ? "bg-blue-100 text-blue-700"
+                                : "bg-green-100 text-green-700"
+                            }`}
+                          >
+                            {item.kategori}
+                          </span>
+                        </td>
+                        <td className="py-3 text-gray-600 text-sm">
+                          {item.lokasi || (
+                            <span className="text-orange-600 text-xs">
+                              Belum dipilih
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3">
+                          <span
+                            className={`px-2 py-1 text-xs rounded-full font-semibold border ${getStatusColor(
+                              item.status
+                            )}`}
+                          >
+                            {getStatusText(item.status)}
+                          </span>
+                        </td>
+                        <td className="py-3 text-gray-600 text-sm">{item.tanggal}</td>
+                        <td className="py-3 text-gray-600 text-sm">{item.waktu}</td>
+                        <td className="py-3">
+                          <div className="flex space-x-1 sm:space-x-2">
+                            <button
+                              onClick={() => handleOpenLocationModal(item)}
+                              className="flex items-center px-2 sm:px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition"
+                              title="Pilih Lokasi"
+                            >
+                              <MapPin className="w-3 h-3 mr-1" />
+                              <span className="hidden sm:inline">Lokasi</span>
+                            </button>
+
+                            {item.status === "Checked" && item.lokasi && (
+                              <button
+                                onClick={() => handleSubmitSingle(item)}
+                                disabled={isSubmitting}
+                                className="flex items-center px-2 sm:px-3 py-1 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 transition disabled:opacity-50"
+                                title="Kirim Data"
+                              >
+                                <Send className="w-3 h-3 mr-1" />
+                                <span className="hidden sm:inline">Kirim</span>
+                              </button>
+                            )}
+
+                            <button
+                              onClick={() => handleDeleteData(item)}
+                              className="flex items-center px-2 sm:px-3 py-1 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition"
+                              title="Hapus Data"
+                            >
+                              <Trash2 className="w-3 h-3 mr-1" />
+                              <span className="hidden sm:inline">Hapus</span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Tampilan Mobile & Tablet */}
+              <div className="md:hidden space-y-3">
+                {checkHistory.map((item) => (
+                  <div
+                    key={item.id}
+                    className="border border-gray-200 rounded-lg p-3 bg-white hover:bg-gray-50 transition"
                   >
-                    {isSubmitting ? (
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex items-center">
+                        {getCategoryIcon(item.kategori)}
+                        <div className="font-bold text-sm text-gray-700 ml-2">
+                          {item.id}
+                        </div>
+                      </div>
+                      <span
+                        className={`px-2 py-1 text-xs rounded-full font-semibold border ${getStatusColor(
+                          item.status
+                        )}`}
+                      >
+                        {getStatusText(item.status)}
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-600 space-y-1">
+                      <div className="flex justify-between">
+                        <span className="font-medium">Jenis:</span>{" "}
+                        {item.jenisAset}
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium">Kategori:</span>
+                        <span
+                          className={`px-1 rounded text-xs ${
+                            item.kategori === "Perangkat"
+                              ? "bg-blue-100 text-blue-700"
+                              : "bg-green-100 text-green-700"
+                          }`}
+                        >
+                          {item.kategori}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium">Lokasi:</span>
+                        {item.lokasi ? (
+                          <span className="text-gray-800 text-right max-w-[120px] truncate">
+                            {item.lokasi}
+                          </span>
+                        ) : (
+                          <span className="text-orange-600 text-xs">
+                            Belum dipilih
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium">
+                          {item.nomorSeri ? "Nomor Seri:" : "Barcode:"}
+                        </span>
+                        <span className="font-mono text-blue-600 text-xs max-w-[100px] truncate">
+                          {item.nomorSeri || item.barcode}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-gray-400">
+                        <span>{item.tanggal}</span>
+                        <span>{item.waktu}</span>
+                      </div>
+                    </div>
+                    <div className="flex space-x-2 mt-3 pt-2 border-t border-gray-100">
+                      <button
+                        onClick={() => handleOpenLocationModal(item)}
+                        className="flex-1 flex items-center justify-center px-2 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition"
+                      >
+                        <MapPin className="w-3 h-3 mr-1" />
+                        Lokasi
+                      </button>
+
+                      {item.status === "Checked" && item.lokasi && (
+                        <button
+                          onClick={() => handleSubmitSingle(item)}
+                          disabled={isSubmitting}
+                          className="flex-1 flex items-center justify-center px-2 py-1 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 transition disabled:opacity-50"
+                        >
+                          <Send className="w-3 h-3 mr-1" />
+                          Kirim
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => handleDeleteData(item)}
+                        className="flex-1 flex items-center justify-center px-2 py-1 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition"
+                      >
+                        <Trash2 className="w-3 h-3 mr-1" />
+                        Hapus
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Tombol Submit All */}
+              {readyToSubmitCount > 0 && (
+                <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-gray-200">
+                  <button
+                    onClick={handleSubmitAll}
+                    disabled={isSubmittingAll}
+                    className="w-full flex items-center justify-center px-3 sm:px-4 py-2 sm:py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-800 transition disabled:opacity-50 text-sm sm:text-base"
+                  >
+                    {isSubmittingAll ? (
                       <>
                         <svg
-                          className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                          xmlns="http://www.w3.org/2000/svg"
+                          className="animate-spin -ml-1 mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 text-white"
                           fill="none"
                           viewBox="0 0 24 24"
                         >
@@ -533,153 +940,187 @@ export default function SerialScanningPage() {
                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                           ></path>
                         </svg>
-                        Mengirim Data...
+                        Mengirim {readyToSubmitCount} Data...
                       </>
                     ) : (
                       <>
-                        <Send className="w-4 h-4 mr-2" />
-                        Kirim & Verifikasi Data
+                        <Send className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                        Kirim Semua Data ({readyToSubmitCount} Data)
                       </>
                     )}
                   </button>
-                )}
-              </div>
-            )}
-
-            {!scanResult && scanResult !== "loading" && (
-              <div className="text-center py-8 text-gray-500">
-                <Box className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                <p className="font-medium">Belum ada hasil pemeriksaan</p>
-                <p className="text-sm mt-1">Gunakan Scanner Kamera atau Input Manual</p>
-              </div>
-            )}
-          </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
 
-        {/* 3. Riwayat Scan */}
-        <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-            <Calendar className="w-5 h-5 mr-2 text-gray-600" /> 
-            Riwayat Pemindaian Terbaru
-          </h2>
-          
-          {/* Tampilan Desktop */}
-          <div className="hidden md:block overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead>
-                <tr className="text-gray-500 uppercase text-xs border-b border-gray-200">
-                  <th className="py-2 font-medium">ID Aset</th>
-                  <th className="py-2 font-medium">Jenis Aset</th>
-                  <th className="py-2 font-medium">Kategori</th>
-                  <th className="py-2 font-medium">Lokasi</th>
-                  <th className="py-2 font-medium">Status</th>
-                  <th className="py-2 font-medium">Tanggal</th>
-                  <th className="py-2 font-medium">Waktu</th>
-                </tr>
-              </thead>
-              <tbody>
-                {dummyScanHistory.map((row, index) => (
-                  <tr
-                    key={index}
-                    className="border-b border-gray-100 hover:bg-gray-50 text-gray-800"
-                  >
-                    <td className="py-3 font-medium">
-                      <div className="flex items-center">
-                        {getCategoryIcon(row.kategori)}
-                        <span className="ml-2">{row.id}</span>
-                      </div>
-                    </td>
-                    <td className="py-3 text-gray-600">{row.jenisAset}</td>
-                    <td className="py-3">
-                      <span
-                        className={`px-2 py-1 text-xs rounded-full font-semibold ${
-                          row.kategori === "Perangkat"
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-green-100 text-green-700"
-                        }`}
-                      >
-                        {row.kategori}
-                      </span>
-                    </td>
-                    <td className="py-3 text-gray-600">{row.lokasi}</td>
-                    <td className="py-3">
-                      <span
-                        className={`px-2 py-1 text-xs rounded-full font-semibold border ${getStatusColor(
-                          row.status
-                        )}`}
-                      >
-                        {row.status}
-                      </span>
-                    </td>
-                    <td className="py-3 text-gray-600">{row.tanggal}</td>
-                    <td className="py-3 text-gray-600">{row.waktu}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        {/* Modal Pilih Lokasi */}
+        {showLocationModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 sm:p-4 z-50">
+            <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-4 sm:p-6 mx-2">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center">
+                  <MapPin className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-600" />
+                  Pilih Lokasi Aset
+                </h3>
+                <button
+                  onClick={() => setShowLocationModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
 
-          {/* Tampilan Mobile */}
-          <div className="md:hidden space-y-3">
-            {dummyScanHistory.map((row, index) => (
-              <div
-                key={index}
-                className="border border-gray-200 rounded-lg p-3 bg-white hover:bg-gray-50 transition"
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex items-center">
-                    {getCategoryIcon(row.kategori)}
-                    <div className="font-bold text-sm text-gray-700 ml-2">
-                      {row.id}
-                    </div>
-                  </div>
-                  <span
-                    className={`px-2 py-1 text-xs rounded-full font-semibold border ${getStatusColor(
-                      row.status
-                    )}`}
+              <div className="space-y-3 sm:space-y-4">
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                    Pilih Lokasi Aset
+                  </label>
+                  <select
+                    value={selectedLocation}
+                    onChange={(e) => setSelectedLocation(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                   >
-                    {row.status}
-                  </span>
+                    <option value="">Pilih lokasi...</option>
+                    {locationOptions.map((location, index) => (
+                      <option key={index} value={location}>
+                        {location}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-                <div className="text-xs text-gray-600 space-y-1">
-                  <div className="flex justify-between">
-                    <span className="font-medium">Jenis:</span> {row.jenisAset}
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Kategori:</span>
-                    <span
-                      className={`px-1 rounded text-xs ${
-                        row.kategori === "Perangkat"
-                          ? "bg-blue-100 text-blue-700"
-                          : "bg-green-100 text-green-700"
-                      }`}
-                    >
-                      {row.kategori}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Lokasi:</span> {row.lokasi}
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">ID Unik:</span>
-                    {row.nomorSeri || row.barcode}
-                  </div>
-                  <div className="flex justify-between text-gray-400">
-                    <span>{row.tanggal}</span>
-                    <span>{row.waktu}</span>
-                  </div>
+
+                <div className="bg-blue-50 p-2 sm:p-3 rounded-lg">
+                  <p className="text-xs sm:text-sm text-blue-700">
+                    <strong>Data yang akan diupdate:</strong>
+                    <br />
+                    Aset: {currentScanData?.jenisAset}
+                    <br />
+                    Kategori: {currentScanData?.kategori}
+                    <br />
+                    ID: {currentScanData?.id}
+                  </p>
+                </div>
+
+                <div className="flex gap-2 sm:gap-3 pt-3 sm:pt-4">
+                  <button
+                    onClick={() => setShowLocationModal(false)}
+                    className="flex-1 px-3 sm:px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition text-sm"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={handleSaveLocation}
+                    disabled={!selectedLocation}
+                    className="flex-1 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 flex items-center justify-center text-sm"
+                  >
+                    <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                    Simpan Lokasi
+                  </button>
                 </div>
               </div>
-            ))}
+            </div>
           </div>
+        )}
 
-          <button 
-            onClick={() => router.push("/history")}
-            className="mt-4 w-full text-center text-sm font-semibold text-blue-600 hover:text-blue-800 transition"
-          >
-            Lihat Riwayat Lengkap &rarr;
-          </button>
-        </div>
+        {/* Modal Konfirmasi Hapus */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 sm:p-4 z-50">
+            <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-4 sm:p-6 mx-2">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center">
+                  <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-red-600" />
+                  Konfirmasi Hapus Data
+                </h3>
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-3 sm:space-y-4">
+                <p className="text-gray-600 text-sm sm:text-base">
+                  Apakah Anda yakin ingin menghapus data pengecekan ini?
+                </p>
+
+                <div className="bg-red-50 p-2 sm:p-3 rounded-lg">
+                  <p className="text-xs sm:text-sm text-red-700">
+                    <strong>Data yang akan dihapus:</strong>
+                    <br />
+                    ID: {dataToDelete?.id}
+                    <br />
+                    Jenis: {dataToDelete?.jenisAset}
+                    <br />
+                    Kategori: {dataToDelete?.kategori}
+                    <br />
+                    Status: {getStatusText(dataToDelete?.status)}
+                  </p>
+                </div>
+
+                <div className="flex gap-2 sm:gap-3 pt-3 sm:pt-4">
+                  <button
+                    onClick={() => setShowDeleteModal(false)}
+                    className="flex-1 px-3 sm:px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition text-sm"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={confirmDelete}
+                    className="flex-1 px-3 sm:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition flex items-center justify-center text-sm"
+                  >
+                    <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                    Hapus Data
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal Sukses Hapus Data */}
+        {showDeleteSuccessModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 sm:p-4 z-50">
+            <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-4 sm:p-6 mx-2">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center">
+                  <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-green-600" />
+                  Berhasil Dihapus
+                </h3>
+                <button
+                  onClick={() => setShowDeleteSuccessModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-3 sm:space-y-4">
+                <div className="text-center">
+                  <CheckCircle className="w-8 h-8 sm:w-12 sm:h-12 text-green-500 mx-auto mb-3 sm:mb-4" />
+                  <p className="text-gray-700 font-medium text-sm sm:text-base">
+                    Data berhasil dihapus dari riwayat!
+                  </p>
+                  <p className="text-xs sm:text-sm text-gray-600 mt-1 sm:mt-2">
+                    {deletedDataInfo?.jenisAset} ({deletedDataInfo?.id})
+                  </p>
+                </div>
+
+                <div className="flex justify-center pt-3 sm:pt-4">
+                  <button
+                    onClick={() => setShowDeleteSuccessModal(false)}
+                    className="px-4 sm:px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center justify-center text-sm"
+                  >
+                    <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                    Oke
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </LayoutDashboard>
   );

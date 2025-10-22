@@ -27,6 +27,8 @@ import {
   Database,
   Brain,
   ScanLine,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import LayoutDashboard from "../components/LayoutDashboard";
 
@@ -37,8 +39,23 @@ export default function ValidationVerificationPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [scanData, setScanData] = useState(null);
   const [activeTab, setActiveTab] = useState("pending");
+  const [isMobile, setIsMobile] = useState(false);
+  const [expandedItem, setExpandedItem] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
 
   const router = useRouter();
+
+  // Detect mobile screen
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Ambil data dari localStorage saat komponen mount
   useEffect(() => {
@@ -287,6 +304,7 @@ export default function ValidationVerificationPage() {
         return "bg-gray-100 text-gray-700";
     }
   };
+
   // Fungsi helper untuk warna tab aktif
   const getActiveTabColor = (color) => {
     switch (color) {
@@ -318,436 +336,636 @@ export default function ValidationVerificationPage() {
         return "bg-blue-500 text-white";
     }
   };
+
+  const toggleItemExpansion = (id) => {
+    setExpandedItem(expandedItem === id ? null : id);
+  };
+
+  // Mobile Card View
+  const MobileItemCard = ({ item }) => (
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-3">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center">
+          <button
+            onClick={() => toggleSelectItem(item.id)}
+            className="mr-3 mt-1"
+          >
+            {selectedItems.includes(item.id) ? (
+              <CheckSquare className="w-5 h-5 text-blue-600" />
+            ) : (
+              <Square className="w-5 h-5 text-gray-400" />
+            )}
+          </button>
+          <div>
+            <div className="font-bold text-blue-700 text-sm">
+              {item.serialNumber}
+            </div>
+            <div className="text-xs text-gray-500 mt-1 flex items-center">
+              {getCategoryIcon(item.kategori)}
+              <span className="ml-1">{item.kategori}</span>
+            </div>
+          </div>
+        </div>
+        <button
+          onClick={() => toggleItemExpansion(item.id)}
+          className="text-gray-400"
+        >
+          {expandedItem === item.id ? (
+            <ChevronUp className="w-5 h-5" />
+          ) : (
+            <ChevronDown className="w-5 h-5" />
+          )}
+        </button>
+      </div>
+
+      {/* Basic Info */}
+      <div className="mb-3">
+        <div className="font-semibold text-gray-900 text-base">
+          {item.assetType}
+        </div>
+        <div className="text-xs text-gray-400 font-mono mt-1">
+          {item.jenisID}: {item.idValue}
+        </div>
+      </div>
+
+      {/* Status & Location */}
+      <div className="flex items-center justify-between mb-3">
+        <span
+          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(
+            item.status
+          )}`}
+        >
+          {getStatusIcon(item.status)}
+          <span className="ml-1 capitalize">
+            {item.status === "valid"
+              ? "Tervalidasi"
+              : item.status === "pending"
+              ? "Menunggu"
+              : "Error"}
+          </span>
+        </span>
+        <div className="text-xs text-gray-500 text-right">
+          <div className="flex items-center">
+            <MapPin className="w-3 h-3 mr-1" />
+            {item.location}
+          </div>
+        </div>
+      </div>
+
+      {/* Expanded Details */}
+      {expandedItem === item.id && (
+        <div className="border-t border-gray-200 pt-3 mt-3 space-y-3">
+          {/* Department & Verification */}
+          <div>
+            <div className="text-xs font-semibold text-gray-500 mb-1">
+              DEPARTEMEN & VERIFIKASI
+            </div>
+            <div className="text-sm text-gray-700">{item.department}</div>
+            <div className="text-xs text-gray-600 mt-1 flex items-center">
+              <User className="w-3 h-3 mr-1" />
+              {item.verifiedBy}
+            </div>
+            <div className="text-xs text-gray-600 mt-1 flex items-center">
+              <Calendar className="w-3 h-3 mr-1" />
+              {item.scanDate} - {item.scanTime}
+            </div>
+          </div>
+
+          {/* Unique Code */}
+          <div>
+            <div className="text-xs font-semibold text-gray-500 mb-1">
+              KODE UNIK
+            </div>
+            <div className="text-sm font-mono text-blue-600">
+              {item.uniqueCode}
+            </div>
+          </div>
+
+          {/* Bukti Foto */}
+          <div>
+            <div className="text-xs font-semibold text-gray-500 mb-1">
+              BUKTI
+            </div>
+            <button className="flex items-center text-blue-600 text-xs">
+              <Camera className="w-3 h-3 mr-1" />
+              Lihat Bukti Foto
+            </button>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-2 pt-2">
+            {item.status === "pending" && (
+              <>
+                <button
+                  onClick={() => handleVerifyItem(item.id, "valid")}
+                  disabled={isSubmitting}
+                  className="flex-1 flex items-center justify-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 text-xs"
+                >
+                  <CheckCircle className="w-3 h-3 mr-1" />
+                  Setujui
+                </button>
+                <button
+                  onClick={() => handleVerifyItem(item.id, "error")}
+                  disabled={isSubmitting}
+                  className="flex-1 flex items-center justify-center px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 text-xs"
+                >
+                  <XCircle className="w-3 h-3 mr-1" />
+                  Tolak
+                </button>
+              </>
+            )}
+            <button className="flex-1 flex items-center justify-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-xs">
+              <Eye className="w-3 h-3 mr-1" />
+              Detail
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <LayoutDashboard activeMenu={3}>
-      <div className="max-w-7xl mx-auto px-3 md:px-4 py-2 md:py-6 space-y-6">
-        {/* Header dengan gradient */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl shadow-lg p-6 text-white">
+      <div className="max-w-7xl mx-auto px-3 md:px-4 py-2 md:py-6 space-y-4 md:space-y-6">
+        {/* Header dengan gradient - Mobile Optimized */}
+        <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl shadow-lg p-4 md:p-6 text-white">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <h1 className="text-2xl md:text-2xl font-semibold flex items-center">
-                <CheckCircle className="w-7 h-7 mr-3" />
-                Validasi & Verifikasi Aset IT
-              </h1>
-              <p className="text-blue-100 mt-2 text-xs md:text-base">
-                Sistem validasi otomatis menggunakan teknologi AI untuk
-                memastikan keakuratan data serial number dan barcode
-              </p>
+            <div className="flex items-center">
+              <CheckCircle className="w-6 h-6 md:w-7 md:h-7 mr-2 md:mr-3" />
+              <div>
+                <h1 className="text-xl md:text-2xl font-semibold">
+                  Validasi & Verifikasi Aset IT
+                </h1>
+                <p className="text-blue-100 mt-1 text-xs md:text-sm">
+                  Sistem validasi otomatis menggunakan teknologi AI
+                </p>
+              </div>
             </div>
 
             {scanData && (
-              <div className="mt-4 lg:mt-0 p-4 bg-blue-500/30 backdrop-blur-sm rounded-lg border border-blue-400">
-                <div className="flex items-center text-blue-100 text-sm">
+              <div className="mt-4 lg:mt-0 p-3 md:p-4 bg-blue-500/30 backdrop-blur-sm rounded-lg border border-blue-400">
+                <div className="flex items-center text-blue-100 text-xs md:text-sm">
                   <ScanLine className="w-4 h-4 mr-2" />
                   <span>
-                    Scan Terakhir: <strong>{scanData.serial}</strong> -{" "}
-                    {scanData.time}
+                    Scan Terakhir: <strong>{scanData.serial}</strong>
                   </span>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Status Sistem AI */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-            <div className="flex items-center space-x-2 text-sm">
+          {/* Status Sistem AI - Mobile Optimized */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 mt-4">
+            <div className="flex items-center space-x-1 md:space-x-2 text-xs md:text-sm">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
               <span>Deteksi AI Aktif</span>
             </div>
-            <div className="flex items-center space-x-2 text-sm">
+            <div className="flex items-center space-x-1 md:space-x-2 text-xs md:text-sm">
               <div className="w-2 h-2 bg-green-400 rounded-full"></div>
               <span>OCR Berjalan</span>
             </div>
-            <div className="flex items-center space-x-2 text-sm">
+            <div className="flex items-center space-x-1 md:space-x-2 text-xs md:text-sm">
               <div className="w-2 h-2 bg-green-400 rounded-full"></div>
               <span>Database Online</span>
             </div>
-            <div className="flex items-center space-x-2 text-sm">
+            <div className="flex items-center space-x-1 md:space-x-2 text-xs md:text-sm">
               <div className="w-2 h-2 bg-green-400 rounded-full"></div>
               <span>Validasi Real-time</span>
             </div>
           </div>
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white rounded-xl shadow-lg p-4 text-center border-l-4 border-green-500">
-            <div className="text-2xl font-bold text-gray-900">
-              {stats.valid}
+        {/* Quick Stats - Mobile Optimized */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+          {[
+            {
+              label: "Tervalidasi",
+              value: stats.valid,
+              sub: "✓ Data Akurat",
+              color: "text-green-600",
+              border: "border-green-500",
+            },
+            {
+              label: "Menunggu",
+              value: stats.pending,
+              sub: "⏳ Perlu Verifikasi",
+              color: "text-yellow-600",
+              border: "border-yellow-500",
+            },
+            {
+              label: "Error",
+              value: stats.error,
+              sub: "⚠ Perlu Tindakan",
+              color: "text-red-600",
+              border: "border-red-500",
+            },
+            {
+              label: "Total Aset",
+              value: stats.total,
+              sub: "📊 Semua Kategori",
+              color: "text-blue-600",
+              border: "border-blue-500",
+            },
+          ].map((stat, index) => (
+            <div
+              key={index}
+              className={`bg-white rounded-lg md:rounded-xl shadow-sm md:shadow-lg p-3 md:p-4 text-center border-l-4 ${stat.border}`}
+            >
+              <div className="text-lg md:text-2xl font-bold text-gray-900">
+                {stat.value}
+              </div>
+              <div className="text-xs md:text-sm text-gray-500">
+                {stat.label}
+              </div>
+              <div className={`text-xs ${stat.color} font-medium mt-1`}>
+                {stat.sub}
+              </div>
             </div>
-            <div className="text-sm text-gray-500">Tervalidasi</div>
-            <div className="text-xs text-green-600 font-medium mt-1">
-              ✓ Data Akurat
-            </div>
-          </div>
-          <div className="bg-white rounded-xl shadow-lg p-4 text-center border-l-4 border-yellow-500">
-            <div className="text-2xl font-bold text-gray-900">
-              {stats.pending}
-            </div>
-            <div className="text-sm text-gray-500">Menunggu</div>
-            <div className="text-xs text-yellow-600 font-medium mt-1">
-              ⏳ Perlu Verifikasi
-            </div>
-          </div>
-          <div className="bg-white rounded-xl shadow-lg p-4 text-center border-l-4 border-red-500">
-            <div className="text-2xl font-bold text-gray-900">
-              {stats.error}
-            </div>
-            <div className="text-sm text-gray-500">Error</div>
-            <div className="text-xs text-red-600 font-medium mt-1">
-              ⚠ Perlu Tindakan
-            </div>
-          </div>
-          <div className="bg-white rounded-xl shadow-lg p-4 text-center border-l-4 border-blue-500">
-            <div className="text-2xl font-bold text-gray-900">
-              {stats.total}
-            </div>
-            <div className="text-sm text-gray-500">Total Aset</div>
-            <div className="text-xs text-blue-600 font-medium mt-1">
-              📊 Semua Kategori
-            </div>
-          </div>
+          ))}
         </div>
-        {/* Tab Navigation */}
-        <div className="bg-white rounded-xl shadow-lg p-2">
-          <div className="flex space-x-1">
-            {[
-              { id: "all", label: "Semua", count: stats.total, color: "blue" },
-              {
-                id: "pending",
-                label: "Menunggu",
-                count: stats.pending,
-                color: "blue",
-              },
-              {
-                id: "valid",
-                label: "Tervalidasi",
-                count: stats.valid,
-                color: "blue",
-              },
-              { id: "error", label: "Error", count: stats.error, color: "blue" },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all ${
+{/* Quick Actions Footer - Mobile Optimized */}
+<div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
+  <h3 className="text-base md:text-lg font-semibold text-gray-800 mb-3 md:mb-4 flex items-center">
+    <Zap className="w-4 h-4 md:w-5 md:h-5 mr-2 text-blue-600" />
+    Lakukan Pemeriksaan Aset Kembali
+  </h3>
+  <div className="space-y-3">
+    {/* Tombol Lebar Penuh dengan warna asli */}
+    <button
+      onClick={() => router.push("/scanning")}
+      className="w-full flex flex-col items-center justify-center p-4 md:p-6 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all duration-200 text-gray-800 hover:text-blue-700 shadow-sm hover:shadow-md"
+    >
+      <Camera className="w-6 h-6 md:w-8 md:h-8 mb-2 md:mb-3 text-blue-600" />
+      <span className="text-sm md:text-lg font-semibold">
+        Mulai Pemindaian Baru
+      </span>
+      <span className="text-xs md:text-sm text-gray-600 mt-1 md:mt-2">
+        Pindai perangkat atau material untuk proses pengecekan
+      </span>
+    </button>
+
+    {/* Informasi Tambahan */}
+    <div className="flex items-center justify-between text-xs text-gray-500 mt-2">
+      <span>Terakhir dipindai: 28 Oktober 2025, 14:30</span>
+      <span className="text-green-600 font-medium">✓ Sistem Siap</span>
+
+    </div>
+  </div>
+</div>
+
+
+      {/* Combined Control Panel and Table */}
+<div className="bg-white rounded-xl shadow-lg overflow-hidden">
+  {/* Search, Filter, Tabs, and Bulk Actions Section */}
+  <div className="p-4 md:p-6 space-y-4 border-b border-gray-200">
+    {/* Search and Filter Row */}
+    <div className="flex flex-col space-y-3 md:space-y-0 md:flex-row gap-3 md:gap-4">
+      {/* Search Input */}
+      <div className="flex-1">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <input
+            type="text"
+            placeholder="Cari nomor seri, barcode, jenis aset, atau lokasi..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
+          />
+        </div>
+      </div>
+
+      {/* Filters - Mobile Collapsible */}
+      <div className="flex flex-col md:flex-row gap-2">
+        {!isMobile ? (
+          <>
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className="px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
+            >
+              <option value="all">Semua Status</option>
+              <option value="pending">Menunggu</option>
+              <option value="valid">Tervalidasi</option>
+              <option value="error">Error</option>
+            </select>
+
+            <button className="flex items-center px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm">
+              <Filter className="w-4 h-4 mr-2" />
+              <span className="hidden md:inline">Filter Lainnya</span>
+              <span className="md:hidden">Filter</span>
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm"
+            >
+              <Filter className="w-4 h-4 mr-2" />
+              Filter
+              {showFilters ? (
+                <ChevronUp className="w-4 h-4 ml-2" />
+              ) : (
+                <ChevronDown className="w-4 h-4 ml-2" />
+              )}
+            </button>
+
+            {showFilters && (
+              <div className="flex gap-2 mt-2">
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
+                >
+                  <option value="all">Semua Status</option>
+                  <option value="pending">Menunggu</option>
+                  <option value="valid">Tervalidasi</option>
+                  <option value="error">Error</option>
+                </select>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+
+    {/* Tab Navigation - Integrated with colored tabs */}
+    <div className="border-t border-gray-200 pt-4">
+      <div className="flex space-x-1 overflow-x-auto">
+        {[
+          {
+            id: "all",
+            label: "Semua",
+            count: stats.total,
+            color: "blue",
+          },
+          {
+            id: "pending",
+            label: "Menunggu",
+            count: stats.pending,
+            color: "blue",
+          },
+          {
+            id: "valid",
+            label: "Tervalidasi",
+            count: stats.valid,
+            color: "blue",
+          },
+          {
+            id: "error",
+            label: "Error",
+            count: stats.error,
+            color: "blue",
+          },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex-shrink-0 py-2 md:py-3 px-3 md:px-4 rounded-lg text-xs md:text-sm font-medium transition-all ${
+              activeTab === tab.id
+                ? getActiveTabColor(tab.color)
+                : "text-gray-600 hover:bg-gray-100"
+            }`}
+          >
+            <div className="flex items-center space-x-1 md:space-x-2">
+              <span>{tab.label}</span>
+              <span
+                className={`px-1.5 md:px-2 py-0.5 md:py-1 rounded-full text-xs ${
                   activeTab === tab.id
-                    ? getActiveTabColor(tab.color)
-                    : "text-gray-600 hover:bg-gray-100"
+                    ? getActiveBadgeColor(tab.color)
+                    : "bg-gray-200 text-gray-600"
                 }`}
               >
-                <div className="flex items-center justify-center space-x-2">
-                  <span>{tab.label}</span>
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs ${
-                      activeTab === tab.id
-                        ? getActiveBadgeColor(tab.color)
-                        : "bg-gray-200 text-gray-600"
-                    }`}
-                  >
-                    {tab.count}
-                  </span>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Search and Filter Section */}
-        <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Search Input */}
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
-                  placeholder="Cari berdasarkan nomor seri, barcode, jenis aset, atau lokasi..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
-                />
-              </div>
-            </div>
-
-            {/* Status Filter */}
-            <div className="flex gap-2">
-              <select
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
-              >
-                <option value="all">Semua Status</option>
-                <option value="pending">Menunggu</option>
-                <option value="valid">Tervalidasi</option>
-                <option value="error">Error</option>
-              </select>
-
-              <button className="flex items-center px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm">
-                <Filter className="w-4 h-4 mr-2" />
-                Filter Lainnya
-              </button>
-            </div>
-          </div>
-
-          {/* Bulk Actions */}
-          {selectedItems.length > 0 && (
-            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div className="text-blue-800 text-sm font-medium flex items-center">
-                  <CheckSquare className="w-4 h-4 mr-2" />
-                  {selectedItems.length} item dipilih untuk verifikasi massal
-                </div>
-                <div className="flex gap-2 flex-wrap">
-                  <button
-                    onClick={() => handleBulkAction("approve")}
-                    disabled={isSubmitting}
-                    className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 text-sm"
-                  >
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    Setujui yang Dipilih
-                  </button>
-                  <button
-                    onClick={() => handleBulkAction("reject")}
-                    disabled={isSubmitting}
-                    className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 text-sm"
-                  >
-                    <XCircle className="w-4 h-4 mr-2" />
-                    Tolak yang Dipilih
-                  </button>
-                  <button
-                    onClick={() => handleBulkAction("export")}
-                    disabled={isSubmitting}
-                    className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition disabled:opacity-50 text-sm"
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Export Data
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Validation Table */}
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left">
-                    <button
-                      onClick={toggleSelectAll}
-                      className="flex items-center text-gray-700 font-medium"
-                    >
-                      {selectedItems.length === filteredItems.length &&
-                      filteredItems.length > 0 ? (
-                        <CheckSquare className="w-4 h-4 mr-2 text-blue-600" />
-                      ) : (
-                        <Square className="w-4 h-4 mr-2 text-gray-400" />
-                      )}
-                      ID Aset
-                    </button>
-                  </th>
-                  <th className="px-4 py-3 text-left text-gray-700 font-medium">
-                    Jenis & Kategori
-                  </th>
-                  <th className="px-4 py-3 text-left text-gray-700 font-medium">
-                    Lokasi & Departemen
-                  </th>
-                  <th className="px-4 py-3 text-left text-gray-700 font-medium">
-                    Detail Pemindaian
-                  </th>
-                  <th className="px-4 py-3 text-left text-gray-700 font-medium">
-                    Status Validasi
-                  </th>
-                  <th className="px-4 py-3 text-left text-gray-700 font-medium">
-                    Aksi
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {filteredItems.map((item) => (
-                  <tr
-                    key={item.id}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
-                    <td className="px-4 py-4">
-                      <div className="flex items-center">
-                        <button
-                          onClick={() => toggleSelectItem(item.id)}
-                          className="mr-3"
-                        >
-                          {selectedItems.includes(item.id) ? (
-                            <CheckSquare className="w-4 h-4 text-blue-600" />
-                          ) : (
-                            <Square className="w-4 h-4 text-gray-400" />
-                          )}
-                        </button>
-                        <div>
-                          <div className="font-medium text-blue-700">
-                            {item.serialNumber}
-                          </div>
-                          <div className="text-xs text-gray-500 mt-1 flex items-center">
-                            {getCategoryIcon(item.kategori)}
-                            <span className="ml-1">{item.kategori}</span>
-                          </div>
-                          <div className="text-xs text-gray-400 font-mono mt-1">
-                            {item.jenisID}: {item.idValue}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="font-medium text-gray-900">
-                        {item.assetType}
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        <span
-                          className={`px-2 py-1 rounded-full ${getCategoryColor(
-                            item.kategori
-                          )}`}
-                        >
-                          {item.kategori}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="flex items-center text-gray-700">
-                        <MapPin className="w-4 h-4 mr-1 text-gray-400" />
-                        {item.location}
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        {item.department}
-                      </div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="text-xs text-gray-600 space-y-1">
-                        <div className="flex items-center">
-                          <Calendar className="w-3 h-3 mr-1" />
-                          {item.scanDate} - {item.scanTime}
-                        </div>
-                        <div className="flex items-center">
-                          <User className="w-3 h-3 mr-1" />
-                          {item.verifiedBy}
-                        </div>
-                        <div className="flex items-center text-blue-600">
-                          <Camera className="w-3 h-3 mr-1" />
-                          <span className="text-xs">Lihat Bukti Foto</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <span
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(
-                          item.status
-                        )}`}
-                      >
-                        {getStatusIcon(item.status)}
-                        <span className="ml-1 capitalize">
-                          {item.status === "valid"
-                            ? "Tervalidasi"
-                            : item.status === "pending"
-                            ? "Menunggu"
-                            : "Error"}
-                        </span>
-                      </span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="flex gap-2">
-                        {item.status === "pending" && (
-                          <>
-                            <button
-                              onClick={() => handleVerifyItem(item.id, "valid")}
-                              disabled={isSubmitting}
-                              className="flex items-center px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 text-xs"
-                            >
-                              <CheckCircle className="w-3 h-3 mr-1" />
-                              Setujui
-                            </button>
-                            <button
-                              onClick={() => handleVerifyItem(item.id, "error")}
-                              disabled={isSubmitting}
-                              className="flex items-center px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 text-xs"
-                            >
-                              <XCircle className="w-3 h-3 mr-1" />
-                              Tolak
-                            </button>
-                          </>
-                        )}
-                        <button className="flex items-center px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-xs">
-                          <Eye className="w-3 h-3 mr-1" />
-                          Detail
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Empty State */}
-          {filteredItems.length === 0 && (
-            <div className="text-center py-12">
-              <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500 text-lg">
-                Tidak ada data validasi ditemukan
-              </p>
-              <p className="text-gray-400 text-sm mt-2">
-                Coba sesuaikan pencarian atau kriteria filter Anda
-              </p>
-            </div>
-          )}
-        </div>
-        {/* Quick Actions Footer */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-            <Zap className="w-5 h-5 mr-2 text-blue-600" />
-            Aksi Cepat
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <button
-              onClick={() => router.push("/scanning")}
-              className="flex flex-col items-center justify-center p-4 bg-gray-100 hover:bg-gray-200 rounded-lg transition text-gray-800 hover:text-blue-700 shadow-sm"
-            >
-              <Camera className="w-6 h-6 mb-2 text-blue-600" />
-              <span className="text-sm font-semibold">
-                Mulai Pemindaian Baru
+                {tab.count}
               </span>
-              <span className="text-xs text-gray-600 mt-1">
-                Tambah Data Aset Baru
-              </span>
-            </button>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
 
+    {/* Bulk Actions - Integrated for validation page */}
+    {selectedItems.length > 0 && (
+      <div className="mt-4 p-3 md:p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-3">
+          <div className="text-blue-800 text-sm font-medium flex items-center">
+            <CheckSquare className="w-4 h-4 mr-2" />
+            {selectedItems.length} item dipilih untuk verifikasi massal
+          </div>
+          <div className="flex gap-1 md:gap-2 flex-wrap">
             <button
-              onClick={() => router.push("/reports")}
-              className="flex flex-col items-center justify-center p-4 bg-gray-100 hover:bg-gray-200 rounded-lg transition text-gray-800 hover:text-green-700 shadow-sm"
+              onClick={() => handleBulkAction("approve")}
+              disabled={isSubmitting}
+              className="flex items-center px-3 py-1.5 md:px-4 md:py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 text-xs"
             >
-              <BarChart3 className="w-6 h-6 mb-2 text-green-600" />
-              <span className="text-sm font-semibold">Laporan</span>
-              <span className="text-xs text-gray-600 mt-1">Export Excel</span>
+              <CheckCircle className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+              Setujui
             </button>
-
             <button
-              onClick={() => router.push("/monitoring")}
-              className="flex flex-col items-center justify-center p-4 bg-gray-100 hover:bg-gray-200 rounded-lg transition text-gray-800 hover:text-purple-700 shadow-sm"
+              onClick={() => handleBulkAction("reject")}
+              disabled={isSubmitting}
+              className="flex items-center px-3 py-1.5 md:px-4 md:py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 text-xs"
             >
-              <Eye className="w-6 h-6 mb-2 text-purple-600" />
-              <span className="text-sm font-semibold">Monitoring</span>
-              <span className="text-xs text-gray-600 mt-1">Real-time</span>
+              <XCircle className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+              Tolak
             </button>
-
             <button
               onClick={() => handleBulkAction("export")}
-              className="flex flex-col items-center justify-center p-4 bg-gray-100 hover:bg-gray-200 rounded-lg transition text-gray-800 hover:text-orange-700 shadow-sm"
+              disabled={isSubmitting}
+              className="flex items-center px-3 py-1.5 md:px-4 md:py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition disabled:opacity-50 text-xs"
             >
-              <Download className="w-6 h-6 mb-2 text-orange-600" />
-              <span className="text-sm font-semibold">Export Data</span>
-              <span className="text-xs text-gray-600 mt-1">Format Excel</span>
+              <Download className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+              Export
             </button>
           </div>
         </div>
+      </div>
+    )}
+  </div>
+
+  {/* Table/Cards Section */}
+  {!isMobile ? (
+    /* Desktop Table View */
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="px-4 py-3 text-left">
+              <button
+                onClick={toggleSelectAll}
+                className="flex items-center text-gray-700 font-medium"
+              >
+                {selectedItems.length === filteredItems.length &&
+                filteredItems.length > 0 ? (
+                  <CheckSquare className="w-4 h-4 mr-2 text-blue-600" />
+                ) : (
+                  <Square className="w-4 h-4 mr-2 text-gray-400" />
+                )}
+                ID Aset
+              </button>
+            </th>
+            <th className="px-4 py-3 text-left text-gray-700 font-medium">
+              Jenis & Kategori
+            </th>
+            <th className="px-4 py-3 text-left text-gray-700 font-medium">
+              Lokasi & Departemen
+            </th>
+            <th className="px-4 py-3 text-left text-gray-700 font-medium">
+              Detail Pemindaian
+            </th>
+            <th className="px-4 py-3 text-left text-gray-700 font-medium">
+              Status Validasi
+            </th>
+            <th className="px-4 py-3 text-left text-gray-700 font-medium">
+              Aksi
+            </th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-200">
+          {filteredItems.map((item) => (
+            <tr
+              key={item.id}
+              className="hover:bg-gray-50 transition-colors"
+            >
+              <td className="px-4 py-4">
+                <div className="flex items-center">
+                  <button
+                    onClick={() => toggleSelectItem(item.id)}
+                    className="mr-3"
+                  >
+                    {selectedItems.includes(item.id) ? (
+                      <CheckSquare className="w-4 h-4 text-blue-600" />
+                    ) : (
+                      <Square className="w-4 h-4 text-gray-400" />
+                    )}
+                  </button>
+                  <div>
+                    <div className="font-medium text-blue-700">
+                      {item.serialNumber}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1 flex items-center">
+                      {getCategoryIcon(item.kategori)}
+                      <span className="ml-1">{item.kategori}</span>
+                    </div>
+                    <div className="text-xs text-gray-400 font-mono mt-1">
+                      {item.jenisID}: {item.idValue}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td className="px-4 py-4">
+                <div className="font-medium text-gray-900">
+                  {item.assetType}
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  <span
+                    className={`px-2 py-1 rounded-full ${getCategoryColor(
+                      item.kategori
+                    )}`}
+                  >
+                    {item.kategori}
+                  </span>
+                </div>
+              </td>
+              <td className="px-4 py-4">
+                <div className="flex items-center text-gray-700">
+                  <MapPin className="w-4 h-4 mr-1 text-gray-400" />
+                  {item.location}
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  {item.department}
+                </div>
+              </td>
+              <td className="px-4 py-4">
+                <div className="text-xs text-gray-600 space-y-1">
+                  <div className="flex items-center">
+                    <Calendar className="w-3 h-3 mr-1" />
+                    {item.scanDate} - {item.scanTime}
+                  </div>
+                  <div className="flex items-center">
+                    <User className="w-3 h-3 mr-1" />
+                    {item.verifiedBy}
+                  </div>
+                  <div className="flex items-center text-blue-600">
+                    <Camera className="w-3 h-3 mr-1" />
+                    <span className="text-xs">Lihat Bukti Foto</span>
+                  </div>
+                </div>
+              </td>
+              <td className="px-4 py-4">
+                <span
+                  className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(
+                    item.status
+                  )}`}
+                >
+                  {getStatusIcon(item.status)}
+                  <span className="ml-1 capitalize">
+                    {item.status === "valid"
+                      ? "Tervalidasi"
+                      : item.status === "pending"
+                      ? "Menunggu"
+                      : "Error"}
+                  </span>
+                </span>
+              </td>
+              <td className="px-4 py-4">
+                <div className="flex gap-2">
+                  {item.status === "pending" && (
+                    <>
+                      <button
+                        onClick={() => handleVerifyItem(item.id, "valid")}
+                        disabled={isSubmitting}
+                        className="flex items-center px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 text-xs"
+                      >
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                        Setujui
+                      </button>
+                      <button
+                        onClick={() => handleVerifyItem(item.id, "error")}
+                        disabled={isSubmitting}
+                        className="flex items-center px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 text-xs"
+                      >
+                        <XCircle className="w-3 h-3 mr-1" />
+                        Tolak
+                      </button>
+                    </>
+                  )}
+                  <button className="flex items-center px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-xs">
+                    <Eye className="w-3 h-3 mr-1" />
+                    Detail
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  ) : (
+    /* Mobile Card View */
+    <div className="p-3 md:p-4">
+      {filteredItems.map((item) => (
+        <MobileItemCard key={item.id} item={item} />
+      ))}
+    </div>
+  )}
+
+  {/* Empty State */}
+  {filteredItems.length === 0 && (
+    <div className="text-center py-8 md:py-12">
+      <AlertTriangle className="w-10 h-10 md:w-12 md:h-12 text-gray-400 mx-auto mb-3 md:mb-4" />
+      <p className="text-gray-500 text-base md:text-lg">
+        Tidak ada data validasi ditemukan
+      </p>
+      <p className="text-gray-400 text-sm mt-1 md:mt-2">
+        Coba sesuaikan pencarian atau kriteria filter Anda
+      </p>
+    </div>
+  )}
+</div>
+
+    
       </div>
     </LayoutDashboard>
   );

@@ -14,7 +14,7 @@ export default function RegisterPage() {
   const [showSnackbar, setShowSnackbar] = useState(false)
   const router = useRouter()
 
-    const images = ['/bg_seatrium 3.png', '/seatrium_offshore.jpg', '/offshore.jpg']
+    const images = ['/bg_seatrium 3.png', '/smoe_images2.png', '/offshore.jpg']
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -205,7 +205,7 @@ export default function RegisterPage() {
 
         {/* Footer */}
         <footer className="text-center py-4 text-gray-500 text-sm border-t">
-          Sistem Inventaris IT 2025 by Clinton Alfaro
+          IT Inventory System 2025 Created by Clinton Alfaro
         </footer>
       </div>
 

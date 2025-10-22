@@ -622,7 +622,7 @@ export default function DashboardPage() {
         {/* 5. Status Sistem */}
         <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
           <h2 className="text-sm md:text-base font-semibold text-gray-800 mb-4">
-            Status Sistem INOVA
+            Status Sistem Invenrtaris Aset IT
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center p-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition text-gray-800 shadow-sm">

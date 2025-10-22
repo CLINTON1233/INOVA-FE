@@ -13,7 +13,7 @@ export default function LoginPage() {
   const router = useRouter()
 
   // Carousel gambar
-  const images = ['/bg_seatrium 3.png', '/seatrium_offshore.jpg', '/offshore.jpg']
+  const images = ['/bg_seatrium 3.png', '/smoe_images2.png', '/offshore.jpg']
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -171,7 +171,7 @@ export default function LoginPage() {
 
         {/*  Footer */}
         <footer className="text-center py-3 sm:py-4 text-xs sm:text-sm text-gray-500 border-t">
-          Sistem Inventaris IT 2025 by Clinton Alfaro
+        IT Inventory System 2025 Created by Clinton Alfaro
         </footer>
       </div>
     </div>
