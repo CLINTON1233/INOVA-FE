@@ -15,9 +15,11 @@ import {
   Cpu,
   Cable,
   Server,
+  ScanLine,
   Eye,
   Settings,
   BarChart2,
+  QrCode,
 } from "lucide-react";
 import {
   BarChart,
@@ -35,7 +37,7 @@ import { useRouter } from "next/navigation";
 import LayoutDashboard from "../components/LayoutDashboard";
 
 export default function DashboardPage() {
-  // Statistik 
+  // Statistik
   const stats = [
     {
       label: "Total Aset IT",
@@ -67,7 +69,7 @@ export default function DashboardPage() {
     {
       label: "Error Nomor Seri/Barcode",
       value: 7,
-      icon: Shield,
+      icon: QrCode,
       color: "bg-red-600",
       trend: 1,
       change: "up",
@@ -204,11 +206,11 @@ export default function DashboardPage() {
     <LayoutDashboard>
       <div className="space-y-4 md:space-y-8">
         {/* Header Dashboard */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl shadow-lg p-6 text-white">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-600 rounded-xl shadow-lg p-6 text-white">
           <h1 className="text-2xl md:text-2xl font-semibold mb-2">
-            Sistem Inventaris Aset IT
+            SISTEM INVENTARIS ASET IT
           </h1>
-          <p className="text-blue-100 text-xs md:text-base">
+          <p className="text-blue-100 text-xs md:text-sm">
             Validasi Otomatis Serial Number atau Barcode Aset IT (Perangkat &
             Material)
           </p>
@@ -231,7 +233,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* 1. Statistik Cepat (Kartu) */}
+        {/* Statistik Cepat (Kartu) */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           {stats.map((item, index) => (
             <div
@@ -251,10 +253,12 @@ export default function DashboardPage() {
                     {item.description}
                   </div>
                 </div>
-                <div className={`${item.color} p-2 rounded-lg text-white`}>
-                  <item.icon className="w-5 h-5" />
+                {/* Ganti warna icon jadi hitam */}
+                <div className="p-2 rounded-lg bg-gray-100 text-black">
+                  <item.icon className="w-5 h-5 text-black" />
                 </div>
               </div>
+
               <div
                 className={`flex items-center mt-3 text-xs font-semibold ${
                   item.change === "up"
@@ -280,8 +284,10 @@ export default function DashboardPage() {
         {/* 2. Bagian Aksi Cepat - Sesuai use case di proposal */}
         <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
           <h2 className="text-base md:text-lg font-semibold text-gray-800 mb-4 flex items-center">
-            <Zap className="w-5 h-5 text-blue-600 mr-2" /> Mulai Pengecekan Aset
+            <ScanLine className="w-5 h-5 text-blue-600 mr-2" /> Mulai Pengecekan
+            Aset
           </h2>
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <button
               onClick={() => router.push("/scanning")}

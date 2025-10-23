@@ -368,14 +368,14 @@ export default function HistoryPage() {
 
   return (
     <LayoutDashboard activeMenu={4}>
-      <div className="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-6 space-y-6">
+      <div className="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-2 space-y-6">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl shadow-lg p-6 text-white">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-600 rounded-xl shadow-lg p-6 text-white">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h1 className="text-2xl font-semibold flex items-center">
                 <HistoryIcon className="w-6 h-6 mr-3" />
-                History & Activity Log
+                HISTORY & ACTIVITY LOG
               </h1>
               <p className="text-blue-100 text-sm mt-2">
                 Riwayat lengkap pemindaian, validasi, dan aktivitas sistem aset
@@ -434,249 +434,248 @@ export default function HistoryPage() {
             <div className="text-xs md:text-sm text-gray-500">Material</div>
           </div>
         </div>
-{/* Main Content Grid */}
-<div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-  {/* Left Column - Combined History Card */}
-  <div className="xl:col-span-2">
-    {/* Combined Card: Tab Navigation + Search & Filters + History Table */}
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-    
-      {/* Search and Filters */}
-      <div className="p-4 md:p-6 border-b border-gray-200">
-        <div className="flex flex-col lg:flex-row gap-4">
-          {/* Search Input */}
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Cari berdasarkan ID, jenis aset, lokasi, atau nomor seri..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
-              />
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          {/* Left Column - Combined History Card */}
+          <div className="xl:col-span-2">
+            {/* Combined Card: Tab Navigation + Search & Filters + History Table */}
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+              <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                {/* Search, Filters, and Tabs Section */}
+                <div className="p-4 md:p-6 space-y-4">
+                  {/* Search and Filters Row */}
+                  <div className="flex flex-col space-y-3 md:space-y-0 md:flex-row gap-3 md:gap-4">
+                    {/* Search Input */}
+                    <div className="flex-1">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="text"
+                          placeholder="Cari berdasarkan ID, jenis aset, lokasi, atau nomor seri..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="w-full pl-10 pr-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Filter Buttons */}
+                    <div className="flex gap-2">
+                      <select
+                        value={selectedStatus}
+                        onChange={(e) => setSelectedStatus(e.target.value)}
+                        className="px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
+                      >
+                        <option value="all">Semua Status</option>
+                        <option value="Valid">Valid</option>
+                        <option value="Error">Error</option>
+                        <option value="Pending">Pending</option>
+                      </select>
+
+                      <button
+                        onClick={() => setShowFilters(!showFilters)}
+                        className="flex items-center px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm"
+                      >
+                        <Filter className="w-4 h-4 mr-2" />
+                        <span className="hidden md:inline">Filter</span>
+                        <span className="md:hidden">Filter</span>
+                      </button>
+
+                 
+                    </div>
+                  </div>
+
+                  {/* Additional Filters */}
+                  {showFilters && (
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Tanggal
+                          </label>
+                          <input
+                            type="date"
+                            value={selectedDate}
+                            onChange={(e) => setSelectedDate(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Kategori
+                          </label>
+                          <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                            <option value="">Semua Kategori</option>
+                            <option value="Perangkat">Perangkat</option>
+                            <option value="Material">Material</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Metode Scan
+                          </label>
+                          <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                            <option value="">Semua Metode</option>
+                            <option value="Kamera">Kamera</option>
+                            <option value="Input Manual">Input Manual</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Border Line ABOVE Tab Navigation */}
+                  <div className="border-t border-gray-200 pt-4">
+                    {/* Tab Navigation */}
+                    <div className="flex space-x-1 overflow-x-auto">
+                      {[
+                        { id: "all", label: "Semua", count: stats.total },
+                        { id: "valid", label: "Valid", count: stats.valid },
+                        { id: "error", label: "Error", count: stats.error },
+                        {
+                          id: "pending",
+                          label: "Pending",
+                          count: stats.pending,
+                        },
+                      ].map((tab) => (
+                        <button
+                          key={tab.id}
+                          onClick={() => setActiveTab(tab.id)}
+                          className={`flex-shrink-0 py-2 md:py-3 px-3 md:px-4 rounded-lg text-xs md:text-sm font-medium transition-all min-w-[90px] ${
+                            activeTab === tab.id
+                              ? "bg-blue-600 text-white shadow-md"
+                              : "text-gray-600 hover:bg-gray-100"
+                          }`}
+                        >
+                          <div className="flex items-center justify-center space-x-1 md:space-x-2">
+                            <span>{tab.label}</span>
+                            <span
+                              className={`px-1.5 md:px-2 py-0.5 md:py-1 rounded-full text-xs ${
+                                activeTab === tab.id
+                                  ? "bg-blue-500 text-white"
+                                  : "bg-gray-200 text-gray-600"
+                              }`}
+                            >
+                              {tab.count}
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* History Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-gray-700 font-medium">
+                        ID Scan
+                      </th>
+                      <th className="px-4 py-3 text-left text-gray-700 font-medium">
+                        Jenis Aset
+                      </th>
+                      <th className="px-4 py-3 text-left text-gray-700 font-medium">
+                        Lokasi & Departemen
+                      </th>
+                      <th className="px-4 py-3 text-left text-gray-700 font-medium">
+                        Status
+                      </th>
+                      <th className="px-4 py-3 text-left text-gray-700 font-medium">
+                        Tanggal Pengecekan
+                      </th>
+                      <th className="px-4 py-3 text-left text-gray-700 font-medium">
+                        Aksi
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {filteredHistory.map((item) => (
+                      <tr
+                        key={item.id}
+                        className="hover:bg-gray-50 transition-colors"
+                      >
+                        <td className="px-4 py-4">
+                          <div className="font-medium text-blue-700">
+                            {item.scanId}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1 flex items-center">
+                            {getCategoryIcon(item.kategori)}
+                            <span className="ml-1">{item.kategori}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="font-medium text-gray-900">
+                            {item.jenisAset}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {item.nomorSeri || item.barcode}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center text-gray-700">
+                            <MapPin className="w-4 h-4 mr-1 text-gray-400" />
+                            {item.lokasi}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {item.department}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <span
+                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(
+                              item.statusColor
+                            )}`}
+                          >
+                            {item.status === "Valid" ? (
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                            ) : item.status === "Error" ? (
+                              <XCircle className="w-3 h-3 mr-1" />
+                            ) : (
+                              <Clock className="w-3 h-3 mr-1" />
+                            )}
+                            {item.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="text-sm text-gray-900">
+                            {item.tanggal}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {item.waktu}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex gap-2">
+                            <button className="flex items-center px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-xs">
+                              <Eye className="w-3 h-3 mr-1" />
+                              Detail
+                            </button>
+                          
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {/* Empty State */}
+                {filteredHistory.length === 0 && (
+                  <div className="text-center py-12">
+                    <Box className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500 text-lg">
+                      Tidak ada data history ditemukan
+                    </p>
+                    <p className="text-gray-400 text-sm mt-2">
+                      Coba sesuaikan pencarian atau filter Anda
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-
-          {/* Filter Buttons */}
-          <div className="flex gap-2">
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
-            >
-              <option value="all">Semua Status</option>
-              <option value="Valid">Valid</option>
-              <option value="Error">Error</option>
-              <option value="Pending">Pending</option>
-            </select>
-
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm"
-            >
-              <Filter className="w-4 h-4 mr-2" />
-              Filter
-            </button>
-
-            <button
-              onClick={exportToExcel}
-              className="flex items-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Export
-            </button>
-          </div>
-        </div>
-
-        {/* Additional Filters */}
-        {showFilters && (
-          <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tanggal
-                </label>
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Kategori
-                </label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
-                  <option value="">Semua Kategori</option>
-                  <option value="Perangkat">Perangkat</option>
-                  <option value="Material">Material</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Metode Scan
-                </label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
-                  <option value="">Semua Metode</option>
-                  <option value="Kamera">Kamera</option>
-                  <option value="Input Manual">Input Manual</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        )}
-
-  <div className="border-b border-gray-200">
-    {/* Tab Navigation */}
-    <div className="flex space-x-1 overflow-x-auto p-2">
-      {[
-        { id: "all", label: "Semua", count: stats.total },
-        { id: "valid", label: "Valid", count: stats.valid },
-        { id: "error", label: "Error", count: stats.error },
-        { id: "pending", label: "Pending", count: stats.pending },
-      ].map((tab) => (
-        <button
-          key={tab.id}
-          onClick={() => setActiveTab(tab.id)}
-          className={`flex-shrink-0 py-3 px-4 rounded-lg text-sm font-medium transition-all min-w-[100px] ${
-            activeTab === tab.id
-              ? "bg-blue-600 text-white shadow-md"
-              : "text-gray-600 hover:bg-gray-100"
-          }`}
-        >
-          <div className="flex items-center justify-center space-x-2">
-            <span>{tab.label}</span>
-            <span
-              className={`px-2 py-1 rounded-full text-xs ${
-                activeTab === tab.id
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-200 text-gray-600"
-              }`}
-            >
-              {tab.count}
-            </span>
-          </div>
-        </button>
-      ))}
-    </div>
-  </div>
-</div>
-
-      {/* History Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-3 text-left text-gray-700 font-medium">
-                ID Scan
-              </th>
-              <th className="px-4 py-3 text-left text-gray-700 font-medium">
-                Jenis Aset
-              </th>
-              <th className="px-4 py-3 text-left text-gray-700 font-medium">
-                Lokasi
-              </th>
-              <th className="px-4 py-3 text-left text-gray-700 font-medium">
-                Status
-              </th>
-              <th className="px-4 py-3 text-left text-gray-700 font-medium">
-                Tanggal
-              </th>
-              <th className="px-4 py-3 text-left text-gray-700 font-medium">
-                Aksi
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {filteredHistory.map((item) => (
-              <tr
-                key={item.id}
-                className="hover:bg-gray-50 transition-colors"
-              >
-                <td className="px-4 py-4">
-                  <div className="font-medium text-blue-700">
-                    {item.scanId}
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1 flex items-center">
-                    {getCategoryIcon(item.kategori)}
-                    <span className="ml-1">{item.kategori}</span>
-                  </div>
-                </td>
-                <td className="px-4 py-4">
-                  <div className="font-medium text-gray-900">
-                    {item.jenisAset}
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    {item.nomorSeri || item.barcode}
-                  </div>
-                </td>
-                <td className="px-4 py-4">
-                  <div className="flex items-center text-gray-700">
-                    <MapPin className="w-4 h-4 mr-1 text-gray-400" />
-                    {item.lokasi}
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    {item.department}
-                  </div>
-                </td>
-                <td className="px-4 py-4">
-                  <span
-                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(
-                      item.statusColor
-                    )}`}
-                  >
-                    {item.status === "Valid" ? (
-                      <CheckCircle className="w-3 h-3 mr-1" />
-                    ) : item.status === "Error" ? (
-                      <XCircle className="w-3 h-3 mr-1" />
-                    ) : (
-                      <Clock className="w-3 h-3 mr-1" />
-                    )}
-                    {item.status}
-                  </span>
-                </td>
-                <td className="px-4 py-4">
-                  <div className="text-sm text-gray-900">
-                    {item.tanggal}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {item.waktu}
-                  </div>
-                </td>
-                <td className="px-4 py-4">
-                  <div className="flex gap-2">
-                    <button className="flex items-center px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-xs">
-                      <Eye className="w-3 h-3 mr-1" />
-                      Detail
-                    </button>
-                    <button className="flex items-center px-3 py-1 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition text-xs">
-                      <FileText className="w-3 h-3 mr-1" />
-                      Laporan
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {/* Empty State */}
-        {filteredHistory.length === 0 && (
-          <div className="text-center py-12">
-            <Box className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500 text-lg">
-              Tidak ada data history ditemukan
-            </p>
-            <p className="text-gray-400 text-sm mt-2">
-              Coba sesuaikan pencarian atau filter Anda
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
-  </div>
 
           {/* Right Column - Activity Log & Analytics */}
           <div className="space-y-6">

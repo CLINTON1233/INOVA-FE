@@ -26,6 +26,7 @@ import {
   BarChart3,
   Database,
   Brain,
+  QrCode,
   ScanLine,
   ChevronDown,
   ChevronUp,
@@ -274,7 +275,7 @@ export default function ValidationVerificationPage() {
     switch (status) {
       case "valid":
         return <CheckCircle className="w-4 h-4" />;
-      case "error":
+      case "Serial Number atau Barcode Error":
         return <XCircle className="w-4 h-4" />;
       case "pending":
         return <Clock className="w-4 h-4" />;
@@ -402,7 +403,7 @@ export default function ValidationVerificationPage() {
               ? "Tervalidasi"
               : item.status === "pending"
               ? "Menunggu"
-              : "Error"}
+              : "Serial Number atau Barcode Error"}
           </span>
         </span>
         <div className="text-xs text-gray-500 text-right">
@@ -487,15 +488,15 @@ export default function ValidationVerificationPage() {
 
   return (
     <LayoutDashboard activeMenu={3}>
-      <div className="max-w-7xl mx-auto px-3 md:px-4 py-2 md:py-6 space-y-4 md:space-y-6">
+      <div className="max-w-7xl mx-auto px-3 md:px-4 py-2 md:py-2 space-y-4 md:space-y-6">
         {/* Header dengan gradient - Mobile Optimized */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl shadow-lg p-4 md:p-6 text-white">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-600 rounded-xl shadow-lg p-4 md:p-6 text-white">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center">
               <CheckCircle className="w-6 h-6 md:w-7 md:h-7 mr-2 md:mr-3" />
               <div>
                 <h1 className="text-xl md:text-2xl font-semibold">
-                  Validasi & Verifikasi Aset IT
+                  VALIDASI & VERIFIKASI ASET IT
                 </h1>
                 <p className="text-blue-100 mt-1 text-xs md:text-sm">
                   Sistem validasi otomatis menggunakan teknologi AI
@@ -587,7 +588,7 @@ export default function ValidationVerificationPage() {
 {/* Quick Actions Footer - Mobile Optimized */}
 <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
   <h3 className="text-base md:text-lg font-semibold text-gray-800 mb-3 md:mb-4 flex items-center">
-    <Zap className="w-4 h-4 md:w-5 md:h-5 mr-2 text-blue-600" />
+    <ScanLine  className="w-4 h-4 md:w-5 md:h-5 mr-2 text-black-600" />
     Lakukan Pemeriksaan Aset Kembali
   </h3>
   <div className="space-y-3">
@@ -617,8 +618,14 @@ export default function ValidationVerificationPage() {
 
       {/* Combined Control Panel and Table */}
 <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+  
   {/* Search, Filter, Tabs, and Bulk Actions Section */}
   <div className="p-4 md:p-6 space-y-4 border-b border-gray-200">
+      <h3 className="text-base md:text-lg font-semibold text-gray-800 mb-3 md:mb-4 flex items-center">
+  <QrCode className="w-4 h-4 md:w-5 md:h-5 mr-2 text-black-600" />
+  Data Aset Hasil Scanning Serial Number & Barcode
+</h3>
+
     {/* Search and Filter Row */}
     <div className="flex flex-col space-y-3 md:space-y-0 md:flex-row gap-3 md:gap-4">
       {/* Search Input */}

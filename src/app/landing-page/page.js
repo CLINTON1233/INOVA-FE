@@ -78,7 +78,7 @@ export default function LandingPage() {
         {/* Background */}
         <div className="absolute inset-0 -z-10">
           <Image
-            src="/helmet.jpg"
+            src="/bg_seatrium 3.png"
             alt="Background"
             fill
             className="object-cover"

@@ -41,7 +41,7 @@ export default function LayoutDashboard({ children, activeMenu }) {
     { icon: HelpCircle, label: "Validation & Verification", hasDropdown: true , href: "/validation-verification" },
     { icon: Calendar, label: "History & Activity Log", hasDropdown: true , href: "/history" },
     { icon: Settings, label: "Reports & Analytics", hasDropdown: true, href: "/reports-analytics" },
-    { icon: Settings, label: "System Settings", hasDropdown: true },
+    { icon: Settings, label: "System Settings", hasDropdown: true , href: "/system-settings" },
   ];
 
   // Handle click outside untuk menutup dropdown

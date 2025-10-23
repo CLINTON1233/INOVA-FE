@@ -12,7 +12,8 @@ import {
   Send,
   AlertCircle,
   Calendar,
-  Cpu,
+  ScanLine
+,  Cpu,
   Cable,
   Server,
   Box,
@@ -20,6 +21,7 @@ import {
   X,
   Trash2,
 } from "lucide-react";
+import Swal from "sweetalert2";
 import LayoutDashboard from "../components/LayoutDashboard";
 
 export default function SerialScanningPage() {
@@ -378,12 +380,56 @@ export default function SerialScanningPage() {
   };
 
   // Fungsi untuk menghapus data dari riwayat
-  const handleDeleteData = (scanData) => {
-    setDataToDelete(scanData);
-    setShowDeleteModal(true);
+  // Fungsi untuk menghapus data dari riwayat - PERBAIKAN
+  const handleDeleteData = async (scanData) => {
+    const result = await Swal.fire({
+      title: `Hapus ${scanData.jenisAset}?`,
+      text: "Data yang dihapus tidak dapat dikembalikan!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#4CAF50",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Ya, hapus!",
+      cancelButtonText: "Batal",
+      customClass: {
+        popup: "font-poppins rounded-xl",
+        confirmButton: "px-4 py-2 text-sm font-medium rounded-lg",
+        cancelButton: "px-4 py-2 text-sm font-medium rounded-lg",
+      },
+    });
+
+    if (result.isConfirmed) {
+      // Hapus data dari state dengan filter yang benar
+      setCheckHistory((prev) => {
+        const newHistory = prev.filter((item) => item.id !== scanData.id);
+
+        // Update localStorage dengan data yang baru
+        if (newHistory.length > 0) {
+          localStorage.setItem("scanCheckHistory", JSON.stringify(newHistory));
+        } else {
+          // Jika tidak ada data lagi, hapus dari localStorage
+          localStorage.removeItem("scanCheckHistory");
+        }
+
+        return newHistory;
+      });
+
+      // Tampilkan SweetAlert sukses
+      Swal.fire({
+        title: "Berhasil Dihapus!",
+        text: `${scanData.jenisAset} (${scanData.id}) telah berhasil dihapus.`,
+        icon: "success",
+        confirmButtonColor: "#1e40af",
+        confirmButtonText: "Oke",
+        customClass: {
+          popup: "font-poppins rounded-xl",
+          confirmButton: "px-4 py-2 text-sm font-medium rounded-lg",
+        },
+      });
+    }
   };
 
-  // Fungsi konfirmasi hapus data
+  // Fungsi konfirmasi hapus data - VERSI CUSTOM:
   const confirmDelete = () => {
     if (dataToDelete) {
       setCheckHistory((prev) =>
@@ -391,14 +437,29 @@ export default function SerialScanningPage() {
       );
       setShowDeleteModal(false);
 
-      // Simpan info data yang dihapus untuk modal sukses
-      setDeletedDataInfo({
-        jenisAset: dataToDelete.jenisAset,
-        id: dataToDelete.id,
+      // Tampilkan SweetAlert custom
+      Swal.fire({
+        title: "Berhasil Dihapus",
+        html: `
+        <div class="text-center">
+          <svg class="w-12 h-12 text-green-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <p class="text-gray-700 font-medium mb-2">Data berhasil dihapus dari riwayat!</p>
+          <p class="text-gray-600 text-sm">${dataToDelete.jenisAset} (${dataToDelete.id})</p>
+        </div>
+      `,
+        icon: "success",
+        confirmButtonText: "Oke",
+        confirmButtonColor: "#10B981",
+        customClass: {
+          popup: "font-poppins rounded-xl",
+          title: "hidden",
+          htmlContainer: "mb-0",
+          confirmButton: "px-6 py-2 text-sm font-medium rounded-lg",
+        },
+        buttonsStyling: false,
       });
-
-      // Tampilkan modal sukses
-      setShowDeleteSuccessModal(true);
 
       setDataToDelete(null);
     }
@@ -452,12 +513,12 @@ export default function SerialScanningPage() {
 
   return (
     <LayoutDashboard activeMenu={2}>
-      <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-2 space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl shadow-lg p-4 sm:p-6 text-white">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-600 rounded-xl shadow-lg p-4 sm:p-6 text-white">
           <h1 className="text-xl sm:text-2xl font-semibold flex items-center">
-            <Scan className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3" />
-            Scan & Pengecekan Aset IT
+            <ScanLine className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3" />
+           SCAN PERANGKAT & MATERIAL IT
           </h1>
           <p className="text-blue-100 text-xs sm:text-sm mt-1 sm:mt-2">
             Scan perangkat IT atau material, pilih lokasi, dan kirim untuk
@@ -484,7 +545,7 @@ export default function SerialScanningPage() {
 
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-4/5 h-4/5 border-4 border-dashed border-white/50 rounded-lg"></div>
-              <div className="absolute top-1/2 w-4/5 h-1 bg-red-500 animate-pulse shadow-lg"></div>
+              {/* Garis merah dihapus */}
             </div>
 
             {cameraError && (
@@ -559,10 +620,13 @@ export default function SerialScanningPage() {
               <Clipboard className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-gray-600" />
               Input Manual
             </h2>
-            <form onSubmit={handleManualCheck} className="space-y-3 sm:space-y-4">
+            <form
+              onSubmit={handleManualCheck}
+              className="space-y-3 sm:space-y-4"
+            >
               <div>
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-                  Masukkan Nomor Seri atau Barcode
+                  Input Serial Number atau Barcode
                 </label>
                 <input
                   type="text"
@@ -612,8 +676,12 @@ export default function SerialScanningPage() {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                <p className="font-medium text-sm sm:text-base">Memproses pemeriksaan...</p>
-                <p className="text-xs sm:text-sm mt-1">Mendeteksi format dan validitas</p>
+                <p className="font-medium text-sm sm:text-base">
+                  Memproses pemeriksaan...
+                </p>
+                <p className="text-xs sm:text-sm mt-1">
+                  Mendeteksi format dan validitas
+                </p>
               </div>
             )}
 
@@ -681,7 +749,9 @@ export default function SerialScanningPage() {
             {!scanResult && scanResult !== "loading" && (
               <div className="text-center py-6 sm:py-8 text-gray-500">
                 <Box className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 text-gray-400" />
-                <p className="font-medium text-sm sm:text-base">Belum ada hasil pemeriksaan</p>
+                <p className="font-medium text-sm sm:text-base">
+                  Belum ada hasil pemeriksaan
+                </p>
                 <p className="text-xs sm:text-sm mt-1">
                   Gunakan Scanner Kamera atau Input Manual
                 </p>
@@ -712,7 +782,9 @@ export default function SerialScanningPage() {
           {checkHistory.length === 0 ? (
             <div className="text-center py-6 sm:py-8 text-gray-500">
               <Box className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 text-gray-400" />
-              <p className="font-medium text-sm sm:text-base">Belum ada riwayat pengecekan</p>
+              <p className="font-medium text-sm sm:text-base">
+                Belum ada riwayat pengecekan
+              </p>
               <p className="text-xs sm:text-sm mt-1">
                 Lakukan scan atau input manual untuk mulai
               </p>
@@ -746,7 +818,9 @@ export default function SerialScanningPage() {
                             <span className="ml-2 text-sm">{item.id}</span>
                           </div>
                         </td>
-                        <td className="py-3 text-gray-600 text-sm">{item.jenisAset}</td>
+                        <td className="py-3 text-gray-600 text-sm">
+                          {item.jenisAset}
+                        </td>
                         <td className="py-3">
                           <span
                             className={`px-2 py-1 text-xs rounded-full font-semibold ${
@@ -774,8 +848,12 @@ export default function SerialScanningPage() {
                             {getStatusText(item.status)}
                           </span>
                         </td>
-                        <td className="py-3 text-gray-600 text-sm">{item.tanggal}</td>
-                        <td className="py-3 text-gray-600 text-sm">{item.waktu}</td>
+                        <td className="py-3 text-gray-600 text-sm">
+                          {item.tanggal}
+                        </td>
+                        <td className="py-3 text-gray-600 text-sm">
+                          {item.waktu}
+                        </td>
                         <td className="py-3">
                           <div className="flex space-x-1 sm:space-x-2">
                             <button
@@ -962,7 +1040,7 @@ export default function SerialScanningPage() {
               <div className="flex items-center justify-between mb-3 sm:mb-4">
                 <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center">
                   <MapPin className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-600" />
-                  Pilih Lokasi Aset
+                  Pilih Lokasi Pengecekan Aset
                 </h3>
                 <button
                   onClick={() => setShowLocationModal(false)}
@@ -975,7 +1053,7 @@ export default function SerialScanningPage() {
               <div className="space-y-3 sm:space-y-4">
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-                    Pilih Lokasi Aset
+                    Pilih Lokasi
                   </label>
                   <select
                     value={selectedLocation}
@@ -991,7 +1069,7 @@ export default function SerialScanningPage() {
                   </select>
                 </div>
 
-                <div className="bg-blue-50 p-2 sm:p-3 rounded-lg">
+                <div className="bg-gray-100 p-2 sm:p-3 rounded-lg">
                   <p className="text-xs sm:text-sm text-blue-700">
                     <strong>Data yang akan diupdate:</strong>
                     <br />
@@ -1046,7 +1124,7 @@ export default function SerialScanningPage() {
                   Apakah Anda yakin ingin menghapus data pengecekan ini?
                 </p>
 
-                <div className="bg-red-50 p-2 sm:p-3 rounded-lg">
+                <div className="bg-gray-100 p-2 sm:p-3 rounded-lg">
                   <p className="text-xs sm:text-sm text-red-700">
                     <strong>Data yang akan dihapus:</strong>
                     <br />
