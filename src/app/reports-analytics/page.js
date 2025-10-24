@@ -37,6 +37,7 @@ import {
   FileDown,
 } from "lucide-react";
 import LayoutDashboard from "../components/LayoutDashboard";
+import Swal from "sweetalert2";
 
 export default function ReportsAnalyticsPage() {
   const [selectedPeriod, setSelectedPeriod] = useState("daily");
@@ -65,7 +66,9 @@ export default function ReportsAnalyticsPage() {
       department: "IT Infrastructure & Networking",
       validationTime: "2 detik",
       uniqueCode: "V-901-XYZ-A",
-      periode: "daily"
+      periode: "daily",
+      scanMethod: "QR Code Scan",
+      notes: "Perangkat dalam kondisi baik dan berfungsi normal"
     },
     {
       id: "RPT-002",
@@ -81,7 +84,9 @@ export default function ReportsAnalyticsPage() {
       department: "Facilities & Networking",
       validationTime: "1.5 detik",
       uniqueCode: "V-902-ABC-B",
-      periode: "daily"
+      periode: "daily",
+      scanMethod: "Barcode Scan",
+      notes: "Kabel tersedia dalam stok yang cukup"
     },
     {
       id: "RPT-003",
@@ -97,7 +102,9 @@ export default function ReportsAnalyticsPage() {
       department: "System Operation",
       validationTime: "3 detik",
       uniqueCode: "V-903-DEF-C",
-      periode: "daily"
+      periode: "daily",
+      scanMethod: "QR Code Scan",
+      notes: "Server mengalami overheating, perlu maintenance segera"
     },
     {
       id: "RPT-004",
@@ -113,7 +120,9 @@ export default function ReportsAnalyticsPage() {
       department: "Facilities & Networking",
       validationTime: "2.2 detik",
       uniqueCode: "V-905-JKL-E",
-      periode: "daily"
+      periode: "daily",
+      scanMethod: "QR Code Scan",
+      notes: "CCTV berfungsi optimal, rekaman tersimpan dengan baik"
     },
     {
       id: "RPT-005",
@@ -129,7 +138,9 @@ export default function ReportsAnalyticsPage() {
       department: "IT Infrastructure & Networking",
       validationTime: "2.5 detik",
       uniqueCode: "V-906-MNO-F",
-      periode: "daily"
+      periode: "daily",
+      scanMethod: "Input Manual",
+      notes: "Menunggu konfirmasi supervisor untuk pemindaian ulang"
     },
     {
       id: "RPT-006",
@@ -145,7 +156,9 @@ export default function ReportsAnalyticsPage() {
       department: "Operations & End User Service",
       validationTime: "1.8 detik",
       uniqueCode: "V-904-GHI-D",
-      periode: "weekly"
+      periode: "weekly",
+      scanMethod: "Barcode Scan",
+      notes: "Trunking terpasang dengan rapi dan aman"
     },
     {
       id: "RPT-007",
@@ -161,7 +174,9 @@ export default function ReportsAnalyticsPage() {
       department: "Facilities & Networking",
       validationTime: "4 detik",
       uniqueCode: "V-907-PQR-G",
-      periode: "weekly"
+      periode: "weekly",
+      scanMethod: "Barcode Scan",
+      notes: "Pipa mengalami kerusakan pada sambungan, perlu penggantian"
     },
     {
       id: "RPT-008",
@@ -177,7 +192,9 @@ export default function ReportsAnalyticsPage() {
       department: "System Operation",
       validationTime: "1.7 detik",
       uniqueCode: "V-908-STU-H",
-      periode: "weekly"
+      periode: "weekly",
+      scanMethod: "QR Code Scan",
+      notes: "Switch beroperasi normal, semua port aktif"
     }
   ];
 
@@ -268,24 +285,181 @@ export default function ReportsAnalyticsPage() {
     }
   };
 
+  // Fungsi untuk menampilkan detail dengan SweetAlert
+  const showDetail = (item) => {
+    Swal.fire({
+      title: `<div class="font-poppins text-lg font-semibold text-black">Detail Laporan Pengecekan</div>`,
+      html: `
+        <div class="font-poppins text-left space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+          <!-- Header Info -->
+          <div class="bg-white rounded-lg p-4 border border-gray-200">
+            <h4 class="text-base font-semibold text-gray-900">${item.jenisAset}</h4>
+            <p class="text-xs text-gray-500 mt-1">${item.kategori} • ${item.scanMethod}</p>
+          </div>
+
+          <!-- Informasi Aset -->
+          <div>
+            <h5 class="text-xs font-medium text-gray-700 mb-2">INFORMASI ASET</h5>
+            <div class="bg-white rounded-lg p-3 space-y-2 border border-gray-200">
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-600">ID Scan</span>
+                <span class="text-xs font-medium text-blue-700">${item.scanId}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-600">ID Laporan</span>
+                <span class="text-xs font-medium text-gray-700">${item.id}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-600">${item.nomorSeri ? 'Nomor Seri' : 'Barcode'}</span>
+                <span class="text-xs font-mono text-blue-600">${item.nomorSeri || item.barcode}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-600">Kode Unik</span>
+                <span class="text-xs font-mono text-gray-700">${item.uniqueCode}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lokasi & Departemen -->
+          <div>
+            <h5 class="text-xs font-medium text-gray-700 mb-2">LOKASI & DEPARTEMEN</h5>
+            <div class="bg-white rounded-lg p-3 space-y-2 border border-gray-200">
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-600">Lokasi</span>
+                <span class="text-xs font-medium text-gray-700">${item.lokasi}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-600">Departemen</span>
+                <span class="text-xs font-medium text-gray-700">${item.department}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Waktu Pengecekan -->
+          <div>
+            <h5 class="text-xs font-medium text-gray-700 mb-2">WAKTU PENGECEKAN</h5>
+            <div class="bg-white rounded-lg p-3 space-y-2 border border-gray-200">
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-600">Tanggal</span>
+                <span class="text-xs font-medium text-gray-700">${item.tanggalScan}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-600">Waktu</span>
+                <span class="text-xs font-medium text-gray-700">${item.waktuScan}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-600">Waktu Validasi</span>
+                <span class="text-xs font-medium text-gray-700">${item.validationTime}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-600">Periode</span>
+                <span class="text-xs font-medium text-gray-700">${item.periode === "daily" ? "Harian" : "Mingguan"}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Status & Verifikasi -->
+          <div>
+            <h5 class="text-xs font-medium text-gray-700 mb-2">STATUS & VERIFIKASI</h5>
+            <div class="bg-white rounded-lg p-3 space-y-2 border border-gray-200">
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-600">Status</span>
+                <span class="text-xs font-medium ${
+                  item.status === "Valid"
+                    ? "text-green-600"
+                    : item.status === "Pending"
+                    ? "text-yellow-600"
+                    : "text-red-600"
+                }">
+                  ${item.status}
+                </span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-600">Metode Scan</span>
+                <span class="text-xs font-medium text-gray-700">${item.scanMethod}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-600">Diverifikasi Oleh</span>
+                <span class="text-xs font-medium text-gray-700">${item.verifiedBy}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Catatan -->
+          ${
+            item.notes
+              ? `
+          <div>
+            <h5 class="text-xs font-medium text-gray-700 mb-2">CATATAN</h5>
+            <div class="bg-white rounded-lg p-3 border border-gray-200">
+              <p class="text-xs text-gray-700">${item.notes}</p>
+            </div>
+          </div>
+          `
+              : ""
+          }
+        </div>
+      `,
+      width: "500px",
+      padding: "8px",
+      showCloseButton: true,
+      showConfirmButton: true,
+      confirmButtonText: "Tutup",
+      confirmButtonColor: "#2563eb",
+      customClass: {
+        popup: "rounded-xl font-poppins bg-white",
+        closeButton: "text-gray-400 hover:text-gray-600 text-lg -mr-1",
+        confirmButton: "font-poppins font-medium text-sm px-8 py-2",
+      }
+    });
+  };
+
   // Export to PDF function
-  const exportToPDF = () => {
-    const selectedData = selectedItems.length > 0 
+  const exportToPDF = (selectedOnly = false) => {
+    const dataToExport = selectedOnly && selectedItems.length > 0 
       ? reportData.filter(item => selectedItems.includes(item.id))
       : filteredReports;
     
-    alert(`Mengekspor ${selectedData.length} data ke PDF...`);
+    Swal.fire({
+      title: 'Export PDF',
+      text: `Mengekspor ${dataToExport.length} data ke format PDF...`,
+      icon: 'info',
+      confirmButtonText: 'OK',
+      confirmButtonColor: '#2563eb',
+    });
     // Implement PDF export logic here
   };
 
   // Export to Excel function
-  const exportToExcel = () => {
-    const selectedData = selectedItems.length > 0 
+  const exportToExcel = (selectedOnly = false) => {
+    const dataToExport = selectedOnly && selectedItems.length > 0 
       ? reportData.filter(item => selectedItems.includes(item.id))
       : filteredReports;
     
-    alert(`Mengekspor ${selectedData.length} data ke Excel...`);
+    Swal.fire({
+      title: 'Export Excel',
+      text: `Mengekspor ${dataToExport.length} data ke format Excel...`,
+      icon: 'info',
+      confirmButtonText: 'OK',
+      confirmButtonColor: '#2563eb',
+    });
     // Implement Excel export logic here
+  };
+
+  // Print function
+  const printReport = (selectedOnly = false) => {
+    const dataToPrint = selectedOnly && selectedItems.length > 0 
+      ? reportData.filter(item => selectedItems.includes(item.id))
+      : filteredReports;
+    
+    Swal.fire({
+      title: 'Print Laporan',
+      text: `Mencetak ${dataToPrint.length} data laporan...`,
+      icon: 'info',
+      confirmButtonText: 'OK',
+      confirmButtonColor: '#2563eb',
+    });
+    // Implement print logic here
   };
 
   return (
@@ -403,95 +577,122 @@ export default function ReportsAnalyticsPage() {
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           {/* Controls Section */}
           <div className="p-4 md:p-6 border-b border-gray-200">
-            <div className="flex flex-col lg:flex-row gap-4">
-              {/* Period Selection */}
+            <div className="flex flex-col gap-4">
+              {/* Baris Pertama: Period Selection, Date Range, Filter Buttons */}
+              <div className="flex flex-col lg:flex-row gap-4">
+                {/* Period Selection */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setSelectedPeriod("daily")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      selectedPeriod === "daily"
+                        ? "bg-blue-600 text-white shadow-md"
+                        : "text-gray-600 hover:bg-gray-100 border border-gray-300"
+                    }`}
+                  >
+                    Harian
+                  </button>
+                  <button
+                    onClick={() => setSelectedPeriod("weekly")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      selectedPeriod === "weekly"
+                        ? "bg-blue-600 text-white shadow-md"
+                        : "text-gray-600 hover:bg-gray-100 border border-gray-300"
+                    }`}
+                  >
+                    Mingguan
+                  </button>
+                  <button
+                    onClick={() => setSelectedPeriod("all")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      selectedPeriod === "all"
+                        ? "bg-blue-600 text-white shadow-md"
+                        : "text-gray-600 hover:bg-gray-100 border border-gray-300"
+                    }`}
+                  >
+                    Semua
+                  </button>
+                </div>
+
+                {/* Date Range */}
+                <div className="flex gap-2 flex-1">
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    placeholder="Dari Tanggal"
+                  />
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    placeholder="Sampai Tanggal"
+                  />
+                </div>
+
+                {/* Filter Buttons */}
+                <div className="flex gap-2">
+                  <select
+                    value={selectedStatus}
+                    onChange={(e) => setSelectedStatus(e.target.value)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  >
+                    <option value="all">Semua Status</option>
+                    <option value="Valid">Valid</option>
+                    <option value="Error">Error</option>
+                    <option value="Pending">Pending</option>
+                  </select>
+
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  >
+                    <option value="all">Semua Kategori</option>
+                    <option value="Perangkat">Perangkat</option>
+                    <option value="Material">Material</option>
+                  </select>
+
+                  <button
+                    onClick={() => setShowFilters(!showFilters)}
+                    className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm"
+                  >
+                    <Filter className="w-4 h-4 mr-2" />
+                    Filter
+                  </button>
+                </div>
+              </div>
+
+              {/* Baris Kedua: Export Buttons - Selalu Tampil */}
               <div className="flex gap-2">
                 <button
-                  onClick={() => setSelectedPeriod("daily")}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    selectedPeriod === "daily"
-                      ? "bg-blue-600 text-white shadow-md"
-                      : "text-gray-600 hover:bg-gray-100 border border-gray-300"
-                  }`}
+                  onClick={() => exportToPDF()}
+                  className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm"
                 >
-                  Harian
+                  <FileDown className="w-4 h-4 mr-2" />
+                  Export PDF
                 </button>
                 <button
-                  onClick={() => setSelectedPeriod("weekly")}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    selectedPeriod === "weekly"
-                      ? "bg-blue-600 text-white shadow-md"
-                      : "text-gray-600 hover:bg-gray-100 border border-gray-300"
-                  }`}
+                  onClick={() => exportToExcel()}
+                  className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm"
                 >
-                  Mingguan
+                  <Download className="w-4 h-4 mr-2" />
+                  Export Excel
                 </button>
-                <button
-                  onClick={() => setSelectedPeriod("all")}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    selectedPeriod === "all"
-                      ? "bg-blue-600 text-white shadow-md"
-                      : "text-gray-600 hover:bg-gray-100 border border-gray-300"
-                  }`}
+                <button 
+                  onClick={() => printReport()}
+                  className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm"
                 >
-                  Semua
+                  <Printer className="w-4 h-4 mr-2" />
+                  Print
                 </button>
               </div>
-
-              {/* Date Range */}
-              <div className="flex gap-2 flex-1">
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                  placeholder="Dari Tanggal"
-                />
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                  placeholder="Sampai Tanggal"
-                />
-              </div>
-
-              {/* Filter Buttons */}
-              <div className="flex gap-2">
-                <select
-                  value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                >
-                  <option value="all">Semua Status</option>
-                  <option value="Valid">Valid</option>
-                  <option value="Error">Error</option>
-                  <option value="Pending">Pending</option>
-                </select>
-
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                >
-                  <option value="all">Semua Kategori</option>
-                  <option value="Perangkat">Perangkat</option>
-                  <option value="Material">Material</option>
-                </select>
-
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm"
-                >
-                  <Filter className="w-4 h-4 mr-2" />
-                  Filter
-                </button>
-              </div>
-            </div>
 
             {/* Additional Filters */}
             {showFilters && (
-              <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="mt-2 p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -530,9 +731,9 @@ export default function ReportsAnalyticsPage() {
               </div>
             )}
 
-            {/* Bulk Actions */}
+            {/* Bulk Actions - Hanya tampil jika ada item yang dipilih */}
             {selectedItems.length > 0 && (
-              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="mt-2 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div className="text-blue-800 text-sm font-medium flex items-center">
                     <CheckSquare className="w-4 h-4 mr-2" />
@@ -540,27 +741,31 @@ export default function ReportsAnalyticsPage() {
                   </div>
                   <div className="flex gap-2">
                     <button
-                      onClick={exportToPDF}
+                      onClick={() => exportToPDF(true)}
                       className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm"
                     >
                       <FileDown className="w-4 h-4 mr-2" />
-                      Export PDF
+                      Export PDF Terpilih
                     </button>
                     <button
-                      onClick={exportToExcel}
+                      onClick={() => exportToExcel(true)}
                       className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm"
                     >
                       <Download className="w-4 h-4 mr-2" />
-                      Export Excel
+                      Export Excel Terpilih
                     </button>
-                    <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm">
+                    <button 
+                      onClick={() => printReport(true)}
+                      className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm"
+                    >
                       <Printer className="w-4 h-4 mr-2" />
-                      Print
+                      Print Terpilih
                     </button>
                   </div>
                 </div>
               </div>
             )}
+          </div>
           </div>
 
           {/* Reports Table */}
@@ -652,16 +857,12 @@ export default function ReportsAnalyticsPage() {
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex gap-2">
-                        <button className="flex items-center px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-xs">
+                        <button 
+                          onClick={() => showDetail(item)}
+                          className="flex items-center px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-xs"
+                        >
                           <Eye className="w-3 h-3 mr-1" />
                           Detail
-                        </button>
-                        <button 
-                          onClick={exportToExcel}
-                          className="flex items-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-xs"
-                        >
-                          <FileDown className="w-3 h-3 mr-1" />
-                          Export Excel
                         </button>
                       </div>
                     </td>

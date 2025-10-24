@@ -28,6 +28,8 @@ import {
   BarChart3,
   PieChart,
   TrendingUp,
+  ChevronDown,
+  ChevronUp,
   Database,
   Shield,
   CheckSquare,
@@ -37,6 +39,7 @@ import {
   History as HistoryIcon,
 } from "lucide-react";
 import LayoutDashboard from "../components/LayoutDashboard";
+import Swal from "sweetalert2";
 
 export default function HistoryPage() {
   const [activeTab, setActiveTab] = useState("all");
@@ -280,6 +283,136 @@ export default function HistoryPage() {
     },
   ];
 
+  // Fungsi untuk menampilkan detail history dengan SweetAlert
+// Fungsi untuk menampilkan detail history dengan SweetAlert
+const handleShowDetail = (item) => {
+  Swal.fire({
+    title: `<div class="font-poppins text-lg font-semibold text-black">Detail History Pengecekan</div>`,
+    html: `
+      <div class="font-poppins text-left space-y-3 max-h-[50vh] overflow-y-auto pr-2">
+        <!-- Header Info -->
+        <div class="bg-white rounded-lg p-3 border border-gray-200">
+          <h4 class="text-base font-semibold text-gray-900">${item.jenisAset}</h4>
+          <p class="text-xs text-gray-500 mt-1">${item.kategori} • ${item.scanMethod}</p>
+        </div>
+
+        <!-- Informasi Aset -->
+        <div>
+          <h5 class="text-xs font-medium text-gray-700 mb-2">INFORMASI ASET</h5>
+          <div class="bg-white rounded-lg p-3 space-y-2 border border-gray-200">
+            <div class="flex justify-between items-center">
+              <span class="text-xs text-gray-600">ID Scan</span>
+              <span class="text-xs font-medium text-blue-700">${item.scanId}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-xs text-gray-600">ID History</span>
+              <span class="text-xs font-medium text-gray-700">${item.id}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-xs text-gray-600">${item.nomorSeri ? 'Nomor Seri' : 'Barcode'}</span>
+              <span class="text-xs font-mono text-blue-600">${item.nomorSeri || item.barcode}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-xs text-gray-600">Kode Unik</span>
+              <span class="text-xs font-mono text-gray-700">${item.uniqueCode}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lokasi & Departemen -->
+        <div>
+          <h5 class="text-xs font-medium text-gray-700 mb-2">LOKASI & DEPARTEMEN</h5>
+          <div class="bg-white rounded-lg p-3 space-y-2 border border-gray-200">
+            <div class="flex justify-between items-center">
+              <span class="text-xs text-gray-600">Lokasi</span>
+              <span class="text-xs font-medium text-gray-700">${item.lokasi}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-xs text-gray-600">Departemen</span>
+              <span class="text-xs font-medium text-gray-700">${item.department}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Waktu Pengecekan -->
+        <div>
+          <h5 class="text-xs font-medium text-gray-700 mb-2">WAKTU PENGECEKAN</h5>
+          <div class="bg-white rounded-lg p-3 space-y-2 border border-gray-200">
+            <div class="flex justify-between items-center">
+              <span class="text-xs text-gray-600">Tanggal</span>
+              <span class="text-xs font-medium text-gray-700">${item.tanggal}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-xs text-gray-600">Waktu</span>
+              <span class="text-xs font-medium text-gray-700">${item.waktu}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-xs text-gray-600">Waktu Validasi</span>
+              <span class="text-xs font-medium text-gray-700">${item.validationTime}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status & Verifikasi -->
+        <div>
+          <h5 class="text-xs font-medium text-gray-700 mb-2">STATUS & VERIFIKASI</h5>
+          <div class="bg-white rounded-lg p-3 space-y-2 border border-gray-200">
+            <div class="flex justify-between items-center">
+              <span class="text-xs text-gray-600">Status</span>
+              <span class="text-xs font-medium ${
+                item.status === "Valid"
+                  ? "text-green-600"
+                  : item.status === "Pending"
+                  ? "text-yellow-600"
+                  : "text-red-600"
+              }">
+                ${item.status}
+              </span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-xs text-gray-600">Metode Scan</span>
+              <span class="text-xs font-medium text-gray-700">${item.scanMethod}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-xs text-gray-600">Diverifikasi Oleh</span>
+              <span class="text-xs font-medium text-gray-700">${item.verifiedBy}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Catatan -->
+        ${
+          item.notes
+            ? `
+        <div>
+          <h5 class="text-xs font-medium text-gray-700 mb-2">CATATAN</h5>
+          <div class="bg-white rounded-lg p-3 border border-gray-200">
+            <p class="text-xs text-gray-700">${item.notes}</p>
+          </div>
+        </div>
+        `
+            : ""
+        }
+      </div>
+    `,
+    width: "500px",
+    padding: "16px",
+    showCloseButton: true,
+    showConfirmButton: true,
+    confirmButtonText: "Tutup",
+    confirmButtonColor: "#2563eb",
+    customClass: {
+      popup: "rounded-xl font-poppins bg-white",
+      closeButton: "text-gray-400 hover:text-gray-600 text-lg -mt-1 -mr-1",
+      confirmButton: "font-poppins font-medium text-sm px-4 py-2",
+    }
+  });
+};
+const [expandedItem, setExpandedItem] = useState(null);
+
+const toggleItemExpansion = (id) => {
+  setExpandedItem(expandedItem === id ? null : id);
+};
   // Filter data berdasarkan kriteria
   const filteredHistory = historyData.filter((item) => {
     const matchesSearch =
@@ -480,8 +613,6 @@ export default function HistoryPage() {
                         <span className="hidden md:inline">Filter</span>
                         <span className="md:hidden">Filter</span>
                       </button>
-
-                 
                     </div>
                   </div>
 
@@ -566,9 +697,10 @@ export default function HistoryPage() {
                 </div>
               </div>
 
-              {/* History Table */}
+              {/* History Table - Desktop & Mobile */}
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                {/* Desktop Table */}
+                <table className="w-full text-sm hidden md:table">
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-4 py-3 text-left text-gray-700 font-medium">
@@ -649,17 +781,157 @@ export default function HistoryPage() {
                         </td>
                         <td className="px-4 py-4">
                           <div className="flex gap-2">
-                            <button className="flex items-center px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-xs">
+                            <button
+                              onClick={() => handleShowDetail(item)}
+                              className="flex items-center px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-xs"
+                            >
                               <Eye className="w-3 h-3 mr-1" />
                               Detail
                             </button>
-                          
                           </div>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+
+                {/* Mobile Dropdown Cards */}
+                <div className="md:hidden space-y-3 p-4">
+                  {filteredHistory.map((item) => (
+                    <div
+                      key={item.id}
+                      className="bg-white border border-gray-200 rounded-lg overflow-hidden"
+                    >
+                      {/* Header - Selalu Tampil */}
+                      <div className="p-4 border-b border-gray-200">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center mb-2">
+                              {getCategoryIcon(item.kategori)}
+                              <div className="ml-2">
+                                <div className="font-bold text-blue-700 text-sm">
+                                  {item.scanId}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {item.kategori}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="font-semibold text-gray-900 text-base mb-1">
+                              {item.jenisAset}
+                            </div>
+                            <div className="text-xs text-gray-600 font-mono mb-2">
+                              {item.nomorSeri || item.barcode}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => toggleItemExpansion(item.id)}
+                            className="text-gray-400 hover:text-gray-600 ml-2"
+                          >
+                            {expandedItem === item.id ? (
+                              <ChevronUp className="w-5 h-5" />
+                            ) : (
+                              <ChevronDown className="w-5 h-5" />
+                            )}
+                          </button>
+                        </div>
+
+                        {/* Quick Info */}
+                        <div className="flex justify-between items-center mt-3">
+                          <span
+                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(
+                              item.statusColor
+                            )}`}
+                          >
+                            {item.status === "Valid" ? (
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                            ) : item.status === "Error" ? (
+                              <XCircle className="w-3 h-3 mr-1" />
+                            ) : (
+                              <Clock className="w-3 h-3 mr-1" />
+                            )}
+                            {item.status}
+                          </span>
+                          <div className="text-xs text-gray-500 text-right">
+                            <div>{item.tanggal}</div>
+                            <div>{item.waktu}</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Expanded Details - Dropdown Content */}
+                      {expandedItem === item.id && (
+                        <div className="p-4 bg-gray-50 border-t border-gray-200">
+                          <div className="space-y-3">
+                            {/* Lokasi & Departemen */}
+                            <div>
+                              <div className="text-xs font-semibold text-gray-500 mb-1">
+                                LOKASI & DEPARTEMEN
+                              </div>
+                              <div className="flex items-center text-sm text-gray-700 mb-1">
+                                <MapPin className="w-3 h-3 mr-2 text-gray-400" />
+                                {item.lokasi}
+                              </div>
+                              <div className="text-xs text-gray-600 ml-5">
+                                {item.department}
+                              </div>
+                            </div>
+
+                            {/* Informasi Tambahan */}
+                            <div>
+                              <div className="text-xs font-semibold text-gray-500 mb-1">
+                                INFORMASI
+                              </div>
+                              <div className="text-xs text-gray-600 space-y-1">
+                                <div className="flex justify-between">
+                                  <span>ID History:</span>
+                                  <span className="font-medium">{item.id}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Kode Unik:</span>
+                                  <span className="font-mono">
+                                    {item.uniqueCode}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Metode Scan:</span>
+                                  <span>{item.scanMethod}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Waktu Validasi:</span>
+                                  <span>{item.validationTime}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Catatan */}
+                            {item.notes && (
+                              <div>
+                                <div className="text-xs font-semibold text-gray-500 mb-1">
+                                  CATATAN
+                                </div>
+                                <div className="text-xs text-gray-600 bg-white p-2 rounded border">
+                                  {item.notes}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Action Buttons */}
+                            <div className="flex gap-2 pt-2">
+                              <button
+                                onClick={() => handleShowDetail(item)}
+                                className="flex-1 flex items-center justify-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-xs"
+                              >
+                                <Eye className="w-3 h-3 mr-1" />
+                                Detail Lengkap
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
 
                 {/* Empty State */}
                 {filteredHistory.length === 0 && (

@@ -274,12 +274,93 @@ export default function SerialScanningPage() {
     }, 1500);
   };
 
-  // Fungsi untuk membuka modal lokasi
-  const handleOpenLocationModal = (scanData) => {
-    setCurrentScanData(scanData);
-    setSelectedLocation(scanData.lokasi || "");
-    setShowLocationModal(true);
-  };
+// Fungsi untuk membuka modal lokasi dengan SweetAlert
+const handleOpenLocationModal = (scanData) => {
+  let selectedLocation = scanData.lokasi || "";
+
+  Swal.fire({
+    title: `<div class="font-poppins text-lg font-semibold text-black">Pilih Lokasi Pengecekan Aset</div>`,
+    html: `
+      <div class="font-poppins text-left space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Pilih Lokasi</label>
+          <select 
+            id="locationSelect" 
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+          >
+            <option value="">Pilih lokasi...</option>
+            ${locationOptions.map(location => 
+              `<option value="${location}" ${location === selectedLocation ? 'selected' : ''}>${location}</option>`
+            ).join('')}
+          </select>
+        </div>
+
+        <div class="bg-gray-100 p-3 rounded-lg">
+          <p class="text-sm text-blue-700">
+            <strong>Data yang akan diupdate:</strong><br/>
+            Aset: ${scanData.jenisAset}<br/>
+            Kategori: ${scanData.kategori}<br/>
+            ID: ${scanData.id}
+          </p>
+        </div>
+      </div>
+    `,
+    width: '500px',
+    padding: '8px',
+    showCloseButton: true,
+    showCancelButton: true,
+    showConfirmButton: true,
+    cancelButtonText: 'Batal',
+    confirmButtonText: 'Simpan Lokasi',
+    confirmButtonColor: '#2563eb',
+    cancelButtonColor: '#6b7280',
+      reverseButtons: true,
+    customClass: {
+      popup: 'rounded-xl font-poppins',
+      confirmButton: 'px-4 py-2 text-sm font-medium ',
+      cancelButton: 'px-6 py-2 text-sm font-medium ',
+    },
+    preConfirm: () => {
+      const select = document.getElementById('locationSelect');
+      const location = select.value;
+      if (!location) {
+        Swal.showValidationMessage('Harap pilih lokasi terlebih dahulu');
+        return false;
+      }
+      return location;
+    }
+  }).then((result) => {
+    if (result.isConfirmed) {
+      const updatedLocation = result.value;
+      
+      // Update data dengan lokasi yang dipilih
+      const updatedData = {
+        ...scanData,
+        lokasi: updatedLocation,
+      };
+
+      // Update riwayat dengan lokasi baru
+      setCheckHistory((prev) =>
+        prev.map((item) =>
+          item.id === scanData.id ? { ...item, ...updatedData } : item
+        )
+      );
+
+      // Tampilkan konfirmasi sukses
+      Swal.fire({
+        title: 'Lokasi Berhasil Disimpan!',
+        text: `Lokasi ${updatedLocation} berhasil ditambahkan ke ${scanData.jenisAset}`,
+        icon: 'success',
+        confirmButtonColor: '#28a745',
+        confirmButtonText: 'Oke',
+        customClass: {
+          popup: 'font-poppins rounded-xl',
+          confirmButton: 'px-8 py-2 text-sm font-medium',
+        },
+      });
+    }
+  });
+};
 
   // Fungsi untuk menyimpan lokasi saja
   const handleSaveLocation = () => {
@@ -303,82 +384,189 @@ export default function SerialScanningPage() {
   };
 
   // Fungsi untuk submit data individual
-  const handleSubmitSingle = (scanData) => {
-    if (!scanData.lokasi) {
-      alert("Harap pilih lokasi terlebih dahulu sebelum mengirim data.");
-      return;
-    }
+// Fungsi untuk submit data individual dengan SweetAlert
+const handleSubmitSingle = async (scanData) => {
+  if (!scanData.lokasi) {
+    Swal.fire({
+      title: 'Lokasi Belum Dipilih',
+      text: 'Harap pilih lokasi terlebih dahulu sebelum mengirim data.',
+      icon: 'warning',
+      confirmButtonColor: '#2563eb',
+      confirmButtonText: 'Oke',
+      customClass: {
+        popup: 'font-poppins rounded-xl',
+        confirmButton: 'px-4 py-2 text-sm font-medium rounded-lg',
+      },
+    });
+    return;
+  }
 
-    setIsSubmitting(true);
+  setIsSubmitting(true);
 
-    const submittedData = {
-      ...scanData,
-      uniqueCode: `V-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-      status: "Pending Validation",
-      submitted: true,
-      submittedAt: new Date().toISOString(),
-    };
+  // Tampilkan loading SweetAlert
+  Swal.fire({
+    title: 'Mengirim Data...',
+    text: `Sedang mengirim data ${scanData.jenisAset}`,
+    icon: 'info',
+    showConfirmButton: false,
+    allowOutsideClick: false,
+    didOpen: () => {
+      Swal.showLoading();
+    },
+    customClass: {
+      popup: 'font-poppins rounded-xl',
+    },
+  });
 
-    // Update riwayat dengan status submitted
-    setCheckHistory((prev) =>
-      prev.map((item) =>
-        item.id === scanData.id ? { ...item, ...submittedData } : item
-      )
-    );
-
-    console.log("Submitting Single Data:", submittedData);
-
-    setTimeout(() => {
-      setIsSubmitting(false);
-      alert(`Data ${submittedData.jenisAset} berhasil dikirim!`);
-    }, 1500);
+  const submittedData = {
+    ...scanData,
+    uniqueCode: `V-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+    status: "Pending Validation",
+    submitted: true,
+    submittedAt: new Date().toISOString(),
   };
+
+  // Update riwayat dengan status submitted
+  setCheckHistory((prev) =>
+    prev.map((item) =>
+      item.id === scanData.id ? { ...item, ...submittedData } : item
+    )
+  );
+
+  console.log("Submitting Single Data:", submittedData);
+
+  // Simulasi proses pengiriman
+  setTimeout(() => {
+    setIsSubmitting(false);
+    
+    // Tutup loading dan tampilkan sukses
+    Swal.fire({
+      title: 'Berhasil Dikirim!',
+      html: `
+        <div class="text-center">
+          <svg class="w-12 h-12 text-green-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <p class="text-gray-700 font-medium mb-2">Data berhasil dikirim untuk validasi!</p>
+          <div class="bg-gray-50 p-3 rounded-lg mt-3">
+            <p class="text-sm text-gray-600"><strong>Detail Data:</strong></p>
+            <p class="text-xs text-gray-600">${submittedData.jenisAset} (${submittedData.id})</p>
+            <p class="text-xs text-gray-600">Lokasi: ${submittedData.lokasi}</p>
+            <p class="text-xs text-blue-600 font-mono mt-1">Kode: ${submittedData.uniqueCode}</p>
+          </div>
+        </div>
+      `,
+      icon: 'success',
+      confirmButtonColor: '#10B981',
+      confirmButtonText: 'Lanjutkan Scanning',
+      customClass: {
+        popup: 'font-poppins rounded-xl',
+        confirmButton: 'px-6 py-2 text-sm font-medium rounded-lg',
+      },
+    });
+  }, 1500);
+};
 
   // Fungsi untuk submit semua data yang sudah ada lokasi
-  const handleSubmitAll = () => {
-    const dataToSubmit = checkHistory.filter(
-      (item) => item.status === "Checked" && item.lokasi && !item.submitted
-    );
+ // Fungsi untuk submit semua data dengan SweetAlert
+const handleSubmitAll = async () => {
+  const dataToSubmit = checkHistory.filter(
+    (item) => item.status === "Checked" && item.lokasi && !item.submitted
+  );
 
-    if (dataToSubmit.length === 0) {
-      alert(
-        "Tidak ada data yang siap dikirim. Pastikan semua data sudah memiliki lokasi."
-      );
-      return;
-    }
+  if (dataToSubmit.length === 0) {
+    Swal.fire({
+      title: 'Tidak Ada Data',
+      text: 'Tidak ada data yang siap dikirim. Pastikan semua data sudah memiliki lokasi.',
+      icon: 'info',
+      confirmButtonColor: '#2563eb',
+      confirmButtonText: 'Oke',
+      customClass: {
+        popup: 'font-poppins rounded-xl',
+        confirmButton: 'px-4 py-2 text-sm font-medium rounded-lg',
+      },
+    });
+    return;
+  }
 
-    setIsSubmittingAll(true);
+  setIsSubmittingAll(true);
 
-    const submittedData = dataToSubmit.map((item) => ({
-      ...item,
-      uniqueCode: `V-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-      status: "Pending Validation",
-      submitted: true,
-      submittedAt: new Date().toISOString(),
-    }));
+  // Tampilkan loading SweetAlert
+  Swal.fire({
+    title: 'Mengirim Semua Data...',
+    html: `
+      <div class="text-center">
+        <p class="text-gray-700 mb-2">Sedang mengirim ${dataToSubmit.length} data</p>
+        <div class="w-full bg-gray-200 rounded-full h-2 mb-4">
+          <div class="bg-blue-600 h-2 rounded-full animate-pulse"></div>
+        </div>
+      </div>
+    `,
+    showConfirmButton: false,
+    allowOutsideClick: false,
+    customClass: {
+      popup: 'font-poppins rounded-xl',
+    },
+  });
 
-    // Update semua data yang dikirim
-    setCheckHistory((prev) =>
-      prev.map((item) => {
-        const submittedItem = submittedData.find((sub) => sub.id === item.id);
-        return submittedItem ? { ...item, ...submittedItem } : item;
-      })
-    );
+  const submittedData = dataToSubmit.map((item) => ({
+    ...item,
+    uniqueCode: `V-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+    status: "Pending Validation",
+    submitted: true,
+    submittedAt: new Date().toISOString(),
+  }));
 
-    console.log("Submitting All Data:", submittedData);
+  // Update semua data yang dikirim
+  setCheckHistory((prev) =>
+    prev.map((item) => {
+      const submittedItem = submittedData.find((sub) => sub.id === item.id);
+      return submittedItem ? { ...item, ...submittedItem } : item;
+    })
+  );
 
-    setTimeout(() => {
-      setIsSubmittingAll(false);
-      alert(
-        `${submittedData.length} data berhasil dikirim! Mengalihkan ke halaman verifikasi.`
-      );
+  console.log("Submitting All Data:", submittedData);
 
-      localStorage.setItem("lastSubmittedScan", JSON.stringify(submittedData));
-
-      router.push("/validation-verification");
-    }, 2000);
-  };
-
+  // Simulasi proses pengiriman
+  setTimeout(() => {
+    setIsSubmittingAll(false);
+    
+    // Tutup loading dan tampilkan sukses
+    Swal.fire({
+      title: 'Semua Data Berhasil Dikirim!',
+      html: `
+        <div class="text-center">
+          <svg class="w-12 h-12 text-green-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <p class="text-gray-700 font-medium mb-2">${submittedData.length} data berhasil dikirim!</p>
+          <div class="bg-gray-50 p-3 rounded-lg mt-3">
+            <p class="text-sm text-gray-600"><strong>Rincian:</strong></p>
+            <p class="text-xs text-gray-600">Total data: ${submittedData.length}</p>
+            <p class="text-xs text-gray-600">Status: Menunggu Validasi Manager</p>
+          </div>
+        </div>
+      `,
+      icon: 'success',
+      showCancelButton: true,
+      confirmButtonColor: '#10B981',
+      cancelButtonColor: '#6B7280',
+      confirmButtonText: 'Lihat Verifikasi',
+      cancelButtonText: 'Lanjut Scanning',
+      reverseButtons: true,
+      customClass: {
+        popup: 'font-poppins rounded-xl',
+        confirmButton: 'px-6 py-2 text-sm font-medium rounded-lg',
+        cancelButton: 'px-6 py-2 text-sm font-medium rounded-lg',
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        localStorage.setItem("lastSubmittedScan", JSON.stringify(submittedData));
+        router.push("/validation-verification");
+      }
+    });
+  }, 2000);
+};
   // Fungsi untuk menghapus data dari riwayat
   // Fungsi untuk menghapus data dari riwayat - PERBAIKAN
   const handleDeleteData = async (scanData) => {
@@ -388,13 +576,14 @@ export default function SerialScanningPage() {
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#4CAF50",
+       reverseButtons: true,
       cancelButtonColor: "#d33",
       confirmButtonText: "Ya, hapus!",
       cancelButtonText: "Batal",
       customClass: {
         popup: "font-poppins rounded-xl",
-        confirmButton: "px-4 py-2 text-sm font-medium rounded-lg",
-        cancelButton: "px-4 py-2 text-sm font-medium rounded-lg",
+        confirmButton: "px-4 py-2 text-sm font-medium ",
+        cancelButton: "px-4 py-2 text-sm font-medium ",
       },
     });
 

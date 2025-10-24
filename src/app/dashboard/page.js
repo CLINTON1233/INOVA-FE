@@ -322,7 +322,7 @@ export default function DashboardPage() {
             </button>
 
             <button
-              onClick={() => router.push("/reports")}
+              onClick={() => router.push("/reports-analytics")}
               className="flex flex-col items-center justify-center p-3 md:p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition text-gray-700 hover:text-purple-700"
             >
               <FileText

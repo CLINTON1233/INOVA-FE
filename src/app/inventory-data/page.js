@@ -17,7 +17,9 @@ import {
   Camera,
   Box,
   CheckCircle,
+  Trash,
   MapPin,
+  ScanLine,
   Calendar,
   User,
   ChevronDown,
@@ -25,6 +27,7 @@ import {
   X,
 } from "lucide-react";
 import LayoutDashboard from "../components/LayoutDashboard";
+import Swal from "sweetalert2";
 
 export default function InventoryDataPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -121,7 +124,7 @@ export default function InventoryDataPage() {
       diperbaruiOleh: "Yovan Sakti",
       spesifikasi: "1080p, Night Vision, IP Camera",
       kodeUnik: "V-905-JKL-E",
-    }
+    },
   ];
 
   // Filter data
@@ -144,8 +147,10 @@ export default function InventoryDataPage() {
   // Hitung statistik
   const stats = {
     total: inventoryData.length,
-    perangkat: inventoryData.filter((item) => item.kategori === "Perangkat").length,
-    material: inventoryData.filter((item) => item.kategori === "Material").length,
+    perangkat: inventoryData.filter((item) => item.kategori === "Perangkat")
+      .length,
+    material: inventoryData.filter((item) => item.kategori === "Material")
+      .length,
   };
 
   // Toggle select item
@@ -164,16 +169,157 @@ export default function InventoryDataPage() {
     }
   };
 
-  // Fungsi untuk membuka modal detail
+  // Fungsi untuk menampilkan detail dengan SweetAlert
   const handleShowDetail = (item) => {
-    setSelectedItem(item);
-    setShowDetailModal(true);
-  };
+    Swal.fire({
+      title: `<div class="font-poppins text-lg font-semibold text-black">Detail Aset IT</div>`,
+      html: `
+      <div class="font-poppins text-left space-y-3 max-h-[50vh] overflow-y-auto pr-2">
+        <!-- Header Info -->
+        <div>
+          <h4 class="text-base font-semibold text-gray-900">${item.nama}</h4>
+          <p class="text-xs text-gray-500 mt-1">${item.jenisAset} • ${
+        item.kategori
+      }</p>
+        </div>
 
+        <!-- Informasi Dasar -->
+        <div>
+          <h5 class="text-xs font-medium text-gray-700 mb-2">INFORMASI</h5>
+          <div class="bg-gray-50 rounded-lg p-3 space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="text-xs text-gray-600">ID Aset</span>
+              <span class="text-xs font-medium text-blue-700">${item.id}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-xs text-gray-600">Kode Unik</span>
+              <span class="text-xs font-mono text-blue-600">${
+                item.kodeUnik
+              }</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Identifikasi -->
+        <div>
+          <h5 class="text-xs font-medium text-gray-700 mb-2">IDENTIFIKASI</h5>
+          <div class="bg-gray-50 rounded-lg p-3 space-y-2">
+            ${
+              item.serialNumber
+                ? `
+            <div class="flex justify-between items-center">
+              <span class="text-xs text-gray-600">Serial Number</span>
+              <span class="text-xs font-mono text-gray-700">${item.serialNumber}</span>
+            </div>
+            `
+                : ""
+            }
+            ${
+              item.barcode
+                ? `
+            <div class="flex justify-between items-center">
+              <span class="text-xs text-gray-600">Barcode</span>
+              <span class="text-xs font-mono text-gray-700">${item.barcode}</span>
+            </div>
+            `
+                : ""
+            }
+          </div>
+        </div>
+
+        <!-- Spesifikasi -->
+        <div>
+          <h5 class="text-xs font-medium text-gray-700 mb-2">SPESIFIKASI</h5>
+          <div class="bg-gray-50 rounded-lg p-3">
+            <p class="text-xs text-gray-700">${item.spesifikasi}</p>
+          </div>
+        </div>
+
+        <!-- Lokasi -->
+        <div>
+          <h5 class="text-xs font-medium text-gray-700 mb-2">LOKASI</h5>
+          <div class="bg-gray-50 rounded-lg p-3 space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="text-xs text-gray-600">Lokasi</span>
+              <span class="text-xs font-medium text-gray-700">${
+                item.lokasi
+              }</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-xs text-gray-600">Departemen</span>
+              <span class="text-xs font-medium text-gray-700">${
+                item.departemen
+              }</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Update Terakhir -->
+        <div>
+          <h5 class="text-xs font-medium text-gray-700 mb-2">UPDATE TERAKHIR</h5>
+          <div class="bg-gray-50 rounded-lg p-3 space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="text-xs text-gray-600">Tanggal Pengecekan</span>
+              <span class="text-xs font-medium text-gray-700">${
+                item.tanggalPengecekan
+              }</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-xs text-gray-600">Dicek Oleh</span>
+              <span class="text-xs font-medium text-gray-700">${
+                item.diperbaruiOleh
+              }</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `,
+      width: "500px",
+      padding: "16px",
+      showCloseButton: true,
+      showConfirmButton: true,
+      confirmButtonText: "Tutup",
+      confirmButtonColor: "#2563eb",
+      customClass: {
+        popup: "rounded-xl font-poppins",
+        closeButton: "text-gray-400 hover:text-gray-600 text-lg -mt-1 -mr-1",
+        confirmButton: "font-poppins font-medium text-sm px-10 py-2",
+      },
+    });
+  };
   // Fungsi untuk menutup modal detail
   const handleCloseDetail = () => {
     setShowDetailModal(false);
     setSelectedItem(null);
+  };
+
+  // Fungsi untuk menghapus item dengan konfirmasi
+  const handleDeleteItem = (item) => {
+    Swal.fire({
+      title: "Hapus Aset?",
+      text: `Anda yakin ingin menghapus ${item.nama} (${item.id})?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#28a745",
+
+      cancelButtonColor: "#d65130ff",
+      confirmButtonText: "Ya, Hapus!",
+      cancelButtonText: "Batal",
+      reverseButtons: true,
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Logika hapus data disini
+        // Contoh: hapus dari state atau API call
+
+        Swal.fire({
+          title: "Berhasil!",
+          text: `Aset ${item.nama} berhasil dihapus`,
+          icon: "success",
+          confirmButtonColor: "#3085d6",
+          confirmButtonText: "OK",
+        });
+      }
+    });
   };
 
   const getCategoryIcon = (kategori, jenisAset) => {
@@ -181,20 +327,8 @@ export default function InventoryDataPage() {
       return <Cable className="w-4 h-4 text-green-600" />;
     }
 
-    switch (jenisAset) {
-      case "Komputer":
-        return <Cpu className="w-4 h-4 text-blue-600" />;
-      case "Server":
-        return <Server className="w-4 h-4 text-purple-600" />;
-      case "Laptop":
-        return <Monitor className="w-4 h-4 text-indigo-600" />;
-      case "CCTV":
-        return <Camera className="w-4 h-4 text-orange-600" />;
-      case "Monitor":
-        return <Monitor className="w-4 h-4 text-cyan-600" />;
-      default:
-        return <Box className="w-4 h-4 text-gray-600" />;
-    }
+    // Untuk semua Perangkat (Komputer, Server, CCTV, dll) gunakan warna biru
+    return <Cpu className="w-4 h-4 text-blue-600" />;
   };
 
   const toggleItemExpansion = (id) => {
@@ -250,9 +384,7 @@ export default function InventoryDataPage() {
           <MapPin className="w-3 h-3 mr-1" />
           {item.lokasi}
         </div>
-        <div className="text-xs text-gray-500">
-          {item.tanggalPengecekan}
-        </div>
+        <div className="text-xs text-gray-500">{item.tanggalPengecekan}</div>
       </div>
 
       {/* Expanded Details */}
@@ -261,7 +393,7 @@ export default function InventoryDataPage() {
           {/* Identifikasi */}
           <div>
             <div className="text-xs font-semibold text-gray-500 mb-1">
-              IDENTIFIKASI 
+              IDENTIFIKASI
             </div>
             <div className="text-sm">
               <span className="font-medium">Kode Unik: </span>
@@ -284,9 +416,7 @@ export default function InventoryDataPage() {
             <div className="text-xs font-semibold text-gray-500 mb-1">
               DEPARTEMEN
             </div>
-            <div className="text-xs text-gray-600">
-              {item.departemen}
-            </div>
+            <div className="text-xs text-gray-600">{item.departemen}</div>
           </div>
 
           {/* Update Info */}
@@ -315,9 +445,12 @@ export default function InventoryDataPage() {
               <Eye className="w-3 h-3 mr-1" />
               Detail
             </button>
-            <button className="flex-1 flex items-center justify-center px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-xs">
+            <button
+              onClick={() => handleDeleteItem(item)}
+              className="flex-1 flex items-center justify-center px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-xs"
+            >
               <Trash2 className="w-3 h-3 mr-1" />
-              Hapus
+              Hapus Data
             </button>
           </div>
         </div>
@@ -335,7 +468,7 @@ export default function InventoryDataPage() {
               <Box className="w-6 h-6 md:w-7 md:h-7 mr-2 md:mr-3" />
               <div>
                 <h1 className="text-xl md:text-2xl font-semibold">
-       INVENTARIS ASET IT
+                  INVENTARIS ASET IT
                 </h1>
                 <p className="text-blue-100 mt-1 text-xs md:text-sm">
                   Daftar lengkap semua perangkat dan material IT perusahaan
@@ -348,56 +481,57 @@ export default function InventoryDataPage() {
                 onClick={() => router.push("/scanning")}
                 className="flex items-center px-3 py-2 md:px-4 md:py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition font-semibold text-xs md:text-sm"
               >
-                <Plus className="w-4 h-4 mr-1 md:mr-2" />
+                <ScanLine className="w-4 h-4 mr-1 md:mr-2" />
                 <span className="hidden sm:inline">Pindai Aset Baru</span>
-                <span className="sm:hidden">Tambah</span>
+                <span className="sm:hidden">Pindai Aset Baru</span>
               </button>
             </div>
           </div>
         </div>
 
-     {/* Quick Stats - Refined Layout */}
-<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-  {/* Kartu Perangkat IT */}
-  <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
-    <div className="flex items-center justify-between">
-      <div>
-        <div className="text-base md:text-lg font-semibold text-gray-800">
-          Perangkat IT
-        </div>
-        <div className="text-3xl md:text-4xl font-bold text-gray-900 mt-1">
-          {stats.perangkat}
-        </div>
-        <div className="text-sm text-gray-500 mt-1">
-          Total perangkat terdaftar: Komputer, Server, CCTV, dan lainnya
-        </div>
-      </div>
-      <div className="p-3 bg-blue-50 rounded-lg">
-        <Cpu className="w-7 h-7 text-blue-600" />
-      </div>
-    </div>
-  </div>
+        {/* Quick Stats - Refined Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Kartu Perangkat IT */}
+          <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-base md:text-lg font-semibold text-gray-800">
+                  Perangkat IT
+                </div>
+                <div className="text-3xl md:text-4xl font-bold text-gray-900 mt-1">
+                  {stats.perangkat}
+                </div>
+                <div className="text-sm text-gray-500 mt-1">
+                  Total perangkat terdaftar: Komputer, Server, CCTV, dan lainnya
+                </div>
+              </div>
+              <div className="p-3 bg-blue-50 rounded-lg">
+                <Cpu className="w-7 h-7 text-blue-600" />
+              </div>
+            </div>
+          </div>
 
-  {/* Kartu Material IT */}
-  <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
-    <div className="flex items-center justify-between">
-      <div>
-        <div className="text-base md:text-lg font-semibold text-gray-800">
-          Material IT
+          {/* Kartu Material IT */}
+          <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-base md:text-lg font-semibold text-gray-800">
+                  Material IT
+                </div>
+                <div className="text-3xl md:text-4xl font-bold text-gray-900 mt-1">
+                  {stats.material}
+                </div>
+                <div className="text-sm text-gray-500 mt-1">
+                  Total material terdaftar: Kabel, trunking, pipa jaringan, dan
+                  pendukung
+                </div>
+              </div>
+              <div className="p-3 bg-green-50 rounded-lg">
+                <Cable className="w-7 h-7 text-green-600" />
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="text-3xl md:text-4xl font-bold text-gray-900 mt-1">
-          {stats.material}
-        </div>
-        <div className="text-sm text-gray-500 mt-1">
-          Total material terdaftar: Kabel, trunking, pipa jaringan, dan pendukung
-        </div>
-      </div>
-      <div className="p-3 bg-green-50 rounded-lg">
-        <Cable className="w-7 h-7 text-green-600" />
-      </div>
-    </div>
-  </div>
-</div>
 
         {/* Inventory Table */}
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
@@ -574,6 +708,13 @@ export default function InventoryDataPage() {
                             <Eye className="w-3 h-3 mr-1" />
                             Detail
                           </button>
+                          <button
+                            onClick={() => handleDeleteItem(item)}
+                            className="flex items-center px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-xs"
+                          >
+                            <Trash2 className="w-3 h-3 mr-1" />
+                            Hapus Data
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -604,156 +745,6 @@ export default function InventoryDataPage() {
           )}
         </div>
       </div>
-
-      {/* Modal Detail Aset */}
-      {showDetailModal && selectedItem && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 sm:p-4 z-50">
-          <div className="bg-white rounded-xl shadow-lg max-w-md w-full max-h-[85vh] overflow-y-auto">
-            {/* Header Modal */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200">
-              <div className="flex items-center">
-                <Eye className="w-4 h-4 mr-2 text-blue-600" />
-                <h3 className="text-base font-semibold text-gray-800">
-                  Detail Aset
-                </h3>
-              </div>
-              <button
-                onClick={handleCloseDetail}
-                className="text-gray-400 hover:text-gray-600 transition"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Content Modal */}
-            <div className="p-4">
-              {/* Header Info */}
-              <div className="mb-4">
-                <h4 className="text-lg font-bold text-gray-900">
-                  {selectedItem.nama}
-                </h4>
-                <p className="text-xs text-gray-500 mt-1">
-                  {selectedItem.jenisAset} • {selectedItem.kategori}
-                </p>
-              </div>
-
-              {/* Informasi Dasar */}
-              <div className="mb-4">
-                <h5 className="text-xs font-semibold text-gray-700 mb-2">
-                  INFORMASI
-                </h5>
-                <div className="bg-gray-50 rounded-lg p-3 space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-600">ID Aset</span>
-                    <span className="text-xs font-medium text-blue-700">
-                      {selectedItem.id}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-600">Kode Unik</span>
-                    <span className="text-xs font-mono text-blue-600">
-                      {selectedItem.kodeUnik}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Identifikasi */}
-              <div className="mb-4">
-                <h5 className="text-xs font-semibold text-gray-700 mb-2">
-                  IDENTIFIKASI
-                </h5>
-                <div className="bg-gray-50 rounded-lg p-3 space-y-2">
-                  {selectedItem.serialNumber && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-600">
-                        Serial Number
-                      </span>
-                      <span className="text-xs font-mono text-gray-700">
-                        {selectedItem.serialNumber}
-                      </span>
-                    </div>
-                  )}
-                  {selectedItem.barcode && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-600">Barcode</span>
-                      <span className="text-xs font-mono text-gray-700">
-                        {selectedItem.barcode}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Spesifikasi */}
-              <div className="mb-4">
-                <h5 className="text-xs font-semibold text-gray-700 mb-2">
-                  SPESIFIKASI
-                </h5>
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <p className="text-xs text-gray-700">
-                    {selectedItem.spesifikasi}
-                  </p>
-                </div>
-              </div>
-
-              {/* Lokasi */}
-              <div className="mb-4">
-                <h5 className="text-xs font-semibold text-gray-700 mb-2">
-                  LOKASI
-                </h5>
-                <div className="bg-gray-50 rounded-lg p-3 space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-600">Lokasi</span>
-                    <span className="text-xs font-medium text-gray-700">
-                      {selectedItem.lokasi}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-600">Departemen</span>
-                    <span className="text-xs font-medium text-gray-700">
-                      {selectedItem.departemen}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Update Terakhir */}
-              <div className="mb-4">
-                <h5 className="text-xs font-semibold text-gray-700 mb-2">
-                  UPDATE TERAKHIR
-                </h5>
-                <div className="bg-gray-50 rounded-lg p-3 space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-600">
-                      Tanggal Pengecekan
-                    </span>
-                    <span className="text-xs font-medium text-gray-700">
-                      {selectedItem.tanggalPengecekan}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-600">
-                      Diperbarui Oleh
-                    </span>
-                    <span className="text-xs font-medium text-gray-700">
-                      {selectedItem.diperbaruiOleh}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-2 pt-4 border-t border-gray-200">
-                <button className="flex-1 flex items-center justify-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium">
-                  <X className="w-4 h-4 mr-2" />
-                  Tutup
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </LayoutDashboard>
   );
 }
