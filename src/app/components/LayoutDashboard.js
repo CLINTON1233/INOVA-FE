@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Swal from "sweetalert2";
 
 export default function LayoutDashboard({ children, activeMenu }) {
   const [activeMenuIndex, setActiveMenuIndex] = useState(null);
@@ -58,13 +59,74 @@ export default function LayoutDashboard({ children, activeMenu }) {
     };
   }, []);
 
-  const handleLogout = () => {
-    // Logic logout disini
-    console.log("Logging out...");
-    // Contoh: clear localStorage, redirect ke login page, dll.
-    localStorage.removeItem("userToken");
-    router.push("/login");
-  };
+const handleLogout = () => {
+  // Tutup dropdown user
+  setUserDropdownOpen(false);
+  setMobileMenuOpen(false);
+
+  Swal.fire({
+    title: 'Konfirmasi Logout',
+    text: "Apakah Anda yakin ingin logout dari sistem?",
+    icon: 'warning',
+    iconColor: '#FACC15', // Warna kuning
+    showCancelButton: true,
+    confirmButtonColor:  "#28a745",
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Ya, Logout!',
+    reverseButtons: true,
+    cancelButtonText: 'Batal',
+    background: '#ffffff',
+    color: '#333333',
+    customClass: {
+      popup: 'rounded-xl font-poppins',
+      confirmButton: 'px-6 py-2 rounded-lg font-medium',
+      cancelButton: 'px-6 py-2 rounded-lg font-medium'
+    }
+  }).then((result) => {
+    if (result.isConfirmed) {
+      // Tampilkan loading
+      Swal.fire({
+        title: 'Logging out...',
+        text: 'Sedang memproses logout...',
+        icon: 'info',
+        iconColor: '#2794ecff', // Warna kuning
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      // Simulasi proses logout (bisa diganti dengan API call)
+      setTimeout(() => {
+        // Clear localStorage atau session
+        localStorage.removeItem("userToken");
+        localStorage.removeItem("userData");
+        sessionStorage.clear();
+
+        // Tampilkan success message
+        Swal.fire({
+          title: 'Logout Berhasil!',
+          text: 'Anda telah berhasil logout dari sistem.',
+          icon: 'success',
+          iconColor: '#28a745', // Warna kuning
+          confirmButtonColor:  "#28a745",
+          confirmButtonText: 'OK',
+          background: '#ffffff',
+          color: '#333333',
+          customClass: {
+            popup: 'rounded-xl font-poppins',
+            confirmButton: 'px-6 py-2 rounded-lg font-medium'
+          }
+        }).then(() => {
+          // Redirect ke halaman login
+          router.push("/login");
+        });
+      }, 1500);
+    }
+  });
+};
+
 
   return (
     <div className="min-h-screen bg-gray-100">

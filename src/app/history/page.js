@@ -50,187 +50,187 @@ export default function HistoryPage() {
 
   const router = useRouter();
 
-  // Data history sesuai dengan proposal
+  // History data according to proposal
   const historyData = [
     {
       id: "HIS-001",
       scanId: "PC-IT-2025-001",
-      jenisAset: "Komputer",
-      kategori: "Perangkat",
-      lokasi: "Infrastruktur & Jaringan",
-      nomorSeri: "NS-PC-887632",
+      assetType: "Computer",
+      category: "Perangkat",
+      location: "Infrastructure & Networking",
+      serialNumber: "NS-PC-887632",
       barcode: null,
       status: "Valid",
       statusColor: "green",
-      tanggal: "2025-10-28",
-      waktu: "14:30:15",
+      date: "2025-10-28",
+      time: "14:30:15",
       verifiedBy: "Clinton Alfaro",
       department: "IT Infrastructure & Networking",
-      scanMethod: "Kamera",
-      validationTime: "2 detik",
+      scanMethod: "Camera",
+      validationTime: "2 seconds",
       uniqueCode: "V-901-XYZ-A",
-      notes: "Serial number valid, kondisi perangkat baik",
+      notes: "Serial number valid, device condition good",
       activityType: "scan_validation",
     },
     {
       id: "HIS-002",
       scanId: "MAT-KBL-045",
-      jenisAset: "Kabel RJ45",
-      kategori: "Material",
-      lokasi: "Workshop 2",
-      nomorSeri: null,
+      assetType: "RJ45 Cable",
+      category: "Material",
+      location: "Workshop 2",
+      serialNumber: null,
       barcode: "BC-RJ45-554321",
       status: "Valid",
       statusColor: "green",
-      tanggal: "2025-10-28",
-      waktu: "14:25:40",
+      date: "2025-10-28",
+      time: "14:25:40",
       verifiedBy: "Wahyu Hidayat",
       department: "Facilities & Networking",
-      scanMethod: "Kamera",
-      validationTime: "1.5 detik",
+      scanMethod: "Camera",
+      validationTime: "1.5 seconds",
       uniqueCode: "V-902-ABC-B",
-      notes: "Barcode terbaca dengan jelas",
+      notes: "Barcode read clearly",
       activityType: "scan_validation",
     },
     {
       id: "HIS-003",
       scanId: "SRV-NET-012",
-      jenisAset: "Server",
-      kategori: "Perangkat",
-      lokasi: "Ruang Server L3",
-      nomorSeri: "NS-SRV-992345",
+      assetType: "Server",
+      category: "Perangkat",
+      location: "Server Room L3",
+      serialNumber: "NS-SRV-992345",
       barcode: null,
       status: "Error",
       statusColor: "red",
-      tanggal: "2025-10-28",
-      waktu: "14:18:22",
+      date: "2025-10-28",
+      time: "14:18:22",
       verifiedBy: "Ikhsan Kurniawan",
       department: "System Operation",
-      scanMethod: "Input Manual",
-      validationTime: "3 detik",
+      scanMethod: "Manual Input",
+      validationTime: "3 seconds",
       uniqueCode: "V-903-DEF-C",
-      notes: "Format serial number tidak sesuai standar",
+      notes: "Serial number format does not match standard",
       activityType: "validation_error",
     },
     {
       id: "HIS-004",
       scanId: "MAT-TRK-987",
-      jenisAset: "Trunking",
-      kategori: "Material",
-      lokasi: "Kantor Utama L1",
-      nomorSeri: null,
+      assetType: "Trunking",
+      category: "Material",
+      location: "Main Office L1",
+      serialNumber: null,
       barcode: "BC-TRK-773216",
       status: "Valid",
       statusColor: "green",
-      tanggal: "2025-10-28",
-      waktu: "14:10:05",
+      date: "2025-10-28",
+      time: "14:10:05",
       verifiedBy: "Mahmud Amma Rizki",
       department: "Operations & End User Service",
-      scanMethod: "Kamera",
-      validationTime: "1.8 detik",
+      scanMethod: "Camera",
+      validationTime: "1.8 seconds",
       uniqueCode: "V-904-GHI-D",
-      notes: "Material dalam kondisi baru",
+      notes: "Material in new condition",
       activityType: "scan_validation",
     },
     {
       id: "HIS-005",
       scanId: "CCTV-SEC-003",
-      jenisAset: "CCTV",
-      kategori: "Perangkat",
-      lokasi: "Pintu Gerbang",
-      nomorSeri: "NS-CCTV-661234",
+      assetType: "CCTV",
+      category: "Perangkat",
+      location: "Main Gate",
+      serialNumber: "NS-CCTV-661234",
       barcode: null,
       status: "Valid",
       statusColor: "green",
-      tanggal: "2025-10-28",
-      waktu: "14:05:33",
+      date: "2025-10-28",
+      time: "14:05:33",
       verifiedBy: "Yovan Sakti",
       department: "Facilities & Networking",
-      scanMethod: "Kamera",
-      validationTime: "2.2 detik",
+      scanMethod: "Camera",
+      validationTime: "2.2 seconds",
       uniqueCode: "V-905-JKL-E",
-      notes: "Perangkat berfungsi normal",
+      notes: "Device functioning normally",
       activityType: "scan_validation",
     },
     {
       id: "HIS-006",
       scanId: "LPT-IT-2025-002",
-      jenisAset: "Laptop",
-      kategori: "Perangkat",
-      lokasi: "Main Office L2",
-      nomorSeri: "NS-LPT-445321",
+      assetType: "Laptop",
+      category: "Perangkat",
+      location: "Main Office L2",
+      serialNumber: "NS-LPT-445321",
       barcode: null,
       status: "Pending",
       statusColor: "yellow",
-      tanggal: "2025-10-28",
-      waktu: "13:55:20",
+      date: "2025-10-28",
+      time: "13:55:20",
       verifiedBy: "Clinton Alfaro",
       department: "IT Infrastructure & Networking",
-      scanMethod: "Input Manual",
-      validationTime: "2.5 detik",
+      scanMethod: "Manual Input",
+      validationTime: "2.5 seconds",
       uniqueCode: "V-906-MNO-F",
-      notes: "Menunggu konfirmasi supervisor",
+      notes: "Waiting for supervisor confirmation",
       activityType: "pending_validation",
     },
     {
       id: "HIS-007",
       scanId: "MAT-PIP-056",
-      jenisAset: "Pipa Jaringan",
-      kategori: "Material",
-      lokasi: "Workshop 1",
-      nomorSeri: null,
+      assetType: "Network Pipe",
+      category: "Material",
+      location: "Workshop 1",
+      serialNumber: null,
       barcode: "BC-PIP-998765",
       status: "Error",
       statusColor: "red",
-      tanggal: "2025-10-28",
-      waktu: "13:45:10",
+      date: "2025-10-28",
+      time: "13:45:10",
       verifiedBy: "Wahyu Hidayat",
       department: "Facilities & Networking",
-      scanMethod: "Kamera",
-      validationTime: "4 detik",
+      scanMethod: "Camera",
+      validationTime: "4 seconds",
       uniqueCode: "V-907-PQR-G",
-      notes: "Barcode rusak, perlu input manual",
+      notes: "Barcode damaged, requires manual input",
       activityType: "validation_error",
     },
     {
       id: "HIS-008",
       scanId: "SWT-NET-008",
-      jenisAset: "Network Switch",
-      kategori: "Perangkat",
-      lokasi: "Ruang Server L3",
-      nomorSeri: "NS-SWT-778899",
+      assetType: "Network Switch",
+      category: "Perangkat",
+      location: "Server Room L3",
+      serialNumber: "NS-SWT-778899",
       barcode: null,
       status: "Valid",
       statusColor: "green",
-      tanggal: "2025-10-27",
-      waktu: "16:20:15",
+      date: "2025-10-27",
+      time: "16:20:15",
       verifiedBy: "Ikhsan Kurniawan",
       department: "System Operation",
-      scanMethod: "Kamera",
-      validationTime: "1.7 detik",
+      scanMethod: "Camera",
+      validationTime: "1.7 seconds",
       uniqueCode: "V-908-STU-H",
-      notes: "Switch berfungsi optimal",
+      notes: "Switch functioning optimally",
       activityType: "scan_validation",
     },
   ];
 
-  // Data statistik
+  // Statistics data
   const stats = {
     total: historyData.length,
     valid: historyData.filter((item) => item.status === "Valid").length,
     error: historyData.filter((item) => item.status === "Error").length,
     pending: historyData.filter((item) => item.status === "Pending").length,
-    perangkat: historyData.filter((item) => item.kategori === "Perangkat")
+    perangkat: historyData.filter((item) => item.category === "Perangkat")
       .length,
-    material: historyData.filter((item) => item.kategori === "Material").length,
+    material: historyData.filter((item) => item.category === "Material").length,
   };
 
-  // Data activity log
+  // Activity log data
   const activityLog = [
     {
       id: "ACT-001",
       action: "scan_success",
-      description: "Berhasil memindai perangkat Komputer",
+      description: "Successfully scanned Computer device",
       user: "Clinton Alfaro",
       timestamp: "2025-10-28 14:30:15",
       icon: "scan",
@@ -239,7 +239,7 @@ export default function HistoryPage() {
     {
       id: "ACT-002",
       action: "validation_success",
-      description: "Validasi berhasil untuk Kabel RJ45",
+      description: "Validation successful for RJ45 Cable",
       user: "Wahyu Hidayat",
       timestamp: "2025-10-28 14:25:40",
       icon: "check",
@@ -248,7 +248,7 @@ export default function HistoryPage() {
     {
       id: "ACT-003",
       action: "validation_error",
-      description: "Error validasi format serial number Server",
+      description: "Serial number format validation error for Server",
       user: "Ikhsan Kurniawan",
       timestamp: "2025-10-28 14:18:22",
       icon: "alert",
@@ -257,7 +257,7 @@ export default function HistoryPage() {
     {
       id: "ACT-004",
       action: "manual_input",
-      description: "Input manual data Trunking",
+      description: "Manual input for Trunking data",
       user: "Mahmud Amma Rizki",
       timestamp: "2025-10-28 14:10:05",
       icon: "clipboard",
@@ -266,7 +266,7 @@ export default function HistoryPage() {
     {
       id: "ACT-005",
       action: "scan_success",
-      description: "Pemindaian CCTV berhasil",
+      description: "CCTV scanning successful",
       user: "Yovan Sakti",
       timestamp: "2025-10-28 14:05:33",
       icon: "scan",
@@ -275,7 +275,7 @@ export default function HistoryPage() {
     {
       id: "ACT-006",
       action: "pending_validation",
-      description: "Validasi Laptop menunggu approval",
+      description: "Laptop validation waiting for approval",
       user: "Clinton Alfaro",
       timestamp: "2025-10-28 13:55:20",
       icon: "clock",
@@ -283,79 +283,78 @@ export default function HistoryPage() {
     },
   ];
 
-  // Fungsi untuk menampilkan detail history dengan SweetAlert
-// Fungsi untuk menampilkan detail history dengan SweetAlert
-const handleShowDetail = (item) => {
-  Swal.fire({
-    title: `<div class="font-poppins text-lg font-semibold text-black">Detail History Pengecekan</div>`,
-    html: `
+  // Function to show history details with SweetAlert
+  const handleShowDetail = (item) => {
+    Swal.fire({
+      title: `<div class="font-poppins text-lg font-semibold text-black">Inspection History Details</div>`,
+      html: `
       <div class="font-poppins text-left space-y-3 max-h-[50vh] overflow-y-auto pr-2">
         <!-- Header Info -->
         <div class="bg-white rounded-lg p-3 border border-gray-200">
-          <h4 class="text-base font-semibold text-gray-900">${item.jenisAset}</h4>
-          <p class="text-xs text-gray-500 mt-1">${item.kategori} • ${item.scanMethod}</p>
+          <h4 class="text-base font-semibold text-gray-900">${item.assetType}</h4>
+          <p class="text-xs text-gray-500 mt-1">${item.category} • ${item.scanMethod}</p>
         </div>
 
-        <!-- Informasi Aset -->
+        <!-- Asset Information -->
         <div>
-          <h5 class="text-xs font-medium text-gray-700 mb-2">INFORMASI ASET</h5>
+          <h5 class="text-xs font-medium text-gray-700 mb-2">ASSET INFORMATION</h5>
           <div class="bg-white rounded-lg p-3 space-y-2 border border-gray-200">
             <div class="flex justify-between items-center">
-              <span class="text-xs text-gray-600">ID Scan</span>
+              <span class="text-xs text-gray-600">Scan ID</span>
               <span class="text-xs font-medium text-blue-700">${item.scanId}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-xs text-gray-600">ID History</span>
+              <span class="text-xs text-gray-600">History ID</span>
               <span class="text-xs font-medium text-gray-700">${item.id}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-xs text-gray-600">${item.nomorSeri ? 'Nomor Seri' : 'Barcode'}</span>
-              <span class="text-xs font-mono text-blue-600">${item.nomorSeri || item.barcode}</span>
+              <span class="text-xs text-gray-600">${item.serialNumber ? 'Serial Number' : 'Barcode'}</span>
+              <span class="text-xs font-mono text-blue-600">${item.serialNumber || item.barcode}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-xs text-gray-600">Kode Unik</span>
+              <span class="text-xs text-gray-600">Unique Code</span>
               <span class="text-xs font-mono text-gray-700">${item.uniqueCode}</span>
             </div>
           </div>
         </div>
 
-        <!-- Lokasi & Departemen -->
+        <!-- Location & Department -->
         <div>
-          <h5 class="text-xs font-medium text-gray-700 mb-2">LOKASI & DEPARTEMEN</h5>
+          <h5 class="text-xs font-medium text-gray-700 mb-2">LOCATION & DEPARTMENT</h5>
           <div class="bg-white rounded-lg p-3 space-y-2 border border-gray-200">
             <div class="flex justify-between items-center">
-              <span class="text-xs text-gray-600">Lokasi</span>
-              <span class="text-xs font-medium text-gray-700">${item.lokasi}</span>
+              <span class="text-xs text-gray-600">Location</span>
+              <span class="text-xs font-medium text-gray-700">${item.location}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-xs text-gray-600">Departemen</span>
+              <span class="text-xs text-gray-600">Department</span>
               <span class="text-xs font-medium text-gray-700">${item.department}</span>
             </div>
           </div>
         </div>
 
-        <!-- Waktu Pengecekan -->
+        <!-- Inspection Time -->
         <div>
-          <h5 class="text-xs font-medium text-gray-700 mb-2">WAKTU PENGECEKAN</h5>
+          <h5 class="text-xs font-medium text-gray-700 mb-2">INSPECTION TIME</h5>
           <div class="bg-white rounded-lg p-3 space-y-2 border border-gray-200">
             <div class="flex justify-between items-center">
-              <span class="text-xs text-gray-600">Tanggal</span>
-              <span class="text-xs font-medium text-gray-700">${item.tanggal}</span>
+              <span class="text-xs text-gray-600">Date</span>
+              <span class="text-xs font-medium text-gray-700">${item.date}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-xs text-gray-600">Waktu</span>
-              <span class="text-xs font-medium text-gray-700">${item.waktu}</span>
+              <span class="text-xs text-gray-600">Time</span>
+              <span class="text-xs font-medium text-gray-700">${item.time}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-xs text-gray-600">Waktu Validasi</span>
+              <span class="text-xs text-gray-600">Validation Time</span>
               <span class="text-xs font-medium text-gray-700">${item.validationTime}</span>
             </div>
           </div>
         </div>
 
-        <!-- Status & Verifikasi -->
+        <!-- Status & Verification -->
         <div>
-          <h5 class="text-xs font-medium text-gray-700 mb-2">STATUS & VERIFIKASI</h5>
+          <h5 class="text-xs font-medium text-gray-700 mb-2">STATUS & VERIFICATION</h5>
           <div class="bg-white rounded-lg p-3 space-y-2 border border-gray-200">
             <div class="flex justify-between items-center">
               <span class="text-xs text-gray-600">Status</span>
@@ -370,22 +369,22 @@ const handleShowDetail = (item) => {
               </span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-xs text-gray-600">Metode Scan</span>
+              <span class="text-xs text-gray-600">Scan Method</span>
               <span class="text-xs font-medium text-gray-700">${item.scanMethod}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-xs text-gray-600">Diverifikasi Oleh</span>
+              <span class="text-xs text-gray-600">Verified By</span>
               <span class="text-xs font-medium text-gray-700">${item.verifiedBy}</span>
             </div>
           </div>
         </div>
 
-        <!-- Catatan -->
+        <!-- Notes -->
         ${
           item.notes
             ? `
         <div>
-          <h5 class="text-xs font-medium text-gray-700 mb-2">CATATAN</h5>
+          <h5 class="text-xs font-medium text-gray-700 mb-2">NOTES</h5>
           <div class="bg-white rounded-lg p-3 border border-gray-200">
             <p class="text-xs text-gray-700">${item.notes}</p>
           </div>
@@ -395,38 +394,40 @@ const handleShowDetail = (item) => {
         }
       </div>
     `,
-    width: "500px",
-    padding: "16px",
-    showCloseButton: true,
-    showConfirmButton: true,
-    confirmButtonText: "Tutup",
-    confirmButtonColor: "#2563eb",
-    customClass: {
-      popup: "rounded-xl font-poppins bg-white",
-      closeButton: "text-gray-400 hover:text-gray-600 text-lg -mt-1 -mr-1",
-      confirmButton: "font-poppins font-medium text-sm px-4 py-2",
-    }
-  });
-};
-const [expandedItem, setExpandedItem] = useState(null);
+      width: "500px",
+      padding: "16px",
+      showCloseButton: true,
+      showConfirmButton: true,
+      confirmButtonText: "Close",
+      confirmButtonColor: "#2563eb",
+      customClass: {
+        popup: "rounded-xl font-poppins bg-white",
+        closeButton: "text-gray-400 hover:text-gray-600 text-lg -mt-1 -mr-1",
+        confirmButton: "font-poppins font-medium text-sm px-4 py-2",
+      }
+    });
+  };
 
-const toggleItemExpansion = (id) => {
-  setExpandedItem(expandedItem === id ? null : id);
-};
-  // Filter data berdasarkan kriteria
+  const [expandedItem, setExpandedItem] = useState(null);
+
+  const toggleItemExpansion = (id) => {
+    setExpandedItem(expandedItem === id ? null : id);
+  };
+
+  // Filter data based on criteria
   const filteredHistory = historyData.filter((item) => {
     const matchesSearch =
       item.scanId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.jenisAset.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.lokasi.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (item.nomorSeri &&
-        item.nomorSeri.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      item.assetType.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (item.serialNumber &&
+        item.serialNumber.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (item.barcode &&
         item.barcode.toLowerCase().includes(searchQuery.toLowerCase()));
 
     const matchesStatus =
       selectedStatus === "all" || item.status === selectedStatus;
-    const matchesDate = !selectedDate || item.tanggal === selectedDate;
+    const matchesDate = !selectedDate || item.date === selectedDate;
     const matchesTab =
       activeTab === "all" ||
       (activeTab === "valid" && item.status === "Valid") ||
@@ -449,8 +450,8 @@ const toggleItemExpansion = (id) => {
     }
   };
 
-  const getCategoryIcon = (kategori) => {
-    switch (kategori) {
+  const getCategoryIcon = (category) => {
+    switch (category) {
       case "Perangkat":
         return <Cpu className="w-4 h-4 text-blue-600" />;
       case "Material":
@@ -495,8 +496,8 @@ const toggleItemExpansion = (id) => {
   };
 
   const exportToExcel = () => {
-    // Simulasi export Excel
-    alert(`Mengekspor ${filteredHistory.length} data ke Excel...`);
+    // Simulate Excel export
+    alert(`Exporting ${filteredHistory.length} data to Excel...`);
   };
 
   return (
@@ -511,8 +512,7 @@ const toggleItemExpansion = (id) => {
                 HISTORY & ACTIVITY LOG
               </h1>
               <p className="text-blue-100 text-sm mt-2">
-                Riwayat lengkap pemindaian, validasi, dan aktivitas sistem aset
-                IT
+                Complete history of scanning, validation, and IT asset system activities
               </p>
             </div>
             <div className="mt-4 lg:mt-0 flex items-center space-x-4 text-blue-100 text-sm">
@@ -522,7 +522,7 @@ const toggleItemExpansion = (id) => {
               </div>
               <div className="flex items-center">
                 <Shield className="w-4 h-4 mr-2" />
-                <span>Sistem Terintegrasi</span>
+                <span>Integrated System</span>
               </div>
             </div>
           </div>
@@ -534,7 +534,7 @@ const toggleItemExpansion = (id) => {
             <div className="text-xl md:text-2xl font-bold text-gray-900">
               {stats.total}
             </div>
-            <div className="text-xs md:text-sm text-gray-500">Total Scan</div>
+            <div className="text-xs md:text-sm text-gray-500">Total Scans</div>
           </div>
           <div className="bg-white rounded-xl shadow-lg p-4 text-center border-l-4 border-green-500">
             <div className="text-xl md:text-2xl font-bold text-gray-900">
@@ -567,6 +567,7 @@ const toggleItemExpansion = (id) => {
             <div className="text-xs md:text-sm text-gray-500">Material</div>
           </div>
         </div>
+
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           {/* Left Column - Combined History Card */}
@@ -584,7 +585,7 @@ const toggleItemExpansion = (id) => {
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                         <input
                           type="text"
-                          placeholder="Cari berdasarkan ID, jenis aset, lokasi, atau nomor seri..."
+                          placeholder="Search by ID, asset type, location, or serial number..."
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
                           className="w-full pl-10 pr-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
@@ -599,7 +600,7 @@ const toggleItemExpansion = (id) => {
                         onChange={(e) => setSelectedStatus(e.target.value)}
                         className="px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
                       >
-                        <option value="all">Semua Status</option>
+                        <option value="all">All Status</option>
                         <option value="Valid">Valid</option>
                         <option value="Error">Error</option>
                         <option value="Pending">Pending</option>
@@ -622,7 +623,7 @@ const toggleItemExpansion = (id) => {
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Tanggal
+                            Date
                           </label>
                           <input
                             type="date"
@@ -633,22 +634,22 @@ const toggleItemExpansion = (id) => {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Kategori
+                            Category
                           </label>
                           <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
-                            <option value="">Semua Kategori</option>
+                            <option value="">All Categories</option>
                             <option value="Perangkat">Perangkat</option>
                             <option value="Material">Material</option>
                           </select>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Metode Scan
+                            Scan Method
                           </label>
                           <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
-                            <option value="">Semua Metode</option>
-                            <option value="Kamera">Kamera</option>
-                            <option value="Input Manual">Input Manual</option>
+                            <option value="">All Methods</option>
+                            <option value="Camera">Camera</option>
+                            <option value="Manual Input">Manual Input</option>
                           </select>
                         </div>
                       </div>
@@ -660,7 +661,7 @@ const toggleItemExpansion = (id) => {
                     {/* Tab Navigation */}
                     <div className="flex space-x-1 overflow-x-auto">
                       {[
-                        { id: "all", label: "Semua", count: stats.total },
+                        { id: "all", label: "All", count: stats.total },
                         { id: "valid", label: "Valid", count: stats.valid },
                         { id: "error", label: "Error", count: stats.error },
                         {
@@ -704,22 +705,22 @@ const toggleItemExpansion = (id) => {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-4 py-3 text-left text-gray-700 font-medium">
-                        ID Scan
+                        Scan ID
                       </th>
                       <th className="px-4 py-3 text-left text-gray-700 font-medium">
-                        Jenis Aset
+                        Asset Type
                       </th>
                       <th className="px-4 py-3 text-left text-gray-700 font-medium">
-                        Lokasi & Departemen
+                        Location & Department
                       </th>
                       <th className="px-4 py-3 text-left text-gray-700 font-medium">
                         Status
                       </th>
                       <th className="px-4 py-3 text-left text-gray-700 font-medium">
-                        Tanggal Pengecekan
+                        Inspection Date
                       </th>
                       <th className="px-4 py-3 text-left text-gray-700 font-medium">
-                        Aksi
+                        Actions
                       </th>
                     </tr>
                   </thead>
@@ -734,22 +735,22 @@ const toggleItemExpansion = (id) => {
                             {item.scanId}
                           </div>
                           <div className="text-xs text-gray-500 mt-1 flex items-center">
-                            {getCategoryIcon(item.kategori)}
-                            <span className="ml-1">{item.kategori}</span>
+                            {getCategoryIcon(item.category)}
+                            <span className="ml-1">{item.category}</span>
                           </div>
                         </td>
                         <td className="px-4 py-4">
                           <div className="font-medium text-gray-900">
-                            {item.jenisAset}
+                            {item.assetType}
                           </div>
                           <div className="text-xs text-gray-500 mt-1">
-                            {item.nomorSeri || item.barcode}
+                            {item.serialNumber || item.barcode}
                           </div>
                         </td>
                         <td className="px-4 py-4">
                           <div className="flex items-center text-gray-700">
                             <MapPin className="w-4 h-4 mr-1 text-gray-400" />
-                            {item.lokasi}
+                            {item.location}
                           </div>
                           <div className="text-xs text-gray-500 mt-1">
                             {item.department}
@@ -773,10 +774,10 @@ const toggleItemExpansion = (id) => {
                         </td>
                         <td className="px-4 py-4">
                           <div className="text-sm text-gray-900">
-                            {item.tanggal}
+                            {item.date}
                           </div>
                           <div className="text-xs text-gray-500">
-                            {item.waktu}
+                            {item.time}
                           </div>
                         </td>
                         <td className="px-4 py-4">
@@ -786,7 +787,7 @@ const toggleItemExpansion = (id) => {
                               className="flex items-center px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-xs"
                             >
                               <Eye className="w-3 h-3 mr-1" />
-                              Detail
+                              Details
                             </button>
                           </div>
                         </td>
@@ -802,26 +803,26 @@ const toggleItemExpansion = (id) => {
                       key={item.id}
                       className="bg-white border border-gray-200 rounded-lg overflow-hidden"
                     >
-                      {/* Header - Selalu Tampil */}
+                      {/* Header - Always Visible */}
                       <div className="p-4 border-b border-gray-200">
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
                             <div className="flex items-center mb-2">
-                              {getCategoryIcon(item.kategori)}
+                              {getCategoryIcon(item.category)}
                               <div className="ml-2">
                                 <div className="font-bold text-blue-700 text-sm">
                                   {item.scanId}
                                 </div>
                                 <div className="text-xs text-gray-500">
-                                  {item.kategori}
+                                  {item.category}
                                 </div>
                               </div>
                             </div>
                             <div className="font-semibold text-gray-900 text-base mb-1">
-                              {item.jenisAset}
+                              {item.assetType}
                             </div>
                             <div className="text-xs text-gray-600 font-mono mb-2">
-                              {item.nomorSeri || item.barcode}
+                              {item.serialNumber || item.barcode}
                             </div>
                           </div>
                           <button
@@ -853,8 +854,8 @@ const toggleItemExpansion = (id) => {
                             {item.status}
                           </span>
                           <div className="text-xs text-gray-500 text-right">
-                            <div>{item.tanggal}</div>
-                            <div>{item.waktu}</div>
+                            <div>{item.date}</div>
+                            <div>{item.time}</div>
                           </div>
                         </div>
                       </div>
@@ -863,52 +864,52 @@ const toggleItemExpansion = (id) => {
                       {expandedItem === item.id && (
                         <div className="p-4 bg-gray-50 border-t border-gray-200">
                           <div className="space-y-3">
-                            {/* Lokasi & Departemen */}
+                            {/* Location & Department */}
                             <div>
                               <div className="text-xs font-semibold text-gray-500 mb-1">
-                                LOKASI & DEPARTEMEN
+                                LOCATION & DEPARTMENT
                               </div>
                               <div className="flex items-center text-sm text-gray-700 mb-1">
                                 <MapPin className="w-3 h-3 mr-2 text-gray-400" />
-                                {item.lokasi}
+                                {item.location}
                               </div>
                               <div className="text-xs text-gray-600 ml-5">
                                 {item.department}
                               </div>
                             </div>
 
-                            {/* Informasi Tambahan */}
+                            {/* Additional Information */}
                             <div>
                               <div className="text-xs font-semibold text-gray-500 mb-1">
-                                INFORMASI
+                                INFORMATION
                               </div>
                               <div className="text-xs text-gray-600 space-y-1">
                                 <div className="flex justify-between">
-                                  <span>ID History:</span>
+                                  <span>History ID:</span>
                                   <span className="font-medium">{item.id}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                  <span>Kode Unik:</span>
+                                  <span>Unique Code:</span>
                                   <span className="font-mono">
                                     {item.uniqueCode}
                                   </span>
                                 </div>
                                 <div className="flex justify-between">
-                                  <span>Metode Scan:</span>
+                                  <span>Scan Method:</span>
                                   <span>{item.scanMethod}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                  <span>Waktu Validasi:</span>
+                                  <span>Validation Time:</span>
                                   <span>{item.validationTime}</span>
                                 </div>
                               </div>
                             </div>
 
-                            {/* Catatan */}
+                            {/* Notes */}
                             {item.notes && (
                               <div>
                                 <div className="text-xs font-semibold text-gray-500 mb-1">
-                                  CATATAN
+                                  NOTES
                                 </div>
                                 <div className="text-xs text-gray-600 bg-white p-2 rounded border">
                                   {item.notes}
@@ -923,7 +924,7 @@ const toggleItemExpansion = (id) => {
                                 className="flex-1 flex items-center justify-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-xs"
                               >
                                 <Eye className="w-3 h-3 mr-1" />
-                                Detail Lengkap
+                                 Details
                               </button>
                             </div>
                           </div>
@@ -938,10 +939,10 @@ const toggleItemExpansion = (id) => {
                   <div className="text-center py-12">
                     <Box className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-500 text-lg">
-                      Tidak ada data history ditemukan
+                      No history data found
                     </p>
                     <p className="text-gray-400 text-sm mt-2">
-                      Coba sesuaikan pencarian atau filter Anda
+                      Try adjusting your search or filters
                     </p>
                   </div>
                 )}
@@ -955,7 +956,7 @@ const toggleItemExpansion = (id) => {
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
                 <Activity className="w-5 h-5 mr-2 text-blue-600" />
-                Activity Log Terbaru
+                Latest Activity Log
               </h3>
 
               <div className="space-y-4">
@@ -985,7 +986,7 @@ const toggleItemExpansion = (id) => {
               </div>
 
               <button className="w-full mt-4 text-center text-sm font-medium text-gray-600 hover:text-gray-800 transition">
-                Lihat Semua Aktivitas &rarr;
+                View All Activities &rarr;
               </button>
             </div>
 
@@ -993,7 +994,7 @@ const toggleItemExpansion = (id) => {
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
                 <TrendingUp className="w-5 h-5 mr-2 text-green-600" />
-                Analytics Cepat
+                Quick Analytics
               </h3>
 
               <div className="space-y-4">
@@ -1003,10 +1004,10 @@ const toggleItemExpansion = (id) => {
                       Success Rate
                     </p>
                     <p className="text-xs text-gray-600">
-                      Rasio keberhasilan validasi
+                      Validation success ratio
                     </p>
                   </div>
-                  <div className="text-2xl font-bold text-gray-800">
+                  <div className="text-2xl font-semibold text-gray-800">
                     {Math.round((stats.valid / stats.total) * 100)}%
                   </div>
                 </div>
@@ -1017,10 +1018,10 @@ const toggleItemExpansion = (id) => {
                       Avg. Validation Time
                     </p>
                     <p className="text-xs text-gray-600">
-                      Rata-rata waktu validasi
+                      Average validation time
                     </p>
                   </div>
-                  <div className="text-lg font-bold text-gray-800">2.1s</div>
+                  <div className="text-lg font-semibold text-gray-800">2.1s</div>
                 </div>
 
                 <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
@@ -1029,10 +1030,10 @@ const toggleItemExpansion = (id) => {
                       Most Active User
                     </p>
                     <p className="text-xs text-gray-600">
-                      User dengan aktivitas terbanyak
+                      User with most activities
                     </p>
                   </div>
-                  <div className="text-sm font-bold text-gray-800">
+                  <div className="text-sm font-semibold text-gray-800">
                     Clinton Alfaro
                   </div>
                 </div>
@@ -1043,11 +1044,11 @@ const toggleItemExpansion = (id) => {
                       Most Scanned Location
                     </p>
                     <p className="text-xs text-gray-600">
-                      Lokasi dengan scan terbanyak
+                      Location with most scans
                     </p>
                   </div>
-                  <div className="text-sm font-bold text-gray-800">
-                    Infrastruktur & Jaringan
+                    <div className="text-sm font-semibold text-gray-800">
+                    Infrastructure
                   </div>
                 </div>
               </div>

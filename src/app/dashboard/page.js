@@ -40,57 +40,57 @@ export default function DashboardPage() {
   // Statistik
   const stats = [
     {
-      label: "Total Aset IT",
+      label: "Total IT Assets",
       value: 245,
       icon: Box,
       color: "bg-blue-600",
       trend: 12,
       change: "up",
-      description: "Perangkat & Material IT",
+      description: "IT Devices & Materials",
     },
     {
-      label: "Terverifikasi Hari Ini",
+      label: "Verified Today",
       value: 18,
       icon: CheckCircle,
       color: "bg-green-600",
       trend: 3,
       change: "up",
-      description: "Nomor Seri & Barcode",
+      description: "Serial Numbers & Barcodes",
     },
     {
-      label: "Pengecekan Tertunda",
+      label: "Pending Inspections",
       value: 15,
       icon: AlertTriangle,
       color: "bg-blue-400",
       trend: 2,
       change: "down",
-      description: "Menunggu Validasi",
+      description: "Awaiting Validation",
     },
     {
-      label: "Error Nomor Seri/Barcode",
+      label: "Serial/Barcode Errors",
       value: 7,
       icon: QrCode,
       color: "bg-red-600",
       trend: 1,
       change: "up",
-      description: "Perlu Scan Ulang",
+      description: "Requires Re-Scanning",
     },
   ];
 
   // Data Grafik Aktivitas - Sesuai monitoring real-time di proposal
   const chartData = [
-    { name: "Sen", Valid: 8, Error: 2, Tertunda: 3 },
-    { name: "Sel", Valid: 12, Error: 1, Tertunda: 2 },
-    { name: "Rab", Valid: 15, Error: 0, Tertunda: 5 },
-    { name: "Kam", Valid: 10, Error: 3, Tertunda: 4 },
-    { name: "Jum", Valid: 14, Error: 1, Tertunda: 2 },
+    { name: "Mon", Valid: 8, Error: 2, Tertunda: 3 },
+    { name: "Tue", Valid: 12, Error: 1, Tertunda: 2 },
+    { name: "Wed", Valid: 15, Error: 0, Tertunda: 5 },
+    { name: "Thu", Valid: 10, Error: 3, Tertunda: 4 },
+    { name: "Fri", Valid: 14, Error: 1, Tertunda: 2 },
   ];
 
   // Ringkasan Status Aset - Disesuaikan dengan persentase yang diminta
   const assetStatusData = [
-    { name: "Valid", value: 185, color: "#2563eb" }, // Biru utama
-    { name: "Tertunda", value: 38, color: "#6366f1" }, // Biru ungu
-    { name: "Error", value: 22, color: "#dc2626" }, // Merah
+    { name: "Valid", value: 185, color: "#2563eb" }, // Primary Blue
+    { name: "Pending", value: 38, color: "#6366f1" }, // Blue Purple
+    { name: "Error", value: 22, color: "#dc2626" }, // Red
   ];
 
   // Riwayat Pengecekan Terbaru - Disesuaikan dengan jenis aset di proposal
@@ -149,11 +149,11 @@ export default function DashboardPage() {
 
   // Distribusi Jenis Aset - Disesuaikan dengan kategori di proposal
   const assetTypeData = [
-    { name: "Periferal (Keyboard, Mouse, Monitor)", jumlah: 75, icon: "🖱️" },
-    { name: "Komputer & Laptop", jumlah: 52, icon: "💻" },
-    { name: "Perangkat Jaringan (Server, Switch)", jumlah: 48, icon: "🔄" },
-    { name: "Material (Kabel, RJ45, Trunking, Pipa)", jumlah: 45, icon: "🔌" },
-    { name: "Keamanan (CCTV, Webcam, Speaker)", jumlah: 25, icon: "📹" },
+    { name: "Periferal (Keyboard, Mouse, Monitor)", jumlah: 75 },
+    { name: "Komputer & Laptop", jumlah: 52 },
+    { name: "Perangkat Jaringan (Server, Switch)", jumlah: 48 },
+    { name: "Material (Kabel, RJ45, Trunking, Pipa)", jumlah: 45 },
+    { name: "Keamanan (CCTV, Webcam, Speaker)", jumlah: 25 },
   ].sort((a, b) => b.jumlah - a.jumlah);
 
   const totalAset = assetTypeData.reduce((sum, item) => sum + item.jumlah, 0);
@@ -205,30 +205,30 @@ export default function DashboardPage() {
   return (
     <LayoutDashboard>
       <div className="space-y-4 md:space-y-8">
-        {/* Header Dashboard */}
+        {/* Dashboard Header */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-600 rounded-xl shadow-lg p-6 text-white">
           <h1 className="text-2xl md:text-2xl font-semibold mb-2">
-            SISTEM INVENTARIS ASET IT
+            IT ASSET INVENTORY SYSTEM
           </h1>
           <p className="text-blue-100 text-xs md:text-sm">
-            Validasi Otomatis Serial Number atau Barcode Aset IT (Perangkat &
-            Material)
+            Automatic Validation of IT Asset Serial Numbers or Barcodes (Devices
+            & Materials)
           </p>
           <div className="flex flex-wrap gap-2 mt-3">
             <span className="bg-blue-500 px-3 py-1 rounded-full text-xs font-medium">
-              Deteksi Perangkat & Material
+              Device & Material Detection
             </span>
             <span className="bg-blue-500 px-3 py-1 rounded-full text-xs font-medium">
-              Scanning Serial Number
+              Serial Number Scanning
             </span>
             <span className="bg-blue-500 px-3 py-1 rounded-full text-xs font-medium">
-              Scanning Barcode
+              Barcode Scanning
             </span>
             <span className="bg-blue-500 px-3 py-1 rounded-full text-xs font-medium">
-              Validasi Otomatis
+              Automatic Validation
             </span>
             <span className="bg-blue-500 px-3 py-1 rounded-full text-xs font-medium">
-              Report & Analytics
+              Reports & Analytics
             </span>
           </div>
         </div>
@@ -281,11 +281,11 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        {/* 2. Bagian Aksi Cepat - Sesuai use case di proposal */}
+        {/* 2. Quick Action Section - Based on use case in the proposal */}
         <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
           <h2 className="text-base md:text-lg font-semibold text-gray-800 mb-4 flex items-center">
-            <ScanLine className="w-5 h-5 text-blue-600 mr-2" /> Mulai Pengecekan
-            Aset
+            <ScanLine className="w-5 h-5 text-blue-600 mr-2" /> Start Asset
+            Checking
           </h2>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -293,15 +293,15 @@ export default function DashboardPage() {
               onClick={() => router.push("/scanning")}
               className="flex flex-col items-center justify-center p-3 md:p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition text-gray-700 hover:text-blue-700"
             >
-              <Camera
+              <ScanLine
                 className="w-7 h-7 mb-1 font-bold text-blue-600"
                 strokeWidth={2.5}
               />
               <span className="text-sm font-semibold text-center mt-1">
-                Mulai Scan
+                Start Scan
               </span>
               <span className="text-xs text-gray-600 mt-1">
-                Cek Perangkat & Material
+                Check Devices & Materials
               </span>
             </button>
 
@@ -314,10 +314,10 @@ export default function DashboardPage() {
                 strokeWidth={2.5}
               />
               <span className="text-sm font-semibold text-center mt-1">
-                Status Validasi
+                Checking Status
               </span>
               <span className="text-xs text-gray-600 mt-1">
-                Periksa Hasil Pengecekan Aset
+                Review Asset Checking Results
               </span>
             </button>
 
@@ -330,10 +330,10 @@ export default function DashboardPage() {
                 strokeWidth={2.5}
               />
               <span className="text-sm font-semibold text-center mt-1">
-                Laporan Pengecekan
+                Checking Reports
               </span>
               <span className="text-xs text-gray-600 mt-1">
-                Lihat data Laporan Pengecekan Aset
+                View Asset Checking Report Data
               </span>
             </button>
 
@@ -346,21 +346,21 @@ export default function DashboardPage() {
                 strokeWidth={2.5}
               />
               <span className="text-sm font-semibold text-center mt-1">
-                Statistik
+                Statistics
               </span>
               <span className="text-xs text-gray-600 mt-1 text-center">
-                Lihat Persentase & Statistik Pengecekan Perangkat
+                View Device Checking Percentage & Statistics
               </span>
             </button>
           </div>
         </div>
 
-        {/* 3. Grafik & Ringkasan */}
+        {/* 3. Charts & Summary Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-          {/* Grafik Pie Status Aset */}
+          {/* Asset Validation Status Pie Chart */}
           <div className="lg:col-span-1 bg-white rounded-xl shadow-lg p-4 md:p-6">
             <h2 className="text-base md:text-lg font-semibold text-gray-800 mb-4">
-              Status Validasi Aset
+              Asset Validation Status
             </h2>
             <div className="flex flex-col items-center justify-center h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -402,7 +402,7 @@ export default function DashboardPage() {
           {/* Grafik Aktivitas Mingguan */}
           <div className="lg:col-span-2 bg-white rounded-xl shadow-lg p-4 md:p-6">
             <h2 className="text-base md:text-lg font-semibold text-gray-800 mb-4">
-              Aktivitas Pengecekan Harian (5 Hari Terakhir)
+              Daily Asset Checking Activity (Last 5 Days)
             </h2>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={chartData}>
@@ -425,21 +425,21 @@ export default function DashboardPage() {
                 <Tooltip />
                 <Bar
                   dataKey="Valid"
-                  fill="#2563eb" // Biru utama
+                  fill="#2563eb" // Blue main
                   stackId="a"
                   radius={[4, 4, 0, 0]}
                   name="Valid"
                 />
                 <Bar
-                  dataKey="Tertunda"
-                  fill="#6366f1" // Biru ungu
+                  dataKey="Pending"
+                  fill="#6366f1" // Blue purple
                   stackId="a"
                   radius={[4, 4, 0, 0]}
-                  name="Tertunda"
+                  name="Pending"
                 />
                 <Bar
                   dataKey="Error"
-                  fill="#dc2626" // Merah
+                  fill="#dc2626" // Red
                   stackId="a"
                   radius={[4, 4, 0, 0]}
                   name="Error"
@@ -448,26 +448,25 @@ export default function DashboardPage() {
             </ResponsiveContainer>
           </div>
         </div>
-
-        {/* 4. Riwayat Terbaru & Distribusi Aset */}
+        {/* 4. Latest History & Asset Distribution */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-          {/* Pengecekan Aset Terbaru */}
+          {/* Latest Asset Checking */}
           <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
             <h2 className="text-base md:text-lg font-semibold text-gray-800 mb-4">
-              Pengecekan Aset Terbaru
+              Latest Asset Checking
             </h2>
 
-            {/* Tampilan Desktop */}
+            {/* Desktop View */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm text-left">
                 <thead>
                   <tr className="text-gray-500 uppercase text-xs border-b border-gray-200">
-                    <th className="py-2 font-medium">ID Aset</th>
-                    <th className="py-2 font-medium">Jenis</th>
-                    <th className="py-2 font-medium">Kategori</th>
-                    <th className="py-2 font-medium">Lokasi</th>
+                    <th className="py-2 font-medium">Asset ID</th>
+                    <th className="py-2 font-medium">Type</th>
+                    <th className="py-2 font-medium">Category</th>
+                    <th className="py-2 font-medium">Location</th>
                     <th className="py-2 font-medium">Status</th>
-                    <th className="py-2 font-medium">Tanggal</th>
+                    <th className="py-2 font-medium">Date</th>
                   </tr>
                 </thead>
 
@@ -492,7 +491,7 @@ export default function DashboardPage() {
                               : "bg-green-100 text-green-700"
                           }`}
                         >
-                          {row.kategori}
+                          {row.kategori === "Perangkat" ? "Device" : "Material"}
                         </span>
                       </td>
                       <td className="py-3 text-gray-600">{row.lokasi}</td>
@@ -577,85 +576,87 @@ export default function DashboardPage() {
               Lihat Log Lengkap &rarr;
             </button>
           </div>
+          {/* Asset Type Distribution */}
+          
+ <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
+  <h2 className="text-base md:text-lg font-semibold text-gray-800 mb-4">
+    Asset Type Distribution
+  </h2>
+  <div className="space-y-3">
+    {assetTypeData.map((item, index) => {
+      const percentage = (item.jumlah / totalAset) * 100;
 
-          {/* Distribusi Jenis Aset */}
-          <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
-            <h2 className="text-base md:text-lg font-semibold text-gray-800 mb-4">
-              Distribusi Jenis Aset
-            </h2>
-            <div className="space-y-3">
-              {assetTypeData.map((item, index) => (
-                <div key={index}>
-                  <div className="flex justify-between text-sm text-gray-700 mb-1">
-                    <span className="font-medium flex items-center">
-                      <span className="mr-2">{item.icon}</span>
-                      {item.name}
-                    </span>
-                    <span className="font-bold">{item.jumlah}</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
-                    <div
-                      className="h-2.5 rounded-full"
-                      style={{
-                        width: `${(item.jumlah / totalAset) * 100}%`,
-                        backgroundColor:
-                          index === 0
-                            ? "#22c55e" // Hijau untuk Periferal
-                            : index === 1
-                            ? "#3b82f6" // Biru untuk Komputer & Laptop
-                            : index === 2
-                            ? "#f97316" // Orange untuk Perangkat Jaringan
-                            : index === 3
-                            ? "#dc2626" // Merah untuk Material
-                            : "#8b5cf6", // Ungu untuk Keamanan
-                      }}
-                    ></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-6 p-3 bg-gray-100 border-l-4 border-gray-400 rounded-r-lg">
-              <p className="text-sm text-gray-700">
-                <strong>Total: {totalAset} Aset</strong>
-                <br />
-                Sistem dapat membaca <strong>Nomor Seri</strong> untuk Perangkat
-                dan <strong>Barcode</strong> untuk Material secara otomatis.
-              </p>
-            </div>
+      // Gradasi warna dinamis: makin tinggi jumlah, makin hijau
+      const getBarColor = () => {
+        if (percentage < 25) return "#1268f3ff"; // biru
+        if (percentage < 50) return "#00ca87ff"; // biru muda (cyan)
+        if (percentage < 75) return "#00b97cff"; // hijau toska
+        return "#16a34a"; // hijau terang
+      };
+
+      return (
+        <div key={index}>
+          <div className="flex justify-between text-sm text-gray-700 mb-1">
+            <span className="font-medium">{item.name}</span>
+            <span className="font-bold">{item.jumlah}</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2.5">
+            <div
+              className="h-2.5 rounded-full transition-all duration-500"
+              style={{
+                width: `${percentage}%`,
+                backgroundColor: getBarColor(),
+              }}
+            ></div>
           </div>
         </div>
+      );
+    })}
+  </div>
 
-        {/* 5. Status Sistem */}
+  <div className="mt-6 p-3 bg-gray-100 border-l-4 border-emerald-500 rounded-r-lg">
+    <p className="text-sm text-gray-700">
+      <strong>Total: {totalAset} Assets</strong>
+      <br />
+      The system can automatically read{" "}
+      <strong>Serial Numbers</strong> for Devices and{" "}
+      <strong>Barcodes</strong> for Materials.
+    </p>
+  </div>
+</div>
+</div>
+        
+        {/* 5. System Status */}
         <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
           <h2 className="text-sm md:text-base font-semibold text-gray-800 mb-4">
-            Status Sistem Invenrtaris Aset IT
+            IT Asset Inventory System Status
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center p-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition text-gray-800 shadow-sm">
               <div className="text-sm font-semibold text-green-700">
-                Deteksi Aset
+                Asset Detection
               </div>
               <div className="text-[10px] text-gray-600 mt-1">
-                Pengenalan Otomatis
+                Automatic Recognition
               </div>
               <div className="text-xs font-semibold text-green-800 mt-1">
-                Aktif
+                Active
               </div>
             </div>
             <div className="text-center p-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition text-gray-800 shadow-sm">
               <div className="text-sm font-semibold text-green-700">
-                Pembaca Teks
+                Text Reader
               </div>
               <div className="text-[10px] text-gray-600 mt-1">
-                Ekstraksi Otomatis
+                Automatic Extraction
               </div>
               <div className="text-xs font-semibold text-green-800 mt-1">
-                Aktif
+                Active
               </div>
             </div>
             <div className="text-center p-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition text-gray-800 shadow-sm">
               <div className="text-sm font-semibold text-green-700">
-                Penyimpanan Data
+                Data Storage
               </div>
               <div className="text-[10px] text-gray-600 mt-1">Database</div>
               <div className="text-xs font-semibold text-green-800 mt-1">
@@ -664,11 +665,11 @@ export default function DashboardPage() {
             </div>
             <div className="text-center p-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition text-gray-800 shadow-sm">
               <div className="text-sm font-semibold text-green-700">
-                Kecerdasan Buatan
+                Artificial Intelligence
               </div>
               <div className="text-[10px] text-gray-600 mt-1">Real-time</div>
               <div className="text-xs font-semibold text-green-800 mt-1">
-                95% Akurat
+                95% Accurate
               </div>
             </div>
           </div>

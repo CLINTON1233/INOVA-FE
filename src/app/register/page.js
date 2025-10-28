@@ -5,16 +5,27 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
+// Gunakan path relative karena sudah ada proxy di next.config.js
+const API_BASE_URL = ''
+
 export default function RegisterPage() {
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    no_badge: '',
+    department: '',
+    username: ''
+  })
   const [agree, setAgree] = useState(false)
   const [currentImage, setCurrentImage] = useState(0)
   const [showSnackbar, setShowSnackbar] = useState(false)
+  const [snackbarMessage, setSnackbarMessage] = useState('')
+  const [snackbarType, setSnackbarType] = useState('success')
+  const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
-    const images = ['/bg_seatrium 3.png', '/smoe_images2.png', '/offshore.jpg']
+  const images = ['/bg_seatrium 3.png', '/smoe_images2.png', '/offshore.jpg']
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -23,17 +34,104 @@ export default function RegisterPage() {
     return () => clearInterval(interval)
   }, [images.length])
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    console.log('Register attempt:', { name, email, password, agree })
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
 
+  const showMessage = (message, type = 'success') => {
+    setSnackbarMessage(message)
+    setSnackbarType(type)
     setShowSnackbar(true)
     setTimeout(() => {
       setShowSnackbar(false)
-      // router.push('/login') // Saya biarkan ini ter-komentar dulu agar Anda bisa melihat snackbar
     }, 3000)
   }
 
+  const testBackendConnection = async () => {
+    try {
+      const response = await fetch('/api/health', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      return response.ok
+    } catch (error) {
+      console.error('Backend connection test failed:', error)
+      return false
+    }
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    
+    if (!agree) {
+      showMessage('Please agree to the terms & policy', 'error')
+      return
+    }
+
+    // Validasi form tambahan
+    if (!formData.no_badge || !formData.department || !formData.username) {
+      showMessage('Please fill all required fields', 'error')
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
+      // Test koneksi backend dulu
+      const isBackendConnected = await testBackendConnection()
+      if (!isBackendConnected) {
+        showMessage('Backend server is not running. Please start the backend server.', 'error')
+        setIsLoading(false)
+        return
+      }
+
+      console.log('Sending registration data:', formData)
+
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          no_badge: formData.no_badge,
+          department: formData.department,
+          username: formData.username
+        })
+      })
+
+      console.log('Response status:', response.status)
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      console.log('Response data:', data)
+
+      showMessage('Registration successful! Redirecting to login...')
+      setTimeout(() => {
+        router.push('/login')
+      }, 2000)
+
+    } catch (error) {
+      console.error('Registration error:', error)
+      showMessage(error.message || 'Registration failed. Please try again.', 'error')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // JSX tetap sama seperti sebelumnya
   return (
     <div className="min-h-screen flex flex-col lg:flex-row relative">
       {/* Logo pojok kiri atas */}
@@ -93,27 +191,86 @@ export default function RegisterPage() {
               </p>
             </div>
 
-            {/* Form — margin atas dikurangi */}
+            {/* Form */}
             <form className="mt-3 space-y-4 sm:mt-4 sm:space-y-5" onSubmit={handleSubmit}>
               <div className="space-y-3 sm:space-y-4">
-                {/* Name */}
+                {/* Full Name */}
                 <div>
                   <label
                     htmlFor="name"
                     className="block text-xs sm:text-sm font-medium text-gray-700 mb-1"
                   >
-                    Name
+                    Full Name *
                   </label>
                   <input
                     id="name"
                     name="name"
                     type="text"
                     required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    // Fokus Ring (bukan shadow) tetap dipertahankan untuk usability
+                    value={formData.name}
+                    onChange={handleChange}
                     className="w-full px-2 py-2 sm:px-3 sm:py-3 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter your name"
+                    placeholder="Enter your full name"
+                  />
+                </div>
+
+                {/* Username */}
+                <div>
+                  <label
+                    htmlFor="username"
+                    className="block text-xs sm:text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Username *
+                  </label>
+                  <input
+                    id="username"
+                    name="username"
+                    type="text"
+                    required
+                    value={formData.username}
+                    onChange={handleChange}
+                    className="w-full px-2 py-2 sm:px-3 sm:py-3 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Choose a username"
+                  />
+                </div>
+
+                {/* Badge Number */}
+                <div>
+                  <label
+                    htmlFor="no_badge"
+                    className="block text-xs sm:text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Badge Number *
+                  </label>
+                  <input
+                    id="no_badge"
+                    name="no_badge"
+                    type="text"
+                    required
+                    value={formData.no_badge}
+                    onChange={handleChange}
+                    className="w-full px-2 py-2 sm:px-3 sm:py-3 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter your badge number"
+                  />
+                </div>
+
+                {/* Department */}
+                <div>
+                  <label
+                    htmlFor="department"
+                    className="block text-xs sm:text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Department *
+                  </label>
+                  <input
+                    id="department"
+                    name="department"
+                    type="text"
+                    required
+                    value={formData.department}
+                    onChange={handleChange}
+                    className="w-full px-2 py-2 sm:px-3 sm:py-3 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter your department"
                   />
                 </div>
 
@@ -123,7 +280,7 @@ export default function RegisterPage() {
                     htmlFor="email"
                     className="block text-xs sm:text-sm font-medium text-gray-700 mb-1"
                   >
-                    Email address
+                    Email address *
                   </label>
                   <input
                     id="email"
@@ -131,9 +288,8 @@ export default function RegisterPage() {
                     type="email"
                     autoComplete="email"
                     required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    // Fokus Ring (bukan shadow) tetap dipertahankan untuk usability
+                    value={formData.email}
+                    onChange={handleChange}
                     className="w-full px-2 py-2 sm:px-3 sm:py-3 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Enter your email"
                   />
@@ -145,7 +301,7 @@ export default function RegisterPage() {
                     htmlFor="password"
                     className="block text-xs sm:text-sm font-medium text-gray-700 mb-1"
                   >
-                    Password
+                    Password *
                   </label>
                   <input
                     id="password"
@@ -153,9 +309,8 @@ export default function RegisterPage() {
                     type="password"
                     autoComplete="new-password"
                     required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    // Fokus Ring (bukan shadow) tetap dipertahankan untuk usability
+                    value={formData.password}
+                    onChange={handleChange}
                     className="w-full px-2 py-2 sm:px-3 sm:py-3 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Enter your password"
                   />
@@ -184,9 +339,14 @@ export default function RegisterPage() {
               <div>
                 <button
                   type="submit"
-                  className="w-full flex justify-center py-2 sm:py-3 px-3 sm:px-4 text-xs sm:text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition"
+                  disabled={isLoading}
+                  className={`w-full flex justify-center py-2 sm:py-3 px-3 sm:px-4 text-xs sm:text-sm font-medium rounded-md text-white transition ${
+                    isLoading 
+                      ? 'bg-gray-400 cursor-not-allowed' 
+                      : 'bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+                  }`}
                 >
-                  Signup
+                  {isLoading ? 'Registering...' : 'Signup'}
                 </button>
               </div>
 
@@ -209,10 +369,12 @@ export default function RegisterPage() {
         </footer>
       </div>
 
-      {/* Snackbar (Telah dihilangkan shadownya) */}
+      {/* Snackbar */}
       {showSnackbar && (
-        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 p-3 sm:p-4 bg-green-500 text-white rounded-lg z-50 transition-all duration-300 ease-out animate-fade-in-up">
-          Registration successful! Redirecting to login...
+        <div className={`fixed bottom-4 left-1/2 transform -translate-x-1/2 p-3 sm:p-4 rounded-lg z-50 transition-all duration-300 ease-out animate-fade-in-up ${
+          snackbarType === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+        }`}>
+          {snackbarMessage}
         </div>
       )}
     </div>

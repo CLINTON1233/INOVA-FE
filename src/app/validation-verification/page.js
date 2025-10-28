@@ -59,7 +59,7 @@ export default function ValidationVerificationPage() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Ambil data dari localStorage saat komponen mount
+  // Get data from localStorage when component mounts
   useEffect(() => {
     const savedScanData = localStorage.getItem("lastSubmittedScan");
     if (savedScanData) {
@@ -67,14 +67,14 @@ export default function ValidationVerificationPage() {
     }
   }, []);
 
-  // Data sesuai dengan proposal - Perangkat dan Material IT
+  // Data according to proposal - IT Perangkats and Materials
   const validationItems = [
     {
       id: 1,
       serialNumber: scanData?.serial || "PC-IT-2025-001",
-      assetType: "Komputer",
-      kategori: "Perangkat",
-      location: scanData?.location || "Infrastruktur & Jaringan",
+      assetType: "Computer",
+      category: "Perangkat",
+      location: scanData?.location || "Infrastructure & Networking",
       department: "IT Infrastructure & Networking",
       lastVerified: "2025-09-20",
       status: "pending",
@@ -82,15 +82,15 @@ export default function ValidationVerificationPage() {
       scanDate: scanData?.date || "2025-10-28",
       scanTime: scanData?.time || "14:30:15",
       verifiedBy: "Clinton Alfaro",
-      buktiFoto: "/api/placeholder/80/60",
-      jenisID: "Nomor Seri",
+      photoEvidence: "/api/placeholder/80/60",
+      idType: "Serial Number",
       idValue: scanData?.serial || "NS-PC-887632",
     },
     {
       id: 2,
       serialNumber: "MAT-KBL-045",
-      assetType: "Kabel RJ45",
-      kategori: "Material",
+      assetType: "RJ45 Cable",
+      category: "Material",
       location: "Workshop 2",
       department: "Facilities & Networking",
       lastVerified: "2025-09-18",
@@ -99,16 +99,16 @@ export default function ValidationVerificationPage() {
       scanDate: "2025-10-28",
       scanTime: "14:25:40",
       verifiedBy: "Wahyu Hidayat",
-      buktiFoto: "/api/placeholder/80/60",
-      jenisID: "Barcode",
+      photoEvidence: "/api/placeholder/80/60",
+      idType: "Barcode",
       idValue: "BC-RJ45-554321",
     },
     {
       id: 3,
       serialNumber: "SRV-NET-012",
       assetType: "Server",
-      kategori: "Perangkat",
-      location: "Ruang Server L3",
+      category: "Perangkat",
+      location: "Server Room L3",
       department: "System Operation",
       lastVerified: "2025-09-15",
       status: "error",
@@ -116,16 +116,16 @@ export default function ValidationVerificationPage() {
       scanDate: "2025-10-28",
       scanTime: "14:18:22",
       verifiedBy: "Ikhsan Kurniawan",
-      buktiFoto: "/api/placeholder/80/60",
-      jenisID: "Nomor Seri",
+      photoEvidence: "/api/placeholder/80/60",
+      idType: "Serial Number",
       idValue: "NS-SRV-992345",
     },
     {
       id: 4,
       serialNumber: "MAT-TRK-987",
       assetType: "Trunking",
-      kategori: "Material",
-      location: "Kantor Utama L1",
+      category: "Material",
+      location: "Main Office L1",
       department: "Operations & End User Service",
       lastVerified: "2025-09-22",
       status: "pending",
@@ -133,16 +133,16 @@ export default function ValidationVerificationPage() {
       scanDate: "2025-10-28",
       scanTime: "14:10:05",
       verifiedBy: "Mahmud Amma Rizki",
-      buktiFoto: "/api/placeholder/80/60",
-      jenisID: "Barcode",
+      photoEvidence: "/api/placeholder/80/60",
+      idType: "Barcode",
       idValue: "BC-TRK-773216",
     },
     {
       id: 5,
       serialNumber: "CCTV-SEC-003",
       assetType: "CCTV",
-      kategori: "Perangkat",
-      location: "Pintu Gerbang",
+      category: "Perangkat",
+      location: "Main Gate",
       department: "Facilities & Networking",
       lastVerified: "2025-09-19",
       status: "valid",
@@ -150,15 +150,15 @@ export default function ValidationVerificationPage() {
       scanDate: "2025-10-28",
       scanTime: "14:05:33",
       verifiedBy: "Yovan Sakti",
-      buktiFoto: "/api/placeholder/80/60",
-      jenisID: "Nomor Seri",
+      photoEvidence: "/api/placeholder/80/60",
+      idType: "Serial Number",
       idValue: "NS-CCTV-661234",
     },
     {
       id: 6,
       serialNumber: "LPT-IT-2025-002",
       assetType: "Laptop",
-      kategori: "Perangkat",
+      category: "Perangkat",
       location: "Main Office L2",
       department: "IT Infrastructure & Networking",
       lastVerified: "2025-09-25",
@@ -167,15 +167,15 @@ export default function ValidationVerificationPage() {
       scanDate: "2025-10-28",
       scanTime: "13:55:20",
       verifiedBy: "Clinton Alfaro",
-      buktiFoto: "/api/placeholder/80/60",
-      jenisID: "Nomor Seri",
+      photoEvidence: "/api/placeholder/80/60",
+      idType: "Serial Number",
       idValue: "NS-LPT-445321",
     },
     {
       id: 7,
       serialNumber: "MAT-PIP-056",
-      assetType: "Pipa Jaringan",
-      kategori: "Material",
+      assetType: "Network Pipe",
+      category: "Material",
       location: "Workshop 1",
       department: "Facilities & Networking",
       lastVerified: "2025-09-28",
@@ -184,13 +184,13 @@ export default function ValidationVerificationPage() {
       scanDate: "2025-10-28",
       scanTime: "13:45:10",
       verifiedBy: "Wahyu Hidayat",
-      buktiFoto: "/api/placeholder/80/60",
-      jenisID: "Barcode",
+      photoEvidence: "/api/placeholder/80/60",
+      idType: "Barcode",
       idValue: "BC-PIP-998765",
     },
   ];
 
-  // Filter data berdasarkan search, status, dan tab aktif
+  // Filter data based on search, status, and active tab
   const filteredItems = validationItems.filter((item) => {
     const matchesSearch =
       item.serialNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -203,7 +203,7 @@ export default function ValidationVerificationPage() {
     return matchesSearch && matchesStatus && matchesTab;
   });
 
-  // Hitung statistik
+  // Calculate statistics
   const stats = {
     total: validationItems.length,
     valid: validationItems.filter((item) => item.status === "valid").length,
@@ -233,16 +233,16 @@ export default function ValidationVerificationPage() {
 
     setIsSubmitting(true);
 
-    // Simulasi API call
+    // Simulate API call
     setTimeout(() => {
       console.log(`Performing ${action} on items:`, selectedItems);
-      alert(`${action} berhasil dilakukan pada ${selectedItems.length} item`);
+      alert(`${action} successfully performed on ${selectedItems.length} items`);
       setSelectedItems([]);
       setIsSubmitting(false);
 
-      // Redirect ke laporan setelah verifikasi massal
+      // Redirect to reports after bulk verification
       if (action === "approve") {
-        router.push("/reports");
+        router.push("/reports-analytics");
       }
     }, 2000);
   };
@@ -251,10 +251,10 @@ export default function ValidationVerificationPage() {
   const handleVerifyItem = (itemId, status) => {
     setIsSubmitting(true);
 
-    // Simulasi API call
+    // Simulate API call
     setTimeout(() => {
       console.log(`Verifying item ${itemId} as ${status}`);
-      alert(`Item berhasil diverifikasi sebagai ${status}`);
+      alert(`Item successfully verified as ${status}`);
       setIsSubmitting(false);
     }, 1500);
   };
@@ -276,7 +276,7 @@ export default function ValidationVerificationPage() {
     switch (status) {
       case "valid":
         return <CheckCircle className="w-4 h-4" />;
-      case "Serial Number atau Barcode Error":
+      case "error":
         return <XCircle className="w-4 h-4" />;
       case "pending":
         return <Clock className="w-4 h-4" />;
@@ -285,8 +285,8 @@ export default function ValidationVerificationPage() {
     }
   };
 
-  const getCategoryIcon = (kategori) => {
-    switch (kategori) {
+  const getCategoryIcon = (category) => {
+    switch (category) {
       case "Perangkat":
         return <Cpu className="w-4 h-4 text-blue-600" />;
       case "Material":
@@ -296,8 +296,8 @@ export default function ValidationVerificationPage() {
     }
   };
 
-  const getCategoryColor = (kategori) => {
-    switch (kategori) {
+  const getCategoryColor = (category) => {
+    switch (category) {
       case "Perangkat":
         return "bg-blue-100 text-blue-700";
       case "Material":
@@ -307,7 +307,7 @@ export default function ValidationVerificationPage() {
     }
   };
 
-  // Fungsi helper untuk warna tab aktif
+  // Helper function for active tab colors
   const getActiveTabColor = (color) => {
     switch (color) {
       case "blue":
@@ -323,7 +323,7 @@ export default function ValidationVerificationPage() {
     }
   };
 
-  // Fungsi helper untuk warna badge aktif
+  // Helper function for active badge colors
   const getActiveBadgeColor = (color) => {
     switch (color) {
       case "blue":
@@ -342,94 +342,75 @@ export default function ValidationVerificationPage() {
   const toggleItemExpansion = (id) => {
     setExpandedItem(expandedItem === id ? null : id);
   };
-  // Fungsi untuk menampilkan detail dengan SweetAlert
+
+  // Function to show details with SweetAlert
   const handleShowDetail = (item) => {
     Swal.fire({
-      title: `<div class="font-poppins text-lg font-semibold text-black">Detail Hasil Scanning</div>`,
+      title: `<div class="font-poppins text-lg font-semibold text-black">Scanning Result Details</div>`,
       html: `
       <div class="font-poppins text-left space-y-3 max-h-[50vh] overflow-y-auto pr-2">
         <!-- Header Info -->
         <div>
-          <h4 class="text-base font-semibold text-gray-900">${
-            item.assetType
-          }</h4>
-          <p class="text-xs text-gray-500 mt-1">${item.kategori} • ${
-        item.jenisID
-      }</p>
+          <h4 class="text-base font-semibold text-gray-900">${item.assetType}</h4>
+          <p class="text-xs text-gray-500 mt-1">${item.category} • ${item.idType}</p>
         </div>
 
-        <!-- Informasi Aset -->
+        <!-- Asset Information -->
         <div>
-          <h5 class="text-xs font-medium text-gray-700 mb-2">INFORMASI ASET</h5>
+          <h5 class="text-xs font-medium text-gray-700 mb-2">ASSET INFORMATION</h5>
           <div class="bg-gray-50 rounded-lg p-3 space-y-2">
             <div class="flex justify-between items-center">
-              <span class="text-xs text-gray-600">ID Aset</span>
-              <span class="text-xs font-medium text-blue-700">${
-                item.serialNumber
-              }</span>
+              <span class="text-xs text-gray-600">Asset ID</span>
+              <span class="text-xs font-medium text-blue-700">${item.serialNumber}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-xs text-gray-600">${item.jenisID}</span>
-              <span class="text-xs font-mono text-blue-600">${
-                item.idValue
-              }</span>
+              <span class="text-xs text-gray-600">${item.idType}</span>
+              <span class="text-xs font-mono text-blue-600">${item.idValue}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-xs text-gray-600">Kode Unik</span>
-              <span class="text-xs font-mono text-gray-700">${
-                item.uniqueCode
-              }</span>
+              <span class="text-xs text-gray-600">Unique Code</span>
+              <span class="text-xs font-mono text-gray-700">${item.uniqueCode}</span>
             </div>
           </div>
         </div>
 
-        <!-- Lokasi & Departemen -->
+        <!-- Location & Department -->
         <div>
-          <h5 class="text-xs font-medium text-gray-700 mb-2">LOKASI & DEPARTEMEN</h5>
+          <h5 class="text-xs font-medium text-gray-700 mb-2">LOCATION & DEPARTMENT</h5>
           <div class="bg-gray-50 rounded-lg p-3 space-y-2">
             <div class="flex justify-between items-center">
-              <span class="text-xs text-gray-600">Lokasi</span>
-              <span class="text-xs font-medium text-gray-700">${
-                item.location
-              }</span>
+              <span class="text-xs text-gray-600">Location</span>
+              <span class="text-xs font-medium text-gray-700">${item.location}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-xs text-gray-600">Departemen</span>
-              <span class="text-xs font-medium text-gray-700">${
-                item.department
-              }</span>
+              <span class="text-xs text-gray-600">Department</span>
+              <span class="text-xs font-medium text-gray-700">${item.department}</span>
             </div>
           </div>
         </div>
 
-        <!-- Waktu Pemeriksaan -->
+        <!-- Inspection Time -->
         <div>
-          <h5 class="text-xs font-medium text-gray-700 mb-2">WAKTU PEMERIKSAAN</h5>
+          <h5 class="text-xs font-medium text-gray-700 mb-2">INSPECTION TIME</h5>
           <div class="bg-gray-50 rounded-lg p-3 space-y-2">
             <div class="flex justify-between items-center">
-              <span class="text-xs text-gray-600">Tanggal</span>
-              <span class="text-xs font-medium text-gray-700">${
-                item.scanDate
-              }</span>
+              <span class="text-xs text-gray-600">Date</span>
+              <span class="text-xs font-medium text-gray-700">${item.scanDate}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-xs text-gray-600">Waktu</span>
-              <span class="text-xs font-medium text-gray-700">${
-                item.scanTime
-              }</span>
+              <span class="text-xs text-gray-600">Time</span>
+              <span class="text-xs font-medium text-gray-700">${item.scanTime}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-xs text-gray-600">Diperiksa Oleh</span>
-              <span class="text-xs font-medium text-gray-700">${
-                item.verifiedBy
-              }</span>
+              <span class="text-xs text-gray-600">Inspected By</span>
+              <span class="text-xs font-medium text-gray-700">${item.verifiedBy}</span>
             </div>
           </div>
         </div>
 
-        <!-- Status Validasi -->
+        <!-- Validation Status -->
         <div>
-          <h5 class="text-xs font-medium text-gray-700 mb-2">STATUS VALIDASI</h5>
+          <h5 class="text-xs font-medium text-gray-700 mb-2">VALIDATION STATUS</h5>
           <div class="bg-gray-50 rounded-lg p-3">
             <div class="flex justify-between items-center">
               <span class="text-xs text-gray-600">Status</span>
@@ -442,32 +423,30 @@ export default function ValidationVerificationPage() {
               }">
                 ${
                   item.status === "valid"
-                    ? "Tervalidasi"
+                    ? "Validated"
                     : item.status === "pending"
-                    ? "Menunggu Validasi"
-                    : "Error Validasi"
+                    ? "Pending Validation"
+                    : "Validation Error"
                 }
               </span>
             </div>
             <div class="flex justify-between items-center mt-2">
-              <span class="text-xs text-gray-600">Terakhir Diverifikasi</span>
-              <span class="text-xs font-medium text-gray-700">${
-                item.lastVerified
-              }</span>
+              <span class="text-xs text-gray-600">Last Verified</span>
+              <span class="text-xs font-medium text-gray-700">${item.lastVerified}</span>
             </div>
           </div>
         </div>
 
-        <!-- Bukti Foto -->
+        <!-- Photo Evidence -->
         <div>
-          <h5 class="text-xs font-medium text-gray-700 mb-2">BUKTI FOTO</h5>
+          <h5 class="text-xs font-medium text-gray-700 mb-2">PHOTO EVIDENCE</h5>
           <div class="bg-gray-50 rounded-lg p-3 text-center">
             <div class="w-20 h-16 bg-gray-200 rounded mx-auto flex items-center justify-center">
               <Camera class="w-6 h-6 text-gray-400" />
             </div>
-            <p class="text-xs text-gray-600 mt-2">Bukti foto hasil scanning</p>
+            <p class="text-xs text-gray-600 mt-2">Scanning result photo evidence</p>
             <button class="text-xs text-blue-600 mt-1 hover:text-blue-700">
-              Lihat Foto Lengkap
+              View Full Photo
             </button>
           </div>
         </div>
@@ -477,7 +456,7 @@ export default function ValidationVerificationPage() {
       padding: "8px",
       showCloseButton: true,
       showConfirmButton: true,
-      confirmButtonText: "Tutup",
+      confirmButtonText: "Close",
       confirmButtonColor: "#2563eb",
       customClass: {
         popup: "rounded-xl font-poppins",
@@ -486,6 +465,7 @@ export default function ValidationVerificationPage() {
       },
     });
   };
+
   // Mobile Card View
   const MobileItemCard = ({ item }) => (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-3">
@@ -507,8 +487,8 @@ export default function ValidationVerificationPage() {
               {item.serialNumber}
             </div>
             <div className="text-xs text-gray-500 mt-1 flex items-center">
-              {getCategoryIcon(item.kategori)}
-              <span className="ml-1">{item.kategori}</span>
+              {getCategoryIcon(item.category)}
+              <span className="ml-1">{item.category}</span>
             </div>
           </div>
         </div>
@@ -530,7 +510,7 @@ export default function ValidationVerificationPage() {
           {item.assetType}
         </div>
         <div className="text-xs text-gray-400 font-mono mt-1">
-          {item.jenisID}: {item.idValue}
+          {item.idType}: {item.idValue}
         </div>
       </div>
 
@@ -544,10 +524,10 @@ export default function ValidationVerificationPage() {
           {getStatusIcon(item.status)}
           <span className="ml-1 capitalize">
             {item.status === "valid"
-              ? "Tervalidasi"
+              ? "Validated"
               : item.status === "pending"
-              ? "Menunggu"
-              : "Serial Number atau Barcode Error"}
+              ? "Pending"
+              : "Serial Number or Barcode Error"}
           </span>
         </span>
         <div className="text-xs text-gray-500 text-right">
@@ -564,7 +544,7 @@ export default function ValidationVerificationPage() {
           {/* Department & Verification */}
           <div>
             <div className="text-xs font-semibold text-gray-500 mb-1">
-              DEPARTEMEN & VERIFIKASI
+              DEPARTMENT & VERIFICATION
             </div>
             <div className="text-sm text-gray-700">{item.department}</div>
             <div className="text-xs text-gray-600 mt-1 flex items-center">
@@ -580,21 +560,21 @@ export default function ValidationVerificationPage() {
           {/* Unique Code */}
           <div>
             <div className="text-xs font-semibold text-gray-500 mb-1">
-              KODE UNIK
+              UNIQUE CODE
             </div>
             <div className="text-sm font-mono text-blue-600">
               {item.uniqueCode}
             </div>
           </div>
 
-          {/* Bukti Foto */}
+          {/* Photo Evidence */}
           <div>
             <div className="text-xs font-semibold text-gray-500 mb-1">
-              BUKTI
+              EVIDENCE
             </div>
             <button className="flex items-center text-blue-600 text-xs">
               <Camera className="w-3 h-3 mr-1" />
-              Lihat Bukti Foto
+              View Photo Evidence
             </button>
           </div>
 
@@ -608,7 +588,7 @@ export default function ValidationVerificationPage() {
                   className="flex-1 flex items-center justify-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 text-xs"
                 >
                   <CheckCircle className="w-3 h-3 mr-1" />
-                  Setujui
+                  Approve
                 </button>
                 <button
                   onClick={() => handleVerifyItem(item.id, "error")}
@@ -616,7 +596,7 @@ export default function ValidationVerificationPage() {
                   className="flex-1 flex items-center justify-center px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 text-xs"
                 >
                   <XCircle className="w-3 h-3 mr-1" />
-                  Tolak
+                  Reject
                 </button>
               </>
             )}
@@ -625,7 +605,7 @@ export default function ValidationVerificationPage() {
               className="flex items-center px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-xs"
             >
               <Eye className="w-3 h-3 mr-1" />
-              Detail
+              Details
             </button>
           </div>
         </div>
@@ -636,17 +616,17 @@ export default function ValidationVerificationPage() {
   return (
     <LayoutDashboard activeMenu={3}>
       <div className="max-w-7xl mx-auto px-3 md:px-4 py-2 md:py-2 space-y-4 md:space-y-6">
-        {/* Header dengan gradient - Mobile Optimized */}
+        {/* Header with gradient - Mobile Optimized */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-600 rounded-xl shadow-lg p-4 md:p-6 text-white">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center">
-              <CheckCircle className="w-6 h-6 md:w-7 md:h-7 mr-2 md:mr-3" />
+              <CheckCircle className="w-6 h-6 md:w-6 md:h-6 mr-2 md:mr-3" />
               <div>
                 <h1 className="text-xl md:text-2xl font-semibold">
-                  VALIDASI & VERIFIKASI ASET IT
+                  IT ASSET VALIDATION & VERIFICATION
                 </h1>
                 <p className="text-blue-100 mt-1 text-xs md:text-sm">
-                  Sistem validasi otomatis menggunakan teknologi AI
+                  Automated validation system using AI technology
                 </p>
               </div>
             </div>
@@ -656,22 +636,22 @@ export default function ValidationVerificationPage() {
                 <div className="flex items-center text-blue-100 text-xs md:text-sm">
                   <ScanLine className="w-4 h-4 mr-2" />
                   <span>
-                    Scan Terakhir: <strong>{scanData.serial}</strong>
+                    Last Scan: <strong>{scanData.serial}</strong>
                   </span>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Status Sistem AI - Mobile Optimized */}
+          {/* AI System Status - Mobile Optimized */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 mt-4">
             <div className="flex items-center space-x-1 md:space-x-2 text-xs md:text-sm">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span>Deteksi AI Aktif</span>
+              <span>AI Detection Active</span>
             </div>
             <div className="flex items-center space-x-1 md:space-x-2 text-xs md:text-sm">
               <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-              <span>OCR Berjalan</span>
+              <span>OCR Running</span>
             </div>
             <div className="flex items-center space-x-1 md:space-x-2 text-xs md:text-sm">
               <div className="w-2 h-2 bg-green-400 rounded-full"></div>
@@ -679,7 +659,7 @@ export default function ValidationVerificationPage() {
             </div>
             <div className="flex items-center space-x-1 md:space-x-2 text-xs md:text-sm">
               <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-              <span>Validasi Real-time</span>
+              <span>Real-time Validation</span>
             </div>
           </div>
         </div>
@@ -688,30 +668,30 @@ export default function ValidationVerificationPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
           {[
             {
-              label: "Tervalidasi",
+              label: "Validated",
               value: stats.valid,
-              sub: "✓ Data Akurat",
+              sub: "Accurate Data",
               color: "text-green-600",
               border: "border-green-500",
             },
             {
-              label: "Menunggu",
+              label: "Pending",
               value: stats.pending,
-              sub: "⏳ Perlu Verifikasi",
+              sub: "Needs Verification",
               color: "text-yellow-600",
               border: "border-yellow-500",
             },
             {
               label: "Error",
               value: stats.error,
-              sub: "⚠ Perlu Tindakan",
+              sub: "Needs Action",
               color: "text-red-600",
               border: "border-red-500",
             },
             {
-              label: "Total Aset",
+              label: "Total Assets",
               value: stats.total,
-              sub: "📊 Semua Kategori",
+              sub: "All Categories",
               color: "text-blue-600",
               border: "border-blue-500",
             },
@@ -732,31 +712,32 @@ export default function ValidationVerificationPage() {
             </div>
           ))}
         </div>
+
         {/* Quick Actions Footer - Mobile Optimized */}
         <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
           <h3 className="text-base md:text-lg font-semibold text-gray-800 mb-3 md:mb-4 flex items-center">
             <ScanLine className="w-4 h-4 md:w-5 md:h-5 mr-2 text-black-600" />
-            Lakukan Pemeriksaan Aset Kembali
+            Perform Asset Re-Check
           </h3>
           <div className="space-y-3">
-            {/* Tombol Lebar Penuh dengan warna asli */}
+            {/* Full Width Button with original colors */}
             <button
               onClick={() => router.push("/scanning")}
               className="w-full flex flex-col items-center justify-center p-4 md:p-6 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all duration-200 text-gray-800 hover:text-blue-700 shadow-sm hover:shadow-md"
             >
               <ScanLine className="w-6 h-6 md:w-8 md:h-8 mb-2 md:mb-3 text-blue-600" />
               <span className="text-sm md:text-lg font-semibold">
-                Mulai Pemindaian Baru
+                Start New Scan
               </span>
               <span className="text-xs md:text-sm text-gray-600 mt-1 md:mt-2">
-                Pindai perangkat atau material untuk proses pengecekan
+                Scan Perangkats or materials for checking process
               </span>
             </button>
 
-            {/* Informasi Tambahan */}
+            {/* Additional Information */}
             <div className="flex items-center justify-between text-xs text-gray-500 mt-2">
-              <span>Terakhir dipindai: 28 Oktober 2025, 14:30</span>
-              <span className="text-green-600 font-medium">✓ Sistem Siap</span>
+              <span>Last scanned: October 28, 2025, 14:30</span>
+              <span className="text-green-600 font-medium">✓ System Ready</span>
             </div>
           </div>
         </div>
@@ -767,7 +748,7 @@ export default function ValidationVerificationPage() {
           <div className="p-4 md:p-6 space-y-4 border-b border-gray-200">
             <h3 className="text-base md:text-lg font-semibold text-gray-800 mb-3 md:mb-4 flex items-center">
               <QrCode className="w-4 h-4 md:w-5 md:h-5 mr-2 text-black-600" />
-              Data Aset Hasil Scanning Serial Number & Barcode
+              Asset Data from Serial Number & Barcode Scanning Results
             </h3>
 
             {/* Search and Filter Row */}
@@ -778,7 +759,7 @@ export default function ValidationVerificationPage() {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <input
                     type="text"
-                    placeholder="Cari nomor seri, barcode, jenis aset, atau lokasi..."
+                    placeholder="Search serial number, barcode, asset type, or location..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
@@ -795,15 +776,15 @@ export default function ValidationVerificationPage() {
                       onChange={(e) => setSelectedStatus(e.target.value)}
                       className="px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
                     >
-                      <option value="all">Semua Status</option>
-                      <option value="pending">Menunggu</option>
-                      <option value="valid">Tervalidasi</option>
+                      <option value="all">All Status</option>
+                      <option value="pending">Pending</option>
+                      <option value="valid">Validated</option>
                       <option value="error">Error</option>
                     </select>
 
                     <button className="flex items-center px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm">
                       <Filter className="w-4 h-4 mr-2" />
-                      <span className="hidden md:inline">Filter Lainnya</span>
+                      <span className="hidden md:inline">More Filters</span>
                       <span className="md:hidden">Filter</span>
                     </button>
                   </>
@@ -829,9 +810,9 @@ export default function ValidationVerificationPage() {
                           onChange={(e) => setSelectedStatus(e.target.value)}
                           className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
                         >
-                          <option value="all">Semua Status</option>
-                          <option value="pending">Menunggu</option>
-                          <option value="valid">Tervalidasi</option>
+                          <option value="all">All Status</option>
+                          <option value="pending">Pending</option>
+                          <option value="valid">Validated</option>
                           <option value="error">Error</option>
                         </select>
                       </div>
@@ -847,19 +828,19 @@ export default function ValidationVerificationPage() {
                 {[
                   {
                     id: "all",
-                    label: "Semua",
+                    label: "All",
                     count: stats.total,
                     color: "blue",
                   },
                   {
                     id: "pending",
-                    label: "Menunggu",
+                    label: "Pending",
                     count: stats.pending,
                     color: "blue",
                   },
                   {
                     id: "valid",
-                    label: "Tervalidasi",
+                    label: "Validated",
                     count: stats.valid,
                     color: "blue",
                   },
@@ -902,7 +883,7 @@ export default function ValidationVerificationPage() {
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-3">
                   <div className="text-blue-800 text-sm font-medium flex items-center">
                     <CheckSquare className="w-4 h-4 mr-2" />
-                    {selectedItems.length} item dipilih untuk verifikasi massal
+                    {selectedItems.length} items selected for bulk verification
                   </div>
                   <div className="flex gap-1 md:gap-2 flex-wrap">
                     <button
@@ -911,7 +892,7 @@ export default function ValidationVerificationPage() {
                       className="flex items-center px-3 py-1.5 md:px-4 md:py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 text-xs"
                     >
                       <CheckCircle className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-                      Setujui
+                      Approve
                     </button>
                     <button
                       onClick={() => handleBulkAction("reject")}
@@ -919,16 +900,9 @@ export default function ValidationVerificationPage() {
                       className="flex items-center px-3 py-1.5 md:px-4 md:py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 text-xs"
                     >
                       <XCircle className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-                      Tolak
+                      Reject
                     </button>
-                    <button
-                      onClick={() => handleBulkAction("export")}
-                      disabled={isSubmitting}
-                      className="flex items-center px-3 py-1.5 md:px-4 md:py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition disabled:opacity-50 text-xs"
-                    >
-                      <Download className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-                      Export
-                    </button>
+               
                   </div>
                 </div>
               </div>
@@ -953,23 +927,23 @@ export default function ValidationVerificationPage() {
                         ) : (
                           <Square className="w-4 h-4 mr-2 text-gray-400" />
                         )}
-                        ID Aset
+                        Asset ID
                       </button>
                     </th>
                     <th className="px-4 py-3 text-left text-gray-700 font-medium">
-                      Jenis & Kategori
+                      Type & Category
                     </th>
                     <th className="px-4 py-3 text-left text-gray-700 font-medium">
-                      Lokasi & Departemen
+                      Location & Department
                     </th>
                     <th className="px-4 py-3 text-left text-gray-700 font-medium">
-                      Detail Pemindaian
+                      Scan Details
                     </th>
                     <th className="px-4 py-3 text-left text-gray-700 font-medium">
-                      Status Validasi
+                      Validation Status
                     </th>
                     <th className="px-4 py-3 text-left text-gray-700 font-medium">
-                      Aksi
+                      Actions
                     </th>
                   </tr>
                 </thead>
@@ -996,11 +970,11 @@ export default function ValidationVerificationPage() {
                               {item.serialNumber}
                             </div>
                             <div className="text-xs text-gray-500 mt-1 flex items-center">
-                              {getCategoryIcon(item.kategori)}
-                              <span className="ml-1">{item.kategori}</span>
+                              {getCategoryIcon(item.category)}
+                              <span className="ml-1">{item.category}</span>
                             </div>
                             <div className="text-xs text-gray-400 font-mono mt-1">
-                              {item.jenisID}: {item.idValue}
+                              {item.idType}: {item.idValue}
                             </div>
                           </div>
                         </div>
@@ -1012,10 +986,10 @@ export default function ValidationVerificationPage() {
                         <div className="text-xs text-gray-500 mt-1">
                           <span
                             className={`px-2 py-1 rounded-full ${getCategoryColor(
-                              item.kategori
+                              item.category
                             )}`}
                           >
-                            {item.kategori}
+                            {item.category}
                           </span>
                         </div>
                       </td>
@@ -1040,7 +1014,7 @@ export default function ValidationVerificationPage() {
                           </div>
                           <div className="flex items-center text-blue-600">
                             <Camera className="w-3 h-3 mr-1" />
-                            <span className="text-xs">Lihat Bukti Foto</span>
+                           <span className="text-xs">View Photo Evidence</span>
                           </div>
                         </div>
                       </td>
@@ -1053,9 +1027,9 @@ export default function ValidationVerificationPage() {
                           {getStatusIcon(item.status)}
                           <span className="ml-1 capitalize">
                             {item.status === "valid"
-                              ? "Tervalidasi"
+                              ? "Validated"
                               : item.status === "pending"
-                              ? "Menunggu"
+                              ? "Pending"
                               : "Error"}
                           </span>
                         </span>
@@ -1072,7 +1046,7 @@ export default function ValidationVerificationPage() {
                                 className="flex items-center px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 text-xs"
                               >
                                 <CheckCircle className="w-3 h-3 mr-1" />
-                                Setujui
+                                Approve
                               </button>
                               <button
                                 onClick={() =>
@@ -1082,7 +1056,7 @@ export default function ValidationVerificationPage() {
                                 className="flex items-center px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 text-xs"
                               >
                                 <XCircle className="w-3 h-3 mr-1" />
-                                Tolak
+                                Reject
                               </button>
                             </>
                           )}
@@ -1091,7 +1065,7 @@ export default function ValidationVerificationPage() {
                             className="flex items-center px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-xs"
                           >
                             <Eye className="w-3 h-3 mr-1" />
-                            Detail
+                            Details
                           </button>
                         </div>
                       </td>
@@ -1114,10 +1088,10 @@ export default function ValidationVerificationPage() {
             <div className="text-center py-8 md:py-12">
               <AlertTriangle className="w-10 h-10 md:w-12 md:h-12 text-gray-400 mx-auto mb-3 md:mb-4" />
               <p className="text-gray-500 text-base md:text-lg">
-                Tidak ada data validasi ditemukan
+                No validation data found
               </p>
               <p className="text-gray-400 text-sm mt-1 md:mt-2">
-                Coba sesuaikan pencarian atau kriteria filter Anda
+                Try adjusting your search or filter criteria
               </p>
             </div>
           )}

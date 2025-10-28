@@ -12,8 +12,8 @@ import {
   Send,
   AlertCircle,
   Calendar,
-  ScanLine
-,  Cpu,
+  ScanLine,
+  Cpu,
   Cable,
   Server,
   Box,
@@ -71,7 +71,6 @@ export default function SerialScanningPage() {
       localStorage.setItem("scanCheckHistory", JSON.stringify(checkHistory));
     }
   }, [checkHistory]);
-
   useEffect(() => {
     const startCamera = async () => {
       try {
@@ -83,9 +82,9 @@ export default function SerialScanningPage() {
           videoRef.current.srcObject = stream;
         }
       } catch (err) {
-        console.error("Gagal akses kamera:", err);
+        console.error("Failed to access camera:", err);
         setCameraError(
-          "Tidak dapat mengakses kamera. Pastikan izin kamera sudah diberikan."
+          "Unable to access the camera. Please make sure camera permissions are granted."
         );
       }
     };
@@ -128,70 +127,70 @@ export default function SerialScanningPage() {
     setInputType("");
 
     setTimeout(() => {
-      const isError = Math.random() < 0.2; // 20% kemungkinan error
-      const isPerangkat = Math.random() < 0.6; // 60% perangkat, 40% material
+      const isError = Math.random() < 0.2; // 20% chance of error
+      const isDevice = Math.random() < 0.6; // 60% device, 40% material
 
       if (isError) {
         const errorData = {
           status: "error",
           id: "ERR-SCAN-001",
-          jenisAset: "Tidak Dikenali",
-          kategori: "Error",
-          lokasi: "",
-          message: "Format nomor seri/barcode tidak valid. Silakan scan ulang.",
+          assetType: "Unrecognized",
+          category: "Error",
+          location: "",
+          message: "Invalid serial number/barcode format. Please rescan.",
           inputType: "scan",
         };
 
         setScanResult(errorData);
         addToCheckHistory(errorData);
       } else {
-        const assets = isPerangkat
-          ? // Data Perangkat (Nomor Seri)
+        const assets = isDevice
+          ? // Device data (Serial Numbers)
             [
               {
                 id: "PC-IT-2025-001",
-                jenisAset: "Komputer",
-                kategori: "Perangkat",
-                lokasi: "",
-                nomorSeri: "NS-PC-887632",
+                assetType: "Computer",
+                category: "Device",
+                location: "",
+                serialNumber: "SN-PC-887632",
               },
               {
                 id: "SRV-NET-012",
-                jenisAset: "Server",
-                kategori: "Perangkat",
-                lokasi: "",
-                nomorSeri: "NS-SRV-992345",
+                assetType: "Server",
+                category: "Device",
+                location: "",
+                serialNumber: "SN-SRV-992345",
               },
               {
                 id: "CCTV-SEC-003",
-                jenisAset: "CCTV",
-                kategori: "Perangkat",
-                lokasi: "",
-                nomorSeri: "NS-CCTV-661234",
+                assetType: "CCTV",
+                category: "Device",
+                location: "",
+                serialNumber: "SN-CCTV-661234",
               },
             ]
-          : // Data Material (Barcode)
+          : // Material data (Barcodes)
             [
               {
-                id: "MAT-KBL-045",
-                jenisAset: "Kabel RJ45",
-                kategori: "Material",
-                lokasi: "",
+                id: "MAT-CBL-045",
+                assetType: "RJ45 Cable",
+                category: "Material",
+                location: "",
                 barcode: "BC-RJ45-554321",
               },
               {
                 id: "MAT-TRK-987",
-                jenisAset: "Trunking",
-                kategori: "Material",
-                lokasi: "",
+                assetType: "Trunking",
+                category: "Material",
+                location: "",
                 barcode: "BC-TRK-773216",
               },
               {
-                id: "MAT-PIP-123",
-                jenisAset: "Pipa PVC",
-                kategori: "Material",
-                lokasi: "",
-                barcode: "BC-PIP-445533",
+                id: "MAT-PVC-123",
+                assetType: "PVC Pipe",
+                category: "Material",
+                location: "",
+                barcode: "BC-PVC-445533",
               },
             ];
 
@@ -199,15 +198,15 @@ export default function SerialScanningPage() {
         const successData = {
           status: "success",
           ...randomAsset,
-          message: `Berhasil! ${
-            isPerangkat ? "Nomor Seri" : "Barcode"
-          } terdeteksi.`,
+          message: `Success! ${
+            isDevice ? "Serial Number" : "Barcode"
+          } detected.`,
           inputType: "scan",
         };
 
         setScanResult(successData);
         addToCheckHistory(successData);
-        setInputType(isPerangkat ? "serial" : "barcode");
+        setInputType(isDevice ? "serial" : "barcode");
       }
     }, 2000);
   };
@@ -257,13 +256,12 @@ export default function SerialScanningPage() {
               lokasi: "",
               barcode: manualInput,
             };
-
         const finalData = {
           status: "success",
           ...successData,
-          message: `Valid! Data input manual ${
-            isPerangkat ? "nomor seri" : "barcode"
-          } terdeteksi.`,
+          message: `Valid! Manual input ${
+            isPerangkat ? "serial number" : "barcode"
+          } detected.`,
           inputType: isSerial ? "serial" : "barcode",
         };
 
@@ -274,93 +272,98 @@ export default function SerialScanningPage() {
     }, 1500);
   };
 
-// Fungsi untuk membuka modal lokasi dengan SweetAlert
-const handleOpenLocationModal = (scanData) => {
-  let selectedLocation = scanData.lokasi || "";
+  // Fungsi untuk membuka modal lokasi dengan SweetAlert
+  const handleOpenLocationModal = (scanData) => {
+    let selectedLocation = scanData.lokasi || "";
 
-  Swal.fire({
-    title: `<div class="font-poppins text-lg font-semibold text-black">Pilih Lokasi Pengecekan Aset</div>`,
-    html: `
-      <div class="font-poppins text-left space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Pilih Lokasi</label>
-          <select 
-            id="locationSelect" 
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-          >
-            <option value="">Pilih lokasi...</option>
-            ${locationOptions.map(location => 
-              `<option value="${location}" ${location === selectedLocation ? 'selected' : ''}>${location}</option>`
-            ).join('')}
-          </select>
-        </div>
+    Swal.fire({
+      title: `<div class="font-poppins text-lg font-semibold text-black">Select Asset Checking Location</div>`,
+      html: `
+  <div class="font-poppins text-left space-y-4">
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2">Select Location</label>
+      <select 
+        id="locationSelect" 
+        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+      >
+        <option value="">Select location...</option>
+        ${locationOptions
+          .map(
+            (location) =>
+              `<option value="${location}" ${
+                location === selectedLocation ? "selected" : ""
+              }>${location}</option>`
+          )
+          .join("")}
+      </select>
+    </div>
 
-        <div class="bg-gray-100 p-3 rounded-lg">
-          <p class="text-sm text-blue-700">
-            <strong>Data yang akan diupdate:</strong><br/>
-            Aset: ${scanData.jenisAset}<br/>
-            Kategori: ${scanData.kategori}<br/>
-            ID: ${scanData.id}
-          </p>
-        </div>
-      </div>
-    `,
-    width: '500px',
-    padding: '8px',
-    showCloseButton: true,
-    showCancelButton: true,
-    showConfirmButton: true,
-    cancelButtonText: 'Batal',
-    confirmButtonText: 'Simpan Lokasi',
-    confirmButtonColor: '#2563eb',
-    cancelButtonColor: '#6b7280',
+    <div class="bg-gray-100 p-3 rounded-lg">
+      <p class="text-sm text-blue-700">
+        <strong>Data to be updated:</strong><br/>
+        Asset: ${scanData.jenisAset}<br/>
+        Category: ${scanData.kategori}<br/>
+        ID: ${scanData.id}
+      </p>
+    </div>
+  </div>
+  `,
+      width: "500px",
+      padding: "8px",
+      showCloseButton: true,
+      showCancelButton: true,
+      showConfirmButton: true,
+      cancelButtonText: "Cancel",
+      confirmButtonText: "Save Location",
+      confirmButtonColor: "#2563eb",
+      cancelButtonColor: "#6b7280",
       reverseButtons: true,
-    customClass: {
-      popup: 'rounded-xl font-poppins',
-      confirmButton: 'px-4 py-2 text-sm font-medium ',
-      cancelButton: 'px-6 py-2 text-sm font-medium ',
-    },
-    preConfirm: () => {
-      const select = document.getElementById('locationSelect');
-      const location = select.value;
-      if (!location) {
-        Swal.showValidationMessage('Harap pilih lokasi terlebih dahulu');
-        return false;
+      customClass: {
+        popup: "rounded-xl font-poppins",
+        confirmButton: "px-4 py-2 text-sm font-medium",
+        cancelButton: "px-6 py-2 text-sm font-medium",
+      },
+      preConfirm: () => {
+        const select = document.getElementById("locationSelect");
+        const location = select.value;
+        if (!location) {
+          Swal.showValidationMessage("Please select a location first");
+          return false;
+        }
+        return location;
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const updatedLocation = result.value;
+
+        // Update data with selected location
+        const updatedData = {
+          ...scanData,
+          lokasi: updatedLocation,
+        };
+
+        // Update check history with new location
+        setCheckHistory((prev) =>
+          prev.map((item) =>
+            item.id === scanData.id ? { ...item, ...updatedData } : item
+          )
+        );
+
+        // Tampilkan konfirmasi sukses
+        Swal.fire({
+          title: "Location Saved Successfully!",
+          text: `Location ${updatedLocation} has been added to ${scanData.jenisAset}.`,
+          icon: "success",
+          confirmButtonColor: "#28a745",
+          confirmButtonText: "OK",
+          customClass: {
+            popup: "font-poppins rounded-xl",
+            confirmButton: "px-8 py-2 text-sm font-medium",
+          },
+        });
       }
-      return location;
-    }
-  }).then((result) => {
-    if (result.isConfirmed) {
-      const updatedLocation = result.value;
-      
-      // Update data dengan lokasi yang dipilih
-      const updatedData = {
-        ...scanData,
-        lokasi: updatedLocation,
-      };
-
-      // Update riwayat dengan lokasi baru
-      setCheckHistory((prev) =>
-        prev.map((item) =>
-          item.id === scanData.id ? { ...item, ...updatedData } : item
-        )
-      );
-
-      // Tampilkan konfirmasi sukses
-      Swal.fire({
-        title: 'Lokasi Berhasil Disimpan!',
-        text: `Lokasi ${updatedLocation} berhasil ditambahkan ke ${scanData.jenisAset}`,
-        icon: 'success',
-        confirmButtonColor: '#28a745',
-        confirmButtonText: 'Oke',
-        customClass: {
-          popup: 'font-poppins rounded-xl',
-          confirmButton: 'px-8 py-2 text-sm font-medium',
-        },
-      });
-    }
-  });
-};
+    });
+  };
 
   // Fungsi untuk menyimpan lokasi saja
   const handleSaveLocation = () => {
@@ -384,190 +387,187 @@ const handleOpenLocationModal = (scanData) => {
   };
 
   // Fungsi untuk submit data individual
-// Fungsi untuk submit data individual dengan SweetAlert
-const handleSubmitSingle = async (scanData) => {
-  if (!scanData.lokasi) {
+  // Fungsi untuk submit data individual dengan SweetAlert
+  const handleSubmitSingle = async (scanData) => {
+    if (!scanData.lokasi) {
+      Swal.fire({
+        title: "Location Not Selected",
+        text: "Please select a location before submitting the data.",
+        icon: "warning",
+        confirmButtonColor: "#2563eb",
+        confirmButtonText: "OK",
+        customClass: {
+          popup: "font-poppins rounded-xl",
+          confirmButton: "px-4 py-2 text-sm font-medium rounded-lg",
+        },
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    // Show loading SweetAlert
     Swal.fire({
-      title: 'Lokasi Belum Dipilih',
-      text: 'Harap pilih lokasi terlebih dahulu sebelum mengirim data.',
-      icon: 'warning',
-      confirmButtonColor: '#2563eb',
-      confirmButtonText: 'Oke',
+      title: "Sending Data...",
+      text: `Submitting data for ${scanData.jenisAset}`,
+      icon: "info",
+      showConfirmButton: false,
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      },
       customClass: {
-        popup: 'font-poppins rounded-xl',
-        confirmButton: 'px-4 py-2 text-sm font-medium rounded-lg',
+        popup: "font-poppins rounded-xl",
       },
     });
-    return;
-  }
 
-  setIsSubmitting(true);
+    const submittedData = {
+      ...scanData,
+      uniqueCode: `V-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+      status: "Pending Validation",
+      submitted: true,
+      submittedAt: new Date().toISOString(),
+    };
 
-  // Tampilkan loading SweetAlert
-  Swal.fire({
-    title: 'Mengirim Data...',
-    text: `Sedang mengirim data ${scanData.jenisAset}`,
-    icon: 'info',
-    showConfirmButton: false,
-    allowOutsideClick: false,
-    didOpen: () => {
-      Swal.showLoading();
-    },
-    customClass: {
-      popup: 'font-poppins rounded-xl',
-    },
-  });
+    // Update riwayat dengan status submitted
+    setCheckHistory((prev) =>
+      prev.map((item) =>
+        item.id === scanData.id ? { ...item, ...submittedData } : item
+      )
+    );
 
-  const submittedData = {
-    ...scanData,
-    uniqueCode: `V-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-    status: "Pending Validation",
-    submitted: true,
-    submittedAt: new Date().toISOString(),
+    console.log("Submitting Single Data:", submittedData);
+
+    // Simulasi proses pengiriman
+    setTimeout(() => {
+      setIsSubmitting(false);
+
+      // Tutup loading dan tampilkan sukses
+      Swal.fire({
+        title: "Successfully Sent!",
+        html: `
+    <div class="text-center">
+   
+      <p class="text-gray-700 font-grey-700 mb-2 mt-0">The data has been successfully sent for validation!</p>
+      <div class="bg-gray-50 p-3 rounded-lg mt-3">
+        <p class="text-sm text-gray-600"><strong>Data Details:</strong></p>
+        <p class="text-xs text-gray-600">${submittedData.jenisAset} (${submittedData.id})</p>
+        <p class="text-xs text-gray-600">Location: ${submittedData.lokasi}</p>
+        <p class="text-xs text-blue-600 font-mono mt-1">Code: ${submittedData.uniqueCode}</p>
+      </div>
+    </div>
+  `,
+        icon: "success",
+        confirmButtonColor: "#10B981",
+        confirmButtonText: "Continue Scanning",
+        customClass: {
+          popup: "font-poppins rounded-xl",
+          confirmButton: "px-6 py-2 text-sm font-medium rounded-lg",
+        },
+      });
+    }, 1500);
   };
 
-  // Update riwayat dengan status submitted
-  setCheckHistory((prev) =>
-    prev.map((item) =>
-      item.id === scanData.id ? { ...item, ...submittedData } : item
-    )
-  );
+  // Fungsi untuk submit semua data dengan SweetAlert
+  const handleSubmitAll = async () => {
+    const dataToSubmit = checkHistory.filter(
+      (item) => item.status === "Checked" && item.lokasi && !item.submitted
+    );
 
-  console.log("Submitting Single Data:", submittedData);
+    if (dataToSubmit.length === 0) {
+      Swal.fire({
+        title: "No Data Available",
+        text: "There is no data ready to be submitted. Please make sure all items have a selected location.",
+        icon: "info",
+        confirmButtonColor: "#2563eb",
+        confirmButtonText: "OK",
+        customClass: {
+          popup: "font-poppins rounded-xl",
+          confirmButton: "px-4 py-2 text-sm font-medium rounded-lg",
+        },
+      });
+      return;
+    }
 
-  // Simulasi proses pengiriman
-  setTimeout(() => {
-    setIsSubmitting(false);
-    
-    // Tutup loading dan tampilkan sukses
+    setIsSubmittingAll(true);
+
+    // Show loading SweetAlert
     Swal.fire({
-      title: 'Berhasil Dikirim!',
+      title: "Submitting All Data...",
       html: `
-        <div class="text-center">
-          <svg class="w-12 h-12 text-green-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-          <p class="text-gray-700 font-medium mb-2">Data berhasil dikirim untuk validasi!</p>
-          <div class="bg-gray-50 p-3 rounded-lg mt-3">
-            <p class="text-sm text-gray-600"><strong>Detail Data:</strong></p>
-            <p class="text-xs text-gray-600">${submittedData.jenisAset} (${submittedData.id})</p>
-            <p class="text-xs text-gray-600">Lokasi: ${submittedData.lokasi}</p>
-            <p class="text-xs text-blue-600 font-mono mt-1">Kode: ${submittedData.uniqueCode}</p>
-          </div>
-        </div>
-      `,
-      icon: 'success',
-      confirmButtonColor: '#10B981',
-      confirmButtonText: 'Lanjutkan Scanning',
-      customClass: {
-        popup: 'font-poppins rounded-xl',
-        confirmButton: 'px-6 py-2 text-sm font-medium rounded-lg',
-      },
-    });
-  }, 1500);
-};
-
-  // Fungsi untuk submit semua data yang sudah ada lokasi
- // Fungsi untuk submit semua data dengan SweetAlert
-const handleSubmitAll = async () => {
-  const dataToSubmit = checkHistory.filter(
-    (item) => item.status === "Checked" && item.lokasi && !item.submitted
-  );
-
-  if (dataToSubmit.length === 0) {
-    Swal.fire({
-      title: 'Tidak Ada Data',
-      text: 'Tidak ada data yang siap dikirim. Pastikan semua data sudah memiliki lokasi.',
-      icon: 'info',
-      confirmButtonColor: '#2563eb',
-      confirmButtonText: 'Oke',
-      customClass: {
-        popup: 'font-poppins rounded-xl',
-        confirmButton: 'px-4 py-2 text-sm font-medium rounded-lg',
-      },
-    });
-    return;
-  }
-
-  setIsSubmittingAll(true);
-
-  // Tampilkan loading SweetAlert
-  Swal.fire({
-    title: 'Mengirim Semua Data...',
-    html: `
-      <div class="text-center">
-        <p class="text-gray-700 mb-2">Sedang mengirim ${dataToSubmit.length} data</p>
-        <div class="w-full bg-gray-200 rounded-full h-2 mb-4">
-          <div class="bg-blue-600 h-2 rounded-full animate-pulse"></div>
-        </div>
+    <div class="text-center">
+      <p class="text-gray-700 mb-2">Sending ${dataToSubmit.length} data item(s)...</p>
+      <div class="w-full bg-gray-200 rounded-full h-2 mb-4">
+        <div class="bg-blue-600 h-2 rounded-full animate-pulse"></div>
       </div>
-    `,
-    showConfirmButton: false,
-    allowOutsideClick: false,
-    customClass: {
-      popup: 'font-poppins rounded-xl',
-    },
-  });
-
-  const submittedData = dataToSubmit.map((item) => ({
-    ...item,
-    uniqueCode: `V-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-    status: "Pending Validation",
-    submitted: true,
-    submittedAt: new Date().toISOString(),
-  }));
-
-  // Update semua data yang dikirim
-  setCheckHistory((prev) =>
-    prev.map((item) => {
-      const submittedItem = submittedData.find((sub) => sub.id === item.id);
-      return submittedItem ? { ...item, ...submittedItem } : item;
-    })
-  );
-
-  console.log("Submitting All Data:", submittedData);
-
-  // Simulasi proses pengiriman
-  setTimeout(() => {
-    setIsSubmittingAll(false);
-    
-    // Tutup loading dan tampilkan sukses
-    Swal.fire({
-      title: 'Semua Data Berhasil Dikirim!',
-      html: `
-        <div class="text-center">
-          <svg class="w-12 h-12 text-green-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-          <p class="text-gray-700 font-medium mb-2">${submittedData.length} data berhasil dikirim!</p>
-          <div class="bg-gray-50 p-3 rounded-lg mt-3">
-            <p class="text-sm text-gray-600"><strong>Rincian:</strong></p>
-            <p class="text-xs text-gray-600">Total data: ${submittedData.length}</p>
-            <p class="text-xs text-gray-600">Status: Menunggu Validasi Manager</p>
-          </div>
-        </div>
-      `,
-      icon: 'success',
-      showCancelButton: true,
-      confirmButtonColor: '#10B981',
-      cancelButtonColor: '#6B7280',
-      confirmButtonText: 'Lihat Verifikasi',
-      cancelButtonText: 'Lanjut Scanning',
-      reverseButtons: true,
+    </div>
+  `,
+      showConfirmButton: false,
+      allowOutsideClick: false,
       customClass: {
-        popup: 'font-poppins rounded-xl',
-        confirmButton: 'px-6 py-2 text-sm font-medium rounded-lg',
-        cancelButton: 'px-6 py-2 text-sm font-medium rounded-lg',
+        popup: "font-poppins rounded-xl",
       },
-    }).then((result) => {
-      if (result.isConfirmed) {
-        localStorage.setItem("lastSubmittedScan", JSON.stringify(submittedData));
-        router.push("/validation-verification");
-      }
     });
-  }, 2000);
-};
-  // Fungsi untuk menghapus data dari riwayat
+
+    const submittedData = dataToSubmit.map((item) => ({
+      ...item,
+      uniqueCode: `V-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+      status: "Pending Validation",
+      submitted: true,
+      submittedAt: new Date().toISOString(),
+    }));
+
+    // Update semua data yang dikirim
+    setCheckHistory((prev) =>
+      prev.map((item) => {
+        const submittedItem = submittedData.find((sub) => sub.id === item.id);
+        return submittedItem ? { ...item, ...submittedItem } : item;
+      })
+    );
+
+    console.log("Submitting All Data:", submittedData);
+
+    // Simulasi proses pengiriman
+    setTimeout(() => {
+      setIsSubmittingAll(false);
+
+      // Close loading and show success
+      Swal.fire({
+        title: "All Data Successfully Submitted!",
+        html: `
+    <div class="text-center">
+      <p class="text-gray-700 font-grey-700 mb-2 mt-0">${submittedData.length} data item(s) have been successfully submitted!</p>
+      <div class="bg-gray-50 p-3 rounded-lg mt-3">
+        <p class="text-sm text-gray-600"><strong>Details:</strong></p>
+        <p class="text-xs text-gray-600">Total items: ${submittedData.length}</p>
+        <p class="text-xs text-gray-600">Status: Awaiting Manager Validation</p>
+      </div>
+    </div>
+  `,
+        icon: "success",
+        showCancelButton: true,
+        confirmButtonColor: "#10B981",
+        cancelButtonColor: "#6B7280",
+        confirmButtonText: "View Verification",
+        cancelButtonText: "Continue Scanning",
+        reverseButtons: true,
+        customClass: {
+          popup: "font-poppins rounded-xl",
+          confirmButton: "px-6 py-2 text-sm font-medium rounded-lg",
+          cancelButton: "px-6 py-2 text-sm font-medium rounded-lg",
+        },
+      }).then((result) => {
+        if (result.isConfirmed) {
+          localStorage.setItem(
+            "lastSubmittedScan",
+            JSON.stringify(submittedData)
+          );
+          router.push("/validation-verification");
+        }
+      });
+    }, 2000);
+  };
+
   // Fungsi untuk menghapus data dari riwayat - PERBAIKAN
   const handleDeleteData = async (scanData) => {
     const result = await Swal.fire({
@@ -576,7 +576,7 @@ const handleSubmitAll = async () => {
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#4CAF50",
-       reverseButtons: true,
+      reverseButtons: true,
       cancelButtonColor: "#d33",
       confirmButtonText: "Ya, hapus!",
       cancelButtonText: "Batal",
@@ -707,20 +707,20 @@ const handleSubmitAll = async () => {
         <div className="bg-gradient-to-r from-blue-600 to-blue-600 rounded-xl shadow-lg p-4 sm:p-6 text-white">
           <h1 className="text-xl sm:text-2xl font-semibold flex items-center">
             <ScanLine className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3" />
-           SCAN PERANGKAT & MATERIAL IT
+            SCAN IT DEVICES & MATERIALS
           </h1>
           <p className="text-blue-100 text-xs sm:text-sm mt-1 sm:mt-2">
-            Scan perangkat IT atau material, pilih lokasi, dan kirim untuk
-            verifikasi. Data pengecekan akan tersimpan sementara sebelum
-            dikirim.
+            Scan IT devices or materials, select the location, and submit for
+            verification. The checking data will be temporarily stored before
+            being sent.
           </p>
         </div>
 
-        {/* 1. Kamera / Scanner Area */}
+        {/* 1. Camera / Scanner Area */}
         <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-3 sm:p-4 md:p-6">
           <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center">
-            <Camera className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-600" />
-            Scanner Kamera - Deteksi Perangkat & Material
+            <ScanLine className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-600" />
+            Camera Scanner – Detect IT Devices & Materials
           </h2>
 
           <div className="relative w-full aspect-video bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center mb-4 sm:mb-6">
@@ -734,7 +734,7 @@ const handleSubmitAll = async () => {
 
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-4/5 h-4/5 border-4 border-dashed border-white/50 rounded-lg"></div>
-              {/* Garis merah dihapus */}
+              {/* Red line removed */}
             </div>
 
             {cameraError && (
@@ -751,13 +751,13 @@ const handleSubmitAll = async () => {
             <div className="flex items-center">
               <Cpu className="w-3 h-3 sm:w-4 sm:h-4 mr-2 text-blue-600" />
               <span>
-                Scan <strong>Nomor Seri</strong> untuk Perangkat IT
+                Scan <strong>Serial Number</strong> for IT Devices
               </span>
             </div>
             <div className="flex items-center">
               <Cable className="w-3 h-3 sm:w-4 sm:h-4 mr-2 text-green-600" />
               <span>
-                Scan <strong>Barcode</strong> untuk Material
+                Scan <strong>Barcode</strong> for Materials
               </span>
             </div>
           </div>
@@ -789,25 +789,25 @@ const handleSubmitAll = async () => {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     ></path>
                   </svg>
-                  Sedang Memindai...
+                  Scanning in Progress...
                 </>
               ) : (
                 <>
-                  <Camera className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                  Mulai Pemindaian Kamera
+                  <ScanLine className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                  Start Camera Scanning
                 </>
               )}
             </button>
           </div>
         </div>
 
-        {/* 2. Input Manual & Hasil Scan */}
+        {/* 2. Manual Input & Scan Results */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-          {/* Input Manual */}
+          {/* Manual Input */}
           <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200">
             <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center">
               <Clipboard className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-gray-600" />
-              Input Manual
+              Manual Input
             </h2>
             <form
               onSubmit={handleManualCheck}
@@ -815,11 +815,11 @@ const handleSubmitAll = async () => {
             >
               <div>
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-                  Input Serial Number atau Barcode
+                  Enter Serial Number or Barcode
                 </label>
                 <input
                   type="text"
-                  placeholder="Contoh: NS-PC-887632 atau BC-RJ45-554321"
+                  placeholder="Example: NS-PC-887632 or BC-RJ45-554321"
                   value={manualInput}
                   onChange={(e) => setManualInput(e.target.value)}
                   className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-xs sm:text-sm"
@@ -832,16 +832,16 @@ const handleSubmitAll = async () => {
                 disabled={scanResult === "loading" || isSubmitting}
               >
                 <Search className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                Cek Validitas
+                Check Validity
               </button>
             </form>
           </div>
 
-          {/* Hasil Scan Terakhir */}
+          {/* Latest Scan Result */}
           <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200">
             <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center">
               <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-gray-400" />
-              Hasil Pemeriksaan Terakhir
+              Latest Inspection Result
             </h2>
 
             {scanResult === "loading" && (
@@ -866,10 +866,10 @@ const handleSubmitAll = async () => {
                   ></path>
                 </svg>
                 <p className="font-medium text-sm sm:text-base">
-                  Memproses pemeriksaan...
+                  Processing inspection...
                 </p>
                 <p className="text-xs sm:text-sm mt-1">
-                  Mendeteksi format dan validitas
+                  Detecting format and validity
                 </p>
               </div>
             )}
@@ -901,19 +901,19 @@ const handleSubmitAll = async () => {
 
                 <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm">
                   <div className="flex justify-between">
-                    <span className="font-medium text-gray-600">ID Aset:</span>
+                    <span className="font-medium text-gray-600">Asset ID:</span>
                     <span className="font-bold text-gray-800 text-xs sm:text-sm">
                       {scanResult.id}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="font-medium text-gray-600">Jenis:</span>
+                    <span className="font-medium text-gray-600">Type:</span>
                     <span className="text-gray-800">
                       {scanResult.jenisAset}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="font-medium text-gray-600">Kategori:</span>
+                    <span className="font-medium text-gray-600">Category:</span>
                     <span className="flex items-center">
                       {getCategoryIcon(scanResult.kategori)}
                       <span className="ml-1">{scanResult.kategori}</span>
@@ -921,7 +921,7 @@ const handleSubmitAll = async () => {
                   </div>
                   <div className="flex justify-between">
                     <span className="font-medium text-gray-600">
-                      {inputType === "serial" ? "Nomor Seri:" : "Barcode:"}
+                      {inputType === "serial" ? "Serial Number:" : "Barcode:"}
                     </span>
                     <span className="font-mono text-blue-600 text-xs sm:text-sm">
                       {scanResult.nomorSeri || scanResult.barcode}
@@ -939,30 +939,30 @@ const handleSubmitAll = async () => {
               <div className="text-center py-6 sm:py-8 text-gray-500">
                 <Box className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 text-gray-400" />
                 <p className="font-medium text-sm sm:text-base">
-                  Belum ada hasil pemeriksaan
+                  No inspection results yet
                 </p>
                 <p className="text-xs sm:text-sm mt-1">
-                  Gunakan Scanner Kamera atau Input Manual
+                  Use the Camera Scanner or Manual Input
                 </p>
               </div>
             )}
           </div>
         </div>
 
-        {/* 3. Riwayat Pengecekan Terbaru */}
+        {/* 3. Recent Inspection History */}
         <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sm:mb-4 gap-2">
             <h2 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center">
               <Calendar className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-gray-600" />
-              Riwayat Pengecekan Terbaru
+              Recent Inspection History
             </h2>
             <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto">
               <span className="text-xs sm:text-sm text-gray-500">
-                {checkHistory.length} item
+                {checkHistory.length} items
               </span>
               {readyToSubmitCount > 0 && (
                 <span className="ml-2 px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
-                  {readyToSubmitCount} siap kirim
+                  {readyToSubmitCount} ready to submit
                 </span>
               )}
             </div>
@@ -972,27 +972,27 @@ const handleSubmitAll = async () => {
             <div className="text-center py-6 sm:py-8 text-gray-500">
               <Box className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 text-gray-400" />
               <p className="font-medium text-sm sm:text-base">
-                Belum ada riwayat pengecekan
+                No inspection history yet
               </p>
               <p className="text-xs sm:text-sm mt-1">
-                Lakukan scan atau input manual untuk mulai
+                Use the camera scanner or manual input to start checking
               </p>
             </div>
           ) : (
             <>
-              {/* Tampilan Desktop */}
+              {/* Desktop View */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm text-left">
                   <thead>
                     <tr className="text-gray-500 uppercase text-xs border-b border-gray-200">
-                      <th className="py-2 font-medium">ID Aset</th>
-                      <th className="py-2 font-medium">Jenis Aset</th>
-                      <th className="py-2 font-medium">Kategori</th>
-                      <th className="py-2 font-medium">Lokasi</th>
+                      <th className="py-2 font-medium">Asset ID</th>
+                      <th className="py-2 font-medium">Asset Type</th>
+                      <th className="py-2 font-medium">Category</th>
+                      <th className="py-2 font-medium">Location</th>
                       <th className="py-2 font-medium">Status</th>
-                      <th className="py-2 font-medium">Tanggal</th>
-                      <th className="py-2 font-medium">Waktu</th>
-                      <th className="py-2 font-medium">Aksi</th>
+                      <th className="py-2 font-medium">Date</th>
+                      <th className="py-2 font-medium">Time</th>
+                      <th className="py-2 font-medium">Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1024,7 +1024,7 @@ const handleSubmitAll = async () => {
                         <td className="py-3 text-gray-600 text-sm">
                           {item.lokasi || (
                             <span className="text-orange-600 text-xs">
-                              Belum dipilih
+                              Not selected
                             </span>
                           )}
                         </td>
@@ -1048,10 +1048,10 @@ const handleSubmitAll = async () => {
                             <button
                               onClick={() => handleOpenLocationModal(item)}
                               className="flex items-center px-2 sm:px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition"
-                              title="Pilih Lokasi"
+                              title="Select Location"
                             >
                               <MapPin className="w-3 h-3 mr-1" />
-                              <span className="hidden sm:inline">Lokasi</span>
+                              <span className="hidden sm:inline">Location</span>
                             </button>
 
                             {item.status === "Checked" && item.lokasi && (
@@ -1059,20 +1059,20 @@ const handleSubmitAll = async () => {
                                 onClick={() => handleSubmitSingle(item)}
                                 disabled={isSubmitting}
                                 className="flex items-center px-2 sm:px-3 py-1 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 transition disabled:opacity-50"
-                                title="Kirim Data"
+                                title="Submit Data"
                               >
                                 <Send className="w-3 h-3 mr-1" />
-                                <span className="hidden sm:inline">Kirim</span>
+                                <span className="hidden sm:inline">Submit</span>
                               </button>
                             )}
 
                             <button
                               onClick={() => handleDeleteData(item)}
                               className="flex items-center px-2 sm:px-3 py-1 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition"
-                              title="Hapus Data"
+                              title="Delete Data"
                             >
                               <Trash2 className="w-3 h-3 mr-1" />
-                              <span className="hidden sm:inline">Hapus</span>
+                              <span className="hidden sm:inline">Delete</span>
                             </button>
                           </div>
                         </td>
@@ -1082,7 +1082,7 @@ const handleSubmitAll = async () => {
                 </table>
               </div>
 
-              {/* Tampilan Mobile & Tablet */}
+              {/* Mobile & Tablet View */}
               <div className="md:hidden space-y-3">
                 {checkHistory.map((item) => (
                   <div
@@ -1104,13 +1104,14 @@ const handleSubmitAll = async () => {
                         {getStatusText(item.status)}
                       </span>
                     </div>
+
                     <div className="text-xs text-gray-600 space-y-1">
                       <div className="flex justify-between">
-                        <span className="font-medium">Jenis:</span>{" "}
+                        <span className="font-medium">Type:</span>{" "}
                         {item.jenisAset}
                       </div>
                       <div className="flex justify-between">
-                        <span className="font-medium">Kategori:</span>
+                        <span className="font-medium">Category:</span>
                         <span
                           className={`px-1 rounded text-xs ${
                             item.kategori === "Perangkat"
@@ -1122,20 +1123,20 @@ const handleSubmitAll = async () => {
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="font-medium">Lokasi:</span>
+                        <span className="font-medium">Location:</span>
                         {item.lokasi ? (
                           <span className="text-gray-800 text-right max-w-[120px] truncate">
                             {item.lokasi}
                           </span>
                         ) : (
                           <span className="text-orange-600 text-xs">
-                            Belum dipilih
+                            Not selected
                           </span>
                         )}
                       </div>
                       <div className="flex justify-between">
                         <span className="font-medium">
-                          {item.nomorSeri ? "Nomor Seri:" : "Barcode:"}
+                          {item.nomorSeri ? "Serial Number:" : "Barcode:"}
                         </span>
                         <span className="font-mono text-blue-600 text-xs max-w-[100px] truncate">
                           {item.nomorSeri || item.barcode}
@@ -1146,13 +1147,14 @@ const handleSubmitAll = async () => {
                         <span>{item.waktu}</span>
                       </div>
                     </div>
+
                     <div className="flex space-x-2 mt-3 pt-2 border-t border-gray-100">
                       <button
                         onClick={() => handleOpenLocationModal(item)}
                         className="flex-1 flex items-center justify-center px-2 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition"
                       >
                         <MapPin className="w-3 h-3 mr-1" />
-                        Lokasi
+                        Location
                       </button>
 
                       {item.status === "Checked" && item.lokasi && (
@@ -1162,7 +1164,7 @@ const handleSubmitAll = async () => {
                           className="flex-1 flex items-center justify-center px-2 py-1 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 transition disabled:opacity-50"
                         >
                           <Send className="w-3 h-3 mr-1" />
-                          Kirim
+                          Submit
                         </button>
                       )}
 
@@ -1171,14 +1173,14 @@ const handleSubmitAll = async () => {
                         className="flex-1 flex items-center justify-center px-2 py-1 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition"
                       >
                         <Trash2 className="w-3 h-3 mr-1" />
-                        Hapus
+                        Delete
                       </button>
                     </div>
                   </div>
                 ))}
               </div>
 
-              {/* Tombol Submit All */}
+              {/* Submit All Button */}
               {readyToSubmitCount > 0 && (
                 <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-gray-200">
                   <button
@@ -1207,12 +1209,12 @@ const handleSubmitAll = async () => {
                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                           ></path>
                         </svg>
-                        Mengirim {readyToSubmitCount} Data...
+                        Sending {readyToSubmitCount} items...
                       </>
                     ) : (
                       <>
                         <Send className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                        Kirim Semua Data ({readyToSubmitCount} Data)
+                        Submit All ({readyToSubmitCount} items)
                       </>
                     )}
                   </button>
@@ -1221,15 +1223,14 @@ const handleSubmitAll = async () => {
             </>
           )}
         </div>
-
-        {/* Modal Pilih Lokasi */}
+        {/* Location Selection Modal */}
         {showLocationModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 sm:p-4 z-50">
             <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-4 sm:p-6 mx-2">
               <div className="flex items-center justify-between mb-3 sm:mb-4">
                 <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center">
                   <MapPin className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-600" />
-                  Pilih Lokasi Pengecekan Aset
+                  Select Asset Inspection Location
                 </h3>
                 <button
                   onClick={() => setShowLocationModal(false)}
@@ -1242,14 +1243,14 @@ const handleSubmitAll = async () => {
               <div className="space-y-3 sm:space-y-4">
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-                    Pilih Lokasi
+                    Choose Location
                   </label>
                   <select
                     value={selectedLocation}
                     onChange={(e) => setSelectedLocation(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                   >
-                    <option value="">Pilih lokasi...</option>
+                    <option value="">Select location...</option>
                     {locationOptions.map((location, index) => (
                       <option key={index} value={location}>
                         {location}
@@ -1260,11 +1261,11 @@ const handleSubmitAll = async () => {
 
                 <div className="bg-gray-100 p-2 sm:p-3 rounded-lg">
                   <p className="text-xs sm:text-sm text-blue-700">
-                    <strong>Data yang akan diupdate:</strong>
+                    <strong>Data to be updated:</strong>
                     <br />
-                    Aset: {currentScanData?.jenisAset}
+                    Asset: {currentScanData?.jenisAset}
                     <br />
-                    Kategori: {currentScanData?.kategori}
+                    Category: {currentScanData?.kategori}
                     <br />
                     ID: {currentScanData?.id}
                   </p>
@@ -1275,7 +1276,7 @@ const handleSubmitAll = async () => {
                     onClick={() => setShowLocationModal(false)}
                     className="flex-1 px-3 sm:px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition text-sm"
                   >
-                    Batal
+                    Cancel
                   </button>
                   <button
                     onClick={handleSaveLocation}
@@ -1283,7 +1284,7 @@ const handleSubmitAll = async () => {
                     className="flex-1 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 flex items-center justify-center text-sm"
                   >
                     <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                    Simpan Lokasi
+                    Save Location
                   </button>
                 </div>
               </div>
@@ -1291,14 +1292,14 @@ const handleSubmitAll = async () => {
           </div>
         )}
 
-        {/* Modal Konfirmasi Hapus */}
+        {/* Delete Confirmation Modal */}
         {showDeleteModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 sm:p-4 z-50">
             <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-4 sm:p-6 mx-2">
               <div className="flex items-center justify-between mb-3 sm:mb-4">
                 <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center">
                   <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-red-600" />
-                  Konfirmasi Hapus Data
+                  Confirm Delete Data
                 </h3>
                 <button
                   onClick={() => setShowDeleteModal(false)}
@@ -1310,18 +1311,18 @@ const handleSubmitAll = async () => {
 
               <div className="space-y-3 sm:space-y-4">
                 <p className="text-gray-600 text-sm sm:text-base">
-                  Apakah Anda yakin ingin menghapus data pengecekan ini?
+                  Are you sure you want to delete this inspection record?
                 </p>
 
                 <div className="bg-gray-100 p-2 sm:p-3 rounded-lg">
                   <p className="text-xs sm:text-sm text-red-700">
-                    <strong>Data yang akan dihapus:</strong>
+                    <strong>Data to be deleted:</strong>
                     <br />
                     ID: {dataToDelete?.id}
                     <br />
-                    Jenis: {dataToDelete?.jenisAset}
+                    Type: {dataToDelete?.jenisAset}
                     <br />
-                    Kategori: {dataToDelete?.kategori}
+                    Category: {dataToDelete?.kategori}
                     <br />
                     Status: {getStatusText(dataToDelete?.status)}
                   </p>
@@ -1332,14 +1333,14 @@ const handleSubmitAll = async () => {
                     onClick={() => setShowDeleteModal(false)}
                     className="flex-1 px-3 sm:px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition text-sm"
                   >
-                    Batal
+                    Cancel
                   </button>
                   <button
                     onClick={confirmDelete}
                     className="flex-1 px-3 sm:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition flex items-center justify-center text-sm"
                   >
                     <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                    Hapus Data
+                    Delete Data
                   </button>
                 </div>
               </div>
@@ -1347,14 +1348,14 @@ const handleSubmitAll = async () => {
           </div>
         )}
 
-        {/* Modal Sukses Hapus Data */}
+        {/* Delete Success Modal */}
         {showDeleteSuccessModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 sm:p-4 z-50">
             <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-4 sm:p-6 mx-2">
               <div className="flex items-center justify-between mb-3 sm:mb-4">
                 <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center">
                   <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-green-600" />
-                  Berhasil Dihapus
+                  Successfully Deleted
                 </h3>
                 <button
                   onClick={() => setShowDeleteSuccessModal(false)}
@@ -1368,7 +1369,7 @@ const handleSubmitAll = async () => {
                 <div className="text-center">
                   <CheckCircle className="w-8 h-8 sm:w-12 sm:h-12 text-green-500 mx-auto mb-3 sm:mb-4" />
                   <p className="text-gray-700 font-medium text-sm sm:text-base">
-                    Data berhasil dihapus dari riwayat!
+                    The record has been successfully deleted from history!
                   </p>
                   <p className="text-xs sm:text-sm text-gray-600 mt-1 sm:mt-2">
                     {deletedDataInfo?.jenisAset} ({deletedDataInfo?.id})
@@ -1381,7 +1382,7 @@ const handleSubmitAll = async () => {
                     className="px-4 sm:px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center justify-center text-sm"
                   >
                     <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                    Oke
+                    OK
                   </button>
                 </div>
               </div>
