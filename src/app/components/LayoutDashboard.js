@@ -60,21 +60,21 @@ export default function LayoutDashboard({ children, activeMenu }) {
   }, []);
 
 const handleLogout = () => {
-  // Tutup dropdown user
+  // Close user dropdown and mobile menu
   setUserDropdownOpen(false);
   setMobileMenuOpen(false);
 
   Swal.fire({
-    title: 'Konfirmasi Logout',
-    text: "Apakah Anda yakin ingin logout dari sistem?",
+    title: 'Logout Confirmation',
+    text: "Are you sure you want to log out of the system?",
     icon: 'warning',
-    iconColor: '#FACC15', // Warna kuning
+    iconColor: '#FACC15', // Yellow color
     showCancelButton: true,
-    confirmButtonColor:  "#28a745",
+    confirmButtonColor: "#28a745",
     cancelButtonColor: '#d33',
-    confirmButtonText: 'Ya, Logout!',
+    confirmButtonText: 'Yes, Log Out!',
     reverseButtons: true,
-    cancelButtonText: 'Batal',
+    cancelButtonText: 'Cancel',
     background: '#ffffff',
     color: '#333333',
     customClass: {
@@ -84,12 +84,12 @@ const handleLogout = () => {
     }
   }).then((result) => {
     if (result.isConfirmed) {
-      // Tampilkan loading
+      // Show loading
       Swal.fire({
         title: 'Logging out...',
-        text: 'Sedang memproses logout...',
+        text: 'Processing your logout...',
         icon: 'info',
-        iconColor: '#2794ecff', // Warna kuning
+        iconColor: '#2794ecff',
         showConfirmButton: false,
         allowOutsideClick: false,
         didOpen: () => {
@@ -97,20 +97,20 @@ const handleLogout = () => {
         }
       });
 
-      // Simulasi proses logout (bisa diganti dengan API call)
+      // Simulate logout process (replace with API call if needed)
       setTimeout(() => {
-        // Clear localStorage atau session
+        // Clear localStorage or session
         localStorage.removeItem("userToken");
         localStorage.removeItem("userData");
         sessionStorage.clear();
 
-        // Tampilkan success message
+        // Show success message
         Swal.fire({
-          title: 'Logout Berhasil!',
-          text: 'Anda telah berhasil logout dari sistem.',
+          title: 'Logout Successful!',
+          text: 'You have been successfully logged out of the system.',
           icon: 'success',
-          iconColor: '#28a745', // Warna kuning
-          confirmButtonColor:  "#28a745",
+          iconColor: '#28a745',
+          confirmButtonColor: "#28a745",
           confirmButtonText: 'OK',
           background: '#ffffff',
           color: '#333333',
@@ -119,7 +119,7 @@ const handleLogout = () => {
             confirmButton: 'px-6 py-2 rounded-lg font-medium'
           }
         }).then(() => {
-          // Redirect ke halaman login
+          // Redirect to login page
           router.push("/login");
         });
       }, 1500);

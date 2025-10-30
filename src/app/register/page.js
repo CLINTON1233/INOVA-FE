@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import Swal from 'sweetalert2'
 
-// Gunakan path relative karena sudah ada proxy di next.config.js
-const API_BASE_URL = ''
+// URL backend - sesuaikan dengan environment
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -19,9 +20,6 @@ export default function RegisterPage() {
   })
   const [agree, setAgree] = useState(false)
   const [currentImage, setCurrentImage] = useState(0)
-  const [showSnackbar, setShowSnackbar] = useState(false)
-  const [snackbarMessage, setSnackbarMessage] = useState('')
-  const [snackbarType, setSnackbarType] = useState('success')
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
@@ -42,99 +40,115 @@ export default function RegisterPage() {
     }))
   }
 
-  const showMessage = (message, type = 'success') => {
-    setSnackbarMessage(message)
-    setSnackbarType(type)
-    setShowSnackbar(true)
-    setTimeout(() => {
-      setShowSnackbar(false)
-    }, 3000)
-  }
-
-  const testBackendConnection = async () => {
-    try {
-      const response = await fetch('/api/health', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-      return response.ok
-    } catch (error) {
-      console.error('Backend connection test failed:', error)
-      return false
-    }
-  }
-
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
-    if (!agree) {
-      showMessage('Please agree to the terms & policy', 'error')
-      return
-    }
 
-    // Validasi form tambahan
-    if (!formData.no_badge || !formData.department || !formData.username) {
-      showMessage('Please fill all required fields', 'error')
+    if (!agree) {
+      Swal.fire({
+        title: 'Agreement Required',
+        text: 'Please agree to the terms & policy before proceeding.',
+        icon: 'warning',
+        iconColor: '#fa4315ff',
+        confirmButtonColor: '#28a745',
+        confirmButtonText: 'OK',
+        background: '#ffffff',
+        color: '#333333',
+        customClass: {
+          popup: 'rounded-xl font-poppins',
+          confirmButton: 'px-6 py-2 rounded-lg font-medium'
+        }
+      })
       return
     }
 
     setIsLoading(true)
 
     try {
-      // Test koneksi backend dulu
-      const isBackendConnected = await testBackendConnection()
-      if (!isBackendConnected) {
-        showMessage('Backend server is not running. Please start the backend server.', 'error')
-        setIsLoading(false)
-        return
-      }
+      // Show loading
+      Swal.fire({
+        title: 'Registering...',
+        text: 'Please wait while we create your account.',
+        icon: 'info',
+        iconColor: '#2794ecff',
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading()
+        }
+      })
 
-      console.log('Sending registration data:', formData)
-
-      const response = await fetch('/api/register', {
+      // Kirim request ke backend
+      const response = await fetch(`${API_URL}/api/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-          no_badge: formData.no_badge,
-          department: formData.department,
-          username: formData.username
-        })
+        body: JSON.stringify(formData)
       })
 
-      console.log('Response status:', response.status)
+      const result = await response.json()
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
+      if (response.ok && result.success) {
+        // Success
+        Swal.fire({
+          title: 'Registration Successful!',
+          text: 'Your account has been successfully created.',
+          icon: 'success',
+          iconColor: '#28a745',
+          confirmButtonColor: '#28a745',
+          confirmButtonText: 'Go to Login',
+          background: '#ffffff',
+          color: '#333333',
+          customClass: {
+            popup: 'rounded-xl font-poppins',
+            confirmButton: 'px-6 py-2 rounded-lg font-medium'
+          }
+        }).then(() => {
+          router.push('/login')
+        })
+      } else {
+        // Error dari backend
+        throw new Error(result.message || 'Registration failed')
       }
-
-      const data = await response.json()
-      console.log('Response data:', data)
-
-      showMessage('Registration successful! Redirecting to login...')
-      setTimeout(() => {
-        router.push('/login')
-      }, 2000)
 
     } catch (error) {
       console.error('Registration error:', error)
-      showMessage(error.message || 'Registration failed. Please try again.', 'error')
+      
+      let errorMessage = 'Registration failed. Please try again.'
+      
+      if (error.message.includes('already exists')) {
+        errorMessage = error.message
+      } else if (error.message.includes('Invalid email')) {
+        errorMessage = 'Please enter a valid email address.'
+      } else if (error.message.includes('Password must be')) {
+        errorMessage = 'Password must be at least 6 characters long.'
+      } else if (error.message.includes('Network') || error.message.includes('fetch')) {
+        errorMessage = 'Cannot connect to server. Please check your connection.'
+      }
+
+      Swal.fire({
+        title: 'Registration Failed',
+        text: errorMessage,
+        icon: 'error',
+        iconColor: '#dc3545',
+        confirmButtonColor: '#28a745',
+        confirmButtonText: 'OK',
+        background: '#ffffff',
+        color: '#333333',
+        customClass: {
+          popup: 'rounded-xl font-poppins',
+          confirmButton: 'px-6 py-2 rounded-lg font-medium'
+        }
+      })
     } finally {
       setIsLoading(false)
     }
   }
 
-  // JSX tetap sama seperti sebelumnya
+  // ... (rest of your JSX remains the same)
   return (
     <div className="min-h-screen flex flex-col lg:flex-row relative">
-      {/* Logo pojok kiri atas */}
+      {/* Logo */}
       <div className="absolute top-4 left-4 z-20 flex items-center space-x-2">
         <Image
           src="/seatrium.png"
@@ -146,7 +160,7 @@ export default function RegisterPage() {
         />
       </div>
 
-      {/* Carousel - mobile (atas) & desktop (kanan) */}
+      {/* Carousel */}
       <div className="relative w-full h-64 lg:h-auto lg:flex-1 overflow-hidden order-1 lg:order-2">
         {images.map((img, index) => (
           <Image
@@ -161,7 +175,6 @@ export default function RegisterPage() {
           />
         ))}
 
-        {/* Overlay gradient mobile */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent lg:hidden" />
 
         {/* Indicator dots */}
@@ -181,7 +194,6 @@ export default function RegisterPage() {
       <div className="flex-1 flex flex-col justify-between bg-white order-2 lg:order-1">
         <div className="flex items-start lg:items-center justify-center px-10 sm:px-12 lg:px-8 pt-6 pb-8 lg:py-0 flex-grow">
           <div className="w-full max-w-md space-y-6">
-            {/* Title */}
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
                 Get Started Now!
@@ -191,15 +203,10 @@ export default function RegisterPage() {
               </p>
             </div>
 
-            {/* Form */}
             <form className="mt-3 space-y-4 sm:mt-4 sm:space-y-5" onSubmit={handleSubmit}>
               <div className="space-y-3 sm:space-y-4">
-                {/* Full Name */}
                 <div>
-                  <label
-                    htmlFor="name"
-                    className="block text-xs sm:text-sm font-medium text-gray-700 mb-1"
-                  >
+                  <label htmlFor="name" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Full Name *
                   </label>
                   <input
@@ -214,12 +221,25 @@ export default function RegisterPage() {
                   />
                 </div>
 
-                {/* Username */}
+                         <div>
+                  <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                    Email address *
+                  </label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="w-full px-2 py-2 sm:px-3 sm:py-3 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter your email"
+                  />
+                </div>
+
+
                 <div>
-                  <label
-                    htmlFor="username"
-                    className="block text-xs sm:text-sm font-medium text-gray-700 mb-1"
-                  >
+                  <label htmlFor="username" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Username *
                   </label>
                   <input
@@ -234,12 +254,8 @@ export default function RegisterPage() {
                   />
                 </div>
 
-                {/* Badge Number */}
                 <div>
-                  <label
-                    htmlFor="no_badge"
-                    className="block text-xs sm:text-sm font-medium text-gray-700 mb-1"
-                  >
+                  <label htmlFor="no_badge" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Badge Number *
                   </label>
                   <input
@@ -254,12 +270,8 @@ export default function RegisterPage() {
                   />
                 </div>
 
-                {/* Department */}
                 <div>
-                  <label
-                    htmlFor="department"
-                    className="block text-xs sm:text-sm font-medium text-gray-700 mb-1"
-                  >
+                  <label htmlFor="department" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Department *
                   </label>
                   <input
@@ -274,50 +286,24 @@ export default function RegisterPage() {
                   />
                 </div>
 
-                {/* Email */}
                 <div>
-                  <label
-                    htmlFor="email"
-                    className="block text-xs sm:text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Email address *
-                  </label>
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="w-full px-2 py-2 sm:px-3 sm:py-3 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter your email"
-                  />
-                </div>
-
-                {/* Password */}
-                <div>
-                  <label
-                    htmlFor="password"
-                    className="block text-xs sm:text-sm font-medium text-gray-700 mb-1"
-                  >
+                  <label htmlFor="password" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Password *
                   </label>
                   <input
                     id="password"
                     name="password"
                     type="password"
-                    autoComplete="new-password"
                     required
                     value={formData.password}
                     onChange={handleChange}
                     className="w-full px-2 py-2 sm:px-3 sm:py-3 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter your password"
+                    placeholder="Enter your password (min. 6 characters)"
+                    minLength={6}
                   />
                 </div>
               </div>
 
-              {/* Terms & Policy */}
               <div className="flex items-start sm:items-center">
                 <input
                   id="agree"
@@ -335,7 +321,6 @@ export default function RegisterPage() {
                 </label>
               </div>
 
-              {/* Signup Button */}
               <div>
                 <button
                   type="submit"
@@ -350,7 +335,6 @@ export default function RegisterPage() {
                 </button>
               </div>
 
-              {/* Already have account */}
               <div className="text-center">
                 <span className="text-gray-600 text-sm">
                   Have an account?{' '}
@@ -363,20 +347,10 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        {/* Footer */}
         <footer className="text-center py-4 text-gray-500 text-sm border-t">
           IT Inventory System 2025 Created by Clinton Alfaro
         </footer>
       </div>
-
-      {/* Snackbar */}
-      {showSnackbar && (
-        <div className={`fixed bottom-4 left-1/2 transform -translate-x-1/2 p-3 sm:p-4 rounded-lg z-50 transition-all duration-300 ease-out animate-fade-in-up ${
-          snackbarType === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-        }`}>
-          {snackbarMessage}
-        </div>
-      )}
     </div>
   )
 }

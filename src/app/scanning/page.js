@@ -571,19 +571,19 @@ export default function SerialScanningPage() {
   // Fungsi untuk menghapus data dari riwayat - PERBAIKAN
   const handleDeleteData = async (scanData) => {
     const result = await Swal.fire({
-      title: `Hapus ${scanData.jenisAset}?`,
-      text: "Data yang dihapus tidak dapat dikembalikan!",
+      title: `Delete ${scanData.jenisAset}?`,
+      text: "Deleted data cannot be restored!",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#4CAF50",
       reverseButtons: true,
       cancelButtonColor: "#d33",
-      confirmButtonText: "Ya, hapus!",
-      cancelButtonText: "Batal",
+      confirmButtonText: "Yes, delete it!",
+      cancelButtonText: "Cancel",
       customClass: {
         popup: "font-poppins rounded-xl",
-        confirmButton: "px-4 py-2 text-sm font-medium ",
-        cancelButton: "px-4 py-2 text-sm font-medium ",
+        confirmButton: "px-4 py-2 text-sm font-medium",
+        cancelButton: "px-4 py-2 text-sm font-medium",
       },
     });
 
@@ -605,11 +605,11 @@ export default function SerialScanningPage() {
 
       // Tampilkan SweetAlert sukses
       Swal.fire({
-        title: "Berhasil Dihapus!",
-        text: `${scanData.jenisAset} (${scanData.id}) telah berhasil dihapus.`,
+        title: "Deleted Successfully!",
+        text: `${scanData.jenisAset} (${scanData.id}) has been successfully deleted.`,
         icon: "success",
         confirmButtonColor: "#1e40af",
-        confirmButtonText: "Oke",
+        confirmButtonText: "OK",
         customClass: {
           popup: "font-poppins rounded-xl",
           confirmButton: "px-4 py-2 text-sm font-medium rounded-lg",
@@ -618,41 +618,6 @@ export default function SerialScanningPage() {
     }
   };
 
-  // Fungsi konfirmasi hapus data - VERSI CUSTOM:
-  const confirmDelete = () => {
-    if (dataToDelete) {
-      setCheckHistory((prev) =>
-        prev.filter((item) => item.id !== dataToDelete.id)
-      );
-      setShowDeleteModal(false);
-
-      // Tampilkan SweetAlert custom
-      Swal.fire({
-        title: "Berhasil Dihapus",
-        html: `
-        <div class="text-center">
-          <svg class="w-12 h-12 text-green-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-          <p class="text-gray-700 font-medium mb-2">Data berhasil dihapus dari riwayat!</p>
-          <p class="text-gray-600 text-sm">${dataToDelete.jenisAset} (${dataToDelete.id})</p>
-        </div>
-      `,
-        icon: "success",
-        confirmButtonText: "Oke",
-        confirmButtonColor: "#10B981",
-        customClass: {
-          popup: "font-poppins rounded-xl",
-          title: "hidden",
-          htmlContainer: "mb-0",
-          confirmButton: "px-6 py-2 text-sm font-medium rounded-lg",
-        },
-        buttonsStyling: false,
-      });
-
-      setDataToDelete(null);
-    }
-  };
 
   const getStatusColor = (status) => {
     switch (status) {

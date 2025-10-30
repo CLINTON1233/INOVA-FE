@@ -4,15 +4,22 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import Swal from 'sweetalert2'
+
+// URL backend - sesuaikan dengan environment
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  })
   const [rememberMe, setRememberMe] = useState(false)
   const [currentImage, setCurrentImage] = useState(0)
+  const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
-  // Carousel gambar
+  // Carousel images
   const images = ['/bg_seatrium 3.png', '/smoe_images2.png', '/offshore.jpg']
 
   useEffect(() => {
@@ -22,15 +29,134 @@ export default function LoginPage() {
     return () => clearInterval(interval)
   }, [images.length])
 
-  const handleSubmit = (e) => {
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    console.log('Login attempt:', { email, password, rememberMe })
-    router.push('/dashboard')
+    setIsLoading(true)
+
+    try {
+      // Validasi form
+      if (!formData.email || !formData.password) {
+        Swal.fire({
+          title: 'Login Failed',
+          text: 'Please fill in all required fields.',
+          icon: 'error',
+          confirmButtonColor: '#d33',
+          background: '#ffffff',
+          color: '#333333',
+          customClass: {
+            popup: 'rounded-xl font-poppins',
+            confirmButton: 'px-6 py-2 rounded-lg font-medium'
+          }
+        })
+        return
+      }
+
+      // Show loading
+      Swal.fire({
+        title: 'Logging in...',
+        text: 'Please wait while we authenticate your account.',
+        icon: 'info',
+        iconColor: '#2794ecff',
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading()
+        }
+      })
+
+      // Kirim request login ke backend
+      const response = await fetch(`${API_URL}/api/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      })
+
+      const result = await response.json()
+
+      if (response.ok && result.success) {
+        // Simpan token dan user data
+        if (result.token) {
+          localStorage.setItem('auth_token', result.token)
+          localStorage.setItem('user_data', JSON.stringify(result.user))
+          
+          if (rememberMe) {
+            localStorage.setItem('remember_me', 'true')
+          }
+        }
+
+        // Success
+        Swal.fire({
+          title: 'Login Successful!',
+          text: `Welcome back, ${result.user.name}!`,
+          icon: 'success',
+          iconColor: '#28a745',
+          showConfirmButton: false,
+          timer: 1500,
+          background: '#ffffff',
+          color: '#333333',
+          customClass: {
+            popup: 'rounded-xl font-poppins',
+          },
+          didOpen: () => {
+            Swal.showLoading()
+          }
+        }).then(() => {
+          // Redirect ke dashboard
+          router.push('/dashboard')
+        })
+
+      } else {
+        // Error dari backend
+        throw new Error(result.message || 'Login failed')
+      }
+
+    } catch (error) {
+      console.error('Login error:', error)
+      
+      let errorMessage = 'Login failed. Please try again.'
+      
+      if (error.message.includes('Invalid email') || error.message.includes('Invalid username')) {
+        errorMessage = 'Invalid email/username or password.'
+      } else if (error.message.includes('account is not active')) {
+        errorMessage = 'Your account is not active. Please contact administrator.'
+      } else if (error.message.includes('Network') || error.message.includes('fetch')) {
+        errorMessage = 'Cannot connect to server. Please check your connection.'
+      } else {
+        errorMessage = error.message
+      }
+
+      Swal.fire({
+        title: 'Login Failed',
+        text: errorMessage,
+        icon: 'error',
+        iconColor: '#dc3545',
+        confirmButtonColor: '#28a745',
+        confirmButtonText: 'OK',
+        background: '#ffffff',
+        color: '#333333',
+        customClass: {
+          popup: 'rounded-xl font-poppins',
+          confirmButton: 'px-6 py-2 rounded-lg font-medium'
+        }
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row relative bg-white">
-      {/*  Logo kiri atas */}
+      {/* Logo top-left */}
       <div className="absolute top-4 left-4 z-20 flex items-center space-x-2">
         <Image
           src="/seatrium.png"
@@ -41,7 +167,7 @@ export default function LoginPage() {
         />
       </div>
 
-      {/*  Image Carousel */}
+      {/* Image Carousel */}
       <div className="relative w-full h-56 sm:h-64 lg:h-auto lg:flex-1 overflow-hidden order-1 lg:order-2">
         {images.map((img, index) => (
           <Image
@@ -56,7 +182,7 @@ export default function LoginPage() {
           />
         ))}
 
-        {/* Overlay gradient untuk mobile */}
+        {/* Overlay gradient for mobile */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent lg:hidden" />
 
         {/* Indicator dots */}
@@ -72,7 +198,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/*  Login Form */}
+      {/* Login Form */}
       <div className="flex-1 flex flex-col justify-between bg-white order-2 lg:order-1">
         <div className="flex items-start lg:items-center justify-center px-10 sm:px-12 lg:px-8 pt-6 pb-8 lg:py-0 flex-grow">
           <div className="max-w-md w-full space-y-4 lg:space-y-8">
@@ -87,34 +213,46 @@ export default function LoginPage() {
             </div>
 
             {/* Form */}
-            <form className="space-y-4 sm:space-y-5 lg:space-y-6" onSubmit={handleSubmit}>
+            <form
+              className="space-y-4 sm:space-y-5 lg:space-y-6"
+              onSubmit={handleSubmit}
+            >
               <div className="space-y-3 sm:space-y-4">
-                {/* Email */}
+                {/* Email/Username */}
                 <div>
-                  <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                    Email address
+                  <label
+                    htmlFor="email"
+                    className="block text-xs sm:text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Email or Username *
                   </label>
                   <input
                     id="email"
                     name="email"
-                    type="email"
+                    type="text"
                     autoComplete="email"
                     required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    value={formData.email}
+                    onChange={handleChange}
                     className="w-full px-2 py-2 sm:px-3 sm:py-3 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter your email"
+                    placeholder="Enter your email or username"
                   />
                 </div>
 
                 {/* Password */}
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label htmlFor="password" className="block text-xs sm:text-sm font-medium text-gray-700">
-                      Password
+                    <label
+                      htmlFor="password"
+                      className="block text-xs sm:text-sm font-medium text-gray-700"
+                    >
+                      Password *
                     </label>
-                    <Link href="/forgot-password" className="text-xs sm:text-sm text-blue-600 hover:text-blue-500">
-                      forgot password?
+                    <Link
+                      href="/forgot-password"
+                      className="text-xs sm:text-sm text-blue-600 hover:text-blue-500"
+                    >
+                      Forgot password?
                     </Link>
                   </div>
                   <input
@@ -123,8 +261,8 @@ export default function LoginPage() {
                     type="password"
                     autoComplete="current-password"
                     required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    value={formData.password}
+                    onChange={handleChange}
                     className="w-full px-2 py-2 sm:px-3 sm:py-3 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Enter your password"
                   />
@@ -141,7 +279,10 @@ export default function LoginPage() {
                   onChange={(e) => setRememberMe(e.target.checked)}
                   className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-0.5 sm:mt-0"
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-xs sm:text-sm text-gray-700">
+                <label
+                  htmlFor="remember-me"
+                  className="ml-2 block text-xs sm:text-sm text-gray-700"
+                >
                   Remember me
                 </label>
               </div>
@@ -150,9 +291,14 @@ export default function LoginPage() {
               <div>
                 <button
                   type="submit"
-                  className="w-full flex justify-center py-2 sm:py-3 px-3 sm:px-4 text-xs sm:text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition"
+                  disabled={isLoading}
+                  className={`w-full flex justify-center py-2 sm:py-3 px-3 sm:px-4 text-xs sm:text-sm font-medium rounded-md text-white transition ${
+                    isLoading 
+                      ? 'bg-gray-400 cursor-not-allowed' 
+                      : 'bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+                  }`}
                 >
-                  Login
+                  {isLoading ? 'Logging in...' : 'Login'}
                 </button>
               </div>
 
@@ -160,7 +306,10 @@ export default function LoginPage() {
               <div className="text-center">
                 <span className="text-gray-600 text-xs sm:text-sm">
                   Don't have an account?{' '}
-                  <Link href="/register" className="text-blue-600 hover:text-blue-500 font-medium">
+                  <Link
+                    href="/register"
+                    className="text-blue-600 hover:text-blue-500 font-medium"
+                  >
                     Sign up
                   </Link>
                 </span>
@@ -169,9 +318,9 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/*  Footer */}
+        {/* Footer */}
         <footer className="text-center py-3 sm:py-4 text-xs sm:text-sm text-gray-500 border-t">
-        IT Inventory System 2025 Created by Clinton Alfaro
+          IT Inventory System 2025 Created by Clinton Alfaro
         </footer>
       </div>
     </div>
