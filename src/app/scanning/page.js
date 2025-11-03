@@ -546,10 +546,11 @@ export default function SerialScanningPage() {
   `,
         icon: "success",
         showCancelButton: true,
-        confirmButtonColor: "#10B981",
-        cancelButtonColor: "#6B7280",
+        confirmButtonColor: "#20a051ff", // hijau pekat
+        cancelButtonColor: "#374151", // abu-abu pekat
         confirmButtonText: "View Verification",
         cancelButtonText: "Continue Scanning",
+
         reverseButtons: true,
         customClass: {
           popup: "font-poppins rounded-xl",
@@ -617,7 +618,6 @@ export default function SerialScanningPage() {
       });
     }
   };
-
 
   const getStatusColor = (status) => {
     switch (status) {

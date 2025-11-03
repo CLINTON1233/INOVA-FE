@@ -549,7 +549,7 @@ const handleDeleteItem = (item) => {
               className="px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
             >
               <option value="all">All Categories</option>
-              <option value="Device">Device</option>
+              <option value="Perangkat">Perangkat</option>
               <option value="Material">Material</option>
             </select>
           </>

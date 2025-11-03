@@ -17,18 +17,63 @@ import {
   LogOut,
   User as UserIcon,
   Key,
+  CheckCircle,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Swal from "sweetalert2";
+import { useAuth } from "../context/AuthContext"; // Sesuaikan path
 
 export default function LayoutDashboard({ children, activeMenu }) {
   const [activeMenuIndex, setActiveMenuIndex] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [currentDate, setCurrentDate] = useState("");
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [hasShownWelcome, setHasShownWelcome] = useState(false);
   const userDropdownRef = useRef(null);
 
   const router = useRouter();
+  const { user, logout } = useAuth();
+
+  // Format current date
+  useEffect(() => {
+    const updateDate = () => {
+      const now = new Date();
+      const options = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      };
+      setCurrentDate(now.toLocaleDateString('en-US', options));
+    };
+    
+    updateDate();
+    const interval = setInterval(updateDate, 60000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  // Show welcome notification when user first loads
+  useEffect(() => {
+    if (user && !hasShownWelcome) {
+      // Delay sedikit agar page fully loaded dulu
+      const timer = setTimeout(() => {
+        setShowWelcome(true);
+        setHasShownWelcome(true);
+        
+        // Auto hide setelah 5 detik
+        const hideTimer = setTimeout(() => {
+          setShowWelcome(false);
+        }, 5000);
+        
+        return () => clearTimeout(hideTimer);
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [user, hasShownWelcome]);
 
   const menuItems = [
     { icon: Home, label: "Home", hasDropdown: false, href: "/dashboard" },
@@ -59,77 +104,125 @@ export default function LayoutDashboard({ children, activeMenu }) {
     };
   }, []);
 
-const handleLogout = () => {
-  // Close user dropdown and mobile menu
-  setUserDropdownOpen(false);
-  setMobileMenuOpen(false);
+  const handleCloseWelcome = () => {
+    setShowWelcome(false);
+  };
 
-  Swal.fire({
-    title: 'Logout Confirmation',
-    text: "Are you sure you want to log out of the system?",
-    icon: 'warning',
-    iconColor: '#FACC15', // Yellow color
-    showCancelButton: true,
-    confirmButtonColor: "#28a745",
-    cancelButtonColor: '#d33',
-    confirmButtonText: 'Yes, Log Out!',
-    reverseButtons: true,
-    cancelButtonText: 'Cancel',
-    background: '#ffffff',
-    color: '#333333',
-    customClass: {
-      popup: 'rounded-xl font-poppins',
-      confirmButton: 'px-6 py-2 rounded-lg font-medium',
-      cancelButton: 'px-6 py-2 rounded-lg font-medium'
-    }
-  }).then((result) => {
-    if (result.isConfirmed) {
-      // Show loading
-      Swal.fire({
-        title: 'Logging out...',
-        text: 'Processing your logout...',
-        icon: 'info',
-        iconColor: '#2794ecff',
-        showConfirmButton: false,
-        allowOutsideClick: false,
-        didOpen: () => {
-          Swal.showLoading();
-        }
-      });
+  const handleLogout = () => {
+    setUserDropdownOpen(false);
+    setMobileMenuOpen(false);
 
-      // Simulate logout process (replace with API call if needed)
-      setTimeout(() => {
-        // Clear localStorage or session
-        localStorage.removeItem("userToken");
-        localStorage.removeItem("userData");
-        sessionStorage.clear();
-
-        // Show success message
+    Swal.fire({
+      title: 'Logout Confirmation',
+      text: "Are you sure you want to log out of the system?",
+      icon: 'warning',
+      iconColor: '#FACC15',
+      showCancelButton: true,
+      confirmButtonColor: "#28a745",
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, Log Out!',
+      reverseButtons: true,
+      cancelButtonText: 'Cancel',
+      background: '#ffffff',
+      color: '#333333',
+      customClass: {
+        popup: 'rounded-xl font-poppins',
+        confirmButton: 'px-6 py-2 rounded-lg font-medium',
+        cancelButton: 'px-6 py-2 rounded-lg font-medium'
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
         Swal.fire({
-          title: 'Logout Successful!',
-          text: 'You have been successfully logged out of the system.',
-          icon: 'success',
-          iconColor: '#28a745',
-          confirmButtonColor: "#28a745",
-          confirmButtonText: 'OK',
-          background: '#ffffff',
-          color: '#333333',
-          customClass: {
-            popup: 'rounded-xl font-poppins',
-            confirmButton: 'px-6 py-2 rounded-lg font-medium'
+          title: 'Logging out...',
+          text: 'Processing your logout...',
+          icon: 'info',
+          iconColor: '#2794ecff',
+          showConfirmButton: false,
+          allowOutsideClick: false,
+          didOpen: () => {
+            Swal.showLoading();
           }
-        }).then(() => {
-          // Redirect to login page
-          router.push("/login");
         });
-      }, 1500);
-    }
-  });
-};
 
+        setTimeout(() => {
+          logout();
+          Swal.fire({
+            title: 'Logout Successful!',
+            text: 'You have been successfully logged out of the system.',
+            icon: 'success',
+            iconColor: '#28a745',
+            confirmButtonColor: "#28a745",
+            confirmButtonText: 'OK',
+            background: '#ffffff',
+            color: '#333333',
+            customClass: {
+              popup: 'rounded-xl font-poppins',
+              confirmButton: 'px-6 py-2 rounded-lg font-medium'
+            }
+          }).then(() => {
+            router.push("/login");
+          });
+        }, 1500);
+      }
+    });
+  };
+
+  // Jika user belum loaded, tampilkan loading
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
+      {/* 🔹 Welcome Notification - Snackbar Style */}
+      {showWelcome && (
+        <div className="fixed top-4 right-4 z-50 animate-fade-in">
+          <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-4 max-w-sm transform transition-all duration-300 ease-in-out">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                </div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-sm font-semibold text-gray-900">
+                  Welcome back! 👋
+                </h4>
+                <p className="text-xs text-gray-600 mt-1">
+                  Hello <span className="font-medium text-blue-600">{user.name}</span>, good to see you again!
+                </p>
+                <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                  <span>Department: {user.department}</span>
+                  <span>•</span>
+                  <span>{user.no_badge}</span>
+                </div>
+              </div>
+              <button
+                onClick={handleCloseWelcome}
+                className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            
+            {/* Progress bar untuk auto close */}
+            <div className="mt-2 w-full bg-gray-200 rounded-full h-1">
+              <div 
+                className="bg-green-700 h-1 rounded-full transition-all duration-5000 ease-linear"
+                style={{ width: '100%' }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 🔹 Top Navbar - Mobile & Desktop */}
       <nav className="bg-white shadow-sm">
         <div className="px-4 py-3 flex items-center justify-between">
@@ -157,7 +250,7 @@ const handleLogout = () => {
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
               >
                 <User className="w-4 h-4" />
-                <span>Clinton Alfaro</span>
+                <span>{user.name}</span>
                 <ChevronDown className={`w-4 h-4 transition-transform ${userDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
 
@@ -165,8 +258,9 @@ const handleLogout = () => {
               {userDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
                   <div className="px-4 py-2 border-b border-gray-100">
-                    <p className="text-sm font-medium text-gray-900">Clinton Alfaro</p>
-                    <p className="text-xs text-gray-500">clinton.alfaro@seatrium.com</p>
+                    <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                    <p className="text-xs text-gray-500">{user.email}</p>
+                    <p className="text-xs text-gray-500">{user.department}</p>
                   </div>
                   
                   <button 
@@ -248,7 +342,7 @@ const handleLogout = () => {
             })}
 
             <div className="ml-auto text-white text-sm py-2 px-3 opacity-80">
-              Monday, 29 September 2025
+              {currentDate}
             </div>
           </div>
         </div>
@@ -284,10 +378,13 @@ const handleLogout = () => {
               </div>
               <div className="flex-1">
                 <div className="text-white font-medium text-sm">
-                  Clinton Alfaro
+                  {user.name}
+                </div>
+                <div className="text-blue-100 text-xs">
+                  {user.department}
                 </div>
                 <button 
-                  className="text-blue-100 text-xs flex items-center"
+                  className="text-blue-100 text-xs flex items-center mt-1"
                   onClick={() => setUserDropdownOpen(!userDropdownOpen)}
                 >
                   <span>Account</span>
@@ -350,7 +447,7 @@ const handleLogout = () => {
             </div>
 
             <div className="absolute bottom-0 left-0 right-0 bg-blue-700 px-4 py-3 text-white text-xs text-center">
-              Monday, 29 September 2025
+              {currentDate}
             </div>
           </div>
         </>
@@ -358,8 +455,26 @@ const handleLogout = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-6">
+        {/* HAPUS Welcome Banner yang lama dari sini */}
         {children}
       </div>
+
+      {/* Tambahkan custom animation di global CSS atau tailwind config */}
+      <style jsx global>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(-10px) scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+        .animate-fade-in {
+          animation: fadeIn 0.3s ease-out forwards;
+        }
+      `}</style>
     </div>
   );
 }

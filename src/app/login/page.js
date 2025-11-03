@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Swal from 'sweetalert2'
+import { useAuth } from '../context/AuthContext'; 
 
 // URL backend - sesuaikan dengan environment
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
@@ -18,7 +19,7 @@ export default function LoginPage() {
   const [currentImage, setCurrentImage] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
-
+const { login } = useAuth();
   // Carousel images
   const images = ['/bg_seatrium 3.png', '/smoe_images2.png', '/offshore.jpg']
 
@@ -83,39 +84,37 @@ export default function LoginPage() {
 
       const result = await response.json()
 
-      if (response.ok && result.success) {
-        // Simpan token dan user data
-        if (result.token) {
-          localStorage.setItem('auth_token', result.token)
-          localStorage.setItem('user_data', JSON.stringify(result.user))
-          
-          if (rememberMe) {
-            localStorage.setItem('remember_me', 'true')
-          }
-        }
+ if (response.ok && result.success) {
+  // Simpan token dan user data
+  if (result.token) {
+    localStorage.setItem('auth_token', result.token);
+    localStorage.setItem('user_data', JSON.stringify(result.user));
+    
+    // Panggil login function dari context
+    login(result.user, result.token);
+    
+    if (rememberMe) {
+      localStorage.setItem('remember_me', 'true');
+    }
+  }
 
-        // Success
-        Swal.fire({
-          title: 'Login Successful!',
-          text: `Welcome back, ${result.user.name}!`,
-          icon: 'success',
-          iconColor: '#28a745',
-          showConfirmButton: false,
-          timer: 1500,
-          background: '#ffffff',
-          color: '#333333',
-          customClass: {
-            popup: 'rounded-xl font-poppins',
-          },
-          didOpen: () => {
-            Swal.showLoading()
-          }
-        }).then(() => {
-          // Redirect ke dashboard
-          router.push('/dashboard')
-        })
-
-      } else {
+  // Success
+  Swal.fire({
+    title: 'Login Successful!',
+    text: `Welcome back, ${result.user.name}!`,
+    icon: 'success',
+    iconColor: '#28a745',
+    showConfirmButton: false,
+    timer: 1500,
+    background: '#ffffff',
+    color: '#333333',
+    customClass: {
+      popup: 'rounded-xl font-poppins',
+    }
+  }).then(() => {
+    router.push('/dashboard');
+  });
+} else {
         // Error dari backend
         throw new Error(result.message || 'Login failed')
       }

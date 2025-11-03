@@ -9,256 +9,269 @@ import {
   Search,
   Filter,
   Download,
-  Send,
-  AlertTriangle,
   CheckSquare,
   Square,
   FileText,
   User,
   Calendar,
   MapPin,
-  Shield,
   Cpu,
   Cable,
-  Camera,
   Eye,
-  Zap,
   BarChart3,
   Database,
-  Brain,
-  ScanLine,
+  Activity,
   ChevronDown,
   ChevronUp,
-  BarChart,
-  PieChart,
   TrendingUp,
-  Activity,
   Printer,
   FileDown,
+  Package,
+  List,
 } from "lucide-react";
 import LayoutDashboard from "../components/LayoutDashboard";
 import Swal from "sweetalert2";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
 
 export default function ReportsAnalyticsPage() {
   const [selectedPeriod, setSelectedPeriod] = useState("daily");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("all");
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [showFilters, setShowFilters] = useState(false);
   const [selectedItems, setSelectedItems] = useState([]);
   const [isMobile, setIsMobile] = useState(false);
-  const [expandedItem, setExpandedItem] = useState(null);
+  const [expandedPeriod, setExpandedPeriod] = useState(null);
 
   const router = useRouter();
 
-  // Detect mobile screen
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-
     checkMobile();
     window.addEventListener("resize", checkMobile);
-
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Report data according to proposal
-  const reportData = [
+  const periodReports = [
     {
-      id: "RPT-001",
-      scanId: "PC-IT-2025-001",
-      assetType: "Computer",
-      category: "Perangkat",
-      location: "Infrastructure & Networking",
-      serialNumber: "NS-PC-887632",
-      status: "Valid",
-      scanDate: "2025-10-28",
-      scanTime: "14:30:15",
-      verifiedBy: "Clinton Alfaro",
-      department: "IT Infrastructure & Networking",
-      validationTime: "2 seconds",
-      uniqueCode: "V-901-XYZ-A",
-      period: "daily",
-      scanMethod: "QR Code Scan",
-      notes: "Device in good condition and functioning normally"
+      periodId: "PERIOD-2025-10-28",
+      periodType: "daily",
+      date: "2025-10-28",
+      displayDate: "Monday, 28 October 2025",
+      totalScans: 3,
+      valid: 2,
+      error: 1,
+      pending: 0,
+      items: [
+        {
+          id: "RPT-001",
+          scanId: "PC-IT-2025-001",
+          assetType: "Computer",
+          category: "Perangkat",
+          location: "Infrastructure & Networking",
+          serialNumber: "NS-PC-887632",
+          status: "Valid",
+          scanDate: "2025-10-28",
+          scanTime: "14:30:15",
+          verifiedBy: "Clinton Alfaro",
+          department: "IT Infrastructure & Networking",
+          validationTime: "2 seconds",
+          uniqueCode: "V-901-XYZ-A",
+          scanMethod: "QR Code Scan",
+          notes: "Device in good condition and functioning normally",
+        },
+        {
+          id: "RPT-002",
+          scanId: "MAT-KBL-045",
+          assetType: "RJ45 Cable",
+          category: "Material",
+          location: "Workshop 2",
+          barcode: "BC-RJ45-554321",
+          status: "Valid",
+          scanDate: "2025-10-28",
+          scanTime: "14:25:40",
+          verifiedBy: "Wahyu Hidayat",
+          department: "Facilities & Networking",
+          validationTime: "1.5 seconds",
+          uniqueCode: "V-902-ABC-B",
+          scanMethod: "Barcode Scan",
+          notes: "Cable available in sufficient stock",
+        },
+        {
+          id: "RPT-003",
+          scanId: "SRV-NET-012",
+          assetType: "Server",
+          category: "Perangkat",
+          location: "Server Room L3",
+          serialNumber: "NS-SRV-992345",
+          status: "Error",
+          scanDate: "2025-10-28",
+          scanTime: "14:18:22",
+          verifiedBy: "Ikhsan Kurniawan",
+          department: "System Operation",
+          validationTime: "3 seconds",
+          uniqueCode: "V-903-DEF-C",
+          scanMethod: "QR Code Scan",
+          notes: "Server experiencing overheating, requires immediate maintenance",
+        },
+      ],
     },
     {
-      id: "RPT-002",
-      scanId: "MAT-KBL-045",
-      assetType: "RJ45 Cable",
-      category: "Material",
-      location: "Workshop 2",
-      barcode: "BC-RJ45-554321",
-      status: "Valid",
-      scanDate: "2025-10-28",
-      scanTime: "14:25:40",
-      verifiedBy: "Wahyu Hidayat",
-      department: "Facilities & Networking",
-      validationTime: "1.5 seconds",
-      uniqueCode: "V-902-ABC-B",
-      period: "daily",
-      scanMethod: "Barcode Scan",
-      notes: "Cable available in sufficient stock"
+      periodId: "PERIOD-2025-10-27",
+      periodType: "daily",
+      date: "2025-10-27",
+      displayDate: "Sunday, 27 October 2025",
+      totalScans: 2,
+      valid: 1,
+      error: 0,
+      pending: 1,
+      items: [
+        {
+          id: "RPT-004",
+          scanId: "CCTV-SEC-003",
+          assetType: "CCTV",
+          category: "Perangkat",
+          location: "Main Gate",
+          serialNumber: "NS-CCTV-661234",
+          status: "Valid",
+          scanDate: "2025-10-27",
+          scanTime: "16:20:15",
+          verifiedBy: "Yovan Sakti",
+          department: "Facilities & Networking",
+          validationTime: "2.2 seconds",
+          uniqueCode: "V-905-JKL-E",
+          scanMethod: "QR Code Scan",
+          notes: "CCTV functioning optimally, recordings stored properly",
+        },
+        {
+          id: "RPT-005",
+          scanId: "LPT-IT-2025-002",
+          assetType: "Laptop",
+          category: "Perangkat",
+          location: "Main Office L2",
+          serialNumber: "NS-LPT-445321",
+          status: "Pending",
+          scanDate: "2025-10-27",
+          scanTime: "15:45:30",
+          verifiedBy: "Clinton Alfaro",
+          department: "IT Infrastructure & Networking",
+          validationTime: "2.5 seconds",
+          uniqueCode: "V-906-MNO-F",
+          scanMethod: "Manual Input",
+          notes: "Waiting for supervisor confirmation for rescanning",
+        },
+      ],
     },
     {
-      id: "RPT-003",
-      scanId: "SRV-NET-012",
-      assetType: "Server",
-      category: "Perangkat",
-      location: "Server Room L3",
-      serialNumber: "NS-SRV-992345",
-      status: "Error",
-      scanDate: "2025-10-28",
-      scanTime: "14:18:22",
-      verifiedBy: "Ikhsan Kurniawan",
-      department: "System Operation",
-      validationTime: "3 seconds",
-      uniqueCode: "V-903-DEF-C",
-      period: "daily",
-      scanMethod: "QR Code Scan",
-      notes: "Server experiencing overheating, requires immediate maintenance"
+      periodId: "PERIOD-2025-10-26",
+      periodType: "daily",
+      date: "2025-10-26",
+      displayDate: "Saturday, 26 October 2025",
+      totalScans: 2,
+      valid: 1,
+      error: 1,
+      pending: 0,
+      items: [
+        {
+          id: "RPT-006",
+          scanId: "MAT-TRK-987",
+          assetType: "Trunking",
+          category: "Material",
+          location: "Main Office L1",
+          barcode: "BC-TRK-773216",
+          status: "Valid",
+          scanDate: "2025-10-26",
+          scanTime: "13:10:05",
+          verifiedBy: "Mahmud Amma Rizki",
+          department: "Operations & End User Service",
+          validationTime: "1.8 seconds",
+          uniqueCode: "V-904-GHI-D",
+          scanMethod: "Barcode Scan",
+          notes: "Trunking installed neatly and securely",
+        },
+        {
+          id: "RPT-007",
+          scanId: "MAT-PIP-056",
+          assetType: "Network Pipe",
+          category: "Material",
+          location: "Workshop 1",
+          barcode: "BC-PIP-998765",
+          status: "Error",
+          scanDate: "2025-10-26",
+          scanTime: "12:45:10",
+          verifiedBy: "Wahyu Hidayat",
+          department: "Facilities & Networking",
+          validationTime: "4 seconds",
+          uniqueCode: "V-907-PQR-G",
+          scanMethod: "Barcode Scan",
+          notes: "Pipe damaged at connection, requires replacement",
+        },
+      ],
     },
     {
-      id: "RPT-004",
-      scanId: "CCTV-SEC-003",
-      assetType: "CCTV",
-      category: "Perangkat",
-      location: "Main Gate",
-      serialNumber: "NS-CCTV-661234",
-      status: "Valid",
-      scanDate: "2025-10-27",
-      scanTime: "16:20:15",
-      verifiedBy: "Yovan Sakti",
-      department: "Facilities & Networking",
-      validationTime: "2.2 seconds",
-      uniqueCode: "V-905-JKL-E",
-      period: "daily",
-      scanMethod: "QR Code Scan",
-      notes: "CCTV functioning optimally, recordings stored properly"
+      periodId: "WEEK-2025-43",
+      periodType: "weekly",
+      date: "2025-10-20",
+      endDate: "2025-10-26",
+      displayDate: "Week 43 (20-26 Oct 2025)",
+      totalScans: 15,
+      valid: 12,
+      error: 2,
+      pending: 1,
+      items: [
+        {
+          id: "RPT-008",
+          scanId: "SWT-NET-008",
+          assetType: "Network Switch",
+          category: "Perangkat",
+          location: "Server Room L3",
+          serialNumber: "NS-SWT-778899",
+          status: "Valid",
+          scanDate: "2025-10-25",
+          scanTime: "11:20:15",
+          verifiedBy: "Ikhsan Kurniawan",
+          department: "System Operation",
+          validationTime: "1.7 seconds",
+          uniqueCode: "V-908-STU-H",
+          scanMethod: "QR Code Scan",
+          notes: "Switch operating normally, all ports active",
+        },
+      ],
     },
-    {
-      id: "RPT-005",
-      scanId: "LPT-IT-2025-002",
-      assetType: "Laptop",
-      category: "Perangkat",
-      location: "Main Office L2",
-      serialNumber: "NS-LPT-445321",
-      status: "Pending",
-      scanDate: "2025-10-27",
-      scanTime: "15:45:30",
-      verifiedBy: "Clinton Alfaro",
-      department: "IT Infrastructure & Networking",
-      validationTime: "2.5 seconds",
-      uniqueCode: "V-906-MNO-F",
-      period: "daily",
-      scanMethod: "Manual Input",
-      notes: "Waiting for supervisor confirmation for rescanning"
-    },
-    {
-      id: "RPT-006",
-      scanId: "MAT-TRK-987",
-      assetType: "Trunking",
-      category: "Material",
-      location: "Main Office L1",
-      barcode: "BC-TRK-773216",
-      status: "Valid",
-      scanDate: "2025-10-26",
-      scanTime: "13:10:05",
-      verifiedBy: "Mahmud Amma Rizki",
-      department: "Operations & End User Service",
-      validationTime: "1.8 seconds",
-      uniqueCode: "V-904-GHI-D",
-      period: "weekly",
-      scanMethod: "Barcode Scan",
-      notes: "Trunking installed neatly and securely"
-    },
-    {
-      id: "RPT-007",
-      scanId: "MAT-PIP-056",
-      assetType: "Network Pipe",
-      category: "Material",
-      location: "Workshop 1",
-      barcode: "BC-PIP-998765",
-      status: "Error",
-      scanDate: "2025-10-26",
-      scanTime: "12:45:10",
-      verifiedBy: "Wahyu Hidayat",
-      department: "Facilities & Networking",
-      validationTime: "4 seconds",
-      uniqueCode: "V-907-PQR-G",
-      period: "weekly",
-      scanMethod: "Barcode Scan",
-      notes: "Pipe damaged at connection, requires replacement"
-    },
-    {
-      id: "RPT-008",
-      scanId: "SWT-NET-008",
-      assetType: "Network Switch",
-      category: "Perangkat",
-      location: "Server Room L3",
-      serialNumber: "NS-SWT-778899",
-      status: "Valid",
-      scanDate: "2025-10-25",
-      scanTime: "11:20:15",
-      verifiedBy: "Ikhsan Kurniawan",
-      department: "System Operation",
-      validationTime: "1.7 seconds",
-      uniqueCode: "V-908-STU-H",
-      period: "weekly",
-      scanMethod: "QR Code Scan",
-      notes: "Switch operating normally, all ports active"
-    }
   ];
 
-  // Statistics data
   const stats = {
-    total: reportData.length,
-    valid: reportData.filter(item => item.status === "Valid").length,
-    error: reportData.filter(item => item.status === "Error").length,
-    pending: reportData.filter(item => item.status === "Pending").length,
-    perangkat: reportData.filter(item => item.category === "Perangkat").length,
-    material: reportData.filter(item => item.category === "Material").length,
-    daily: reportData.filter(item => item.period === "daily").length,
-    weekly: reportData.filter(item => item.period === "weekly").length
+    total: periodReports.reduce((sum, period) => sum + period.totalScans, 0),
+    valid: periodReports.reduce((sum, period) => sum + period.valid, 0),
+    error: periodReports.reduce((sum, period) => sum + period.error, 0),
+    pending: periodReports.reduce((sum, period) => sum + period.pending, 0),
+    daily: periodReports.filter((period) => period.periodType === "daily").length,
+    weekly: periodReports.filter((period) => period.periodType === "weekly").length,
   };
 
-  // Analytics data
   const analyticsData = {
     successRate: Math.round((stats.valid / stats.total) * 100),
     avgValidationTime: "2.1s",
     mostActiveUser: "Clinton Alfaro",
     mostScannedLocation: "Infrastructure & Networking",
-    dailyAverage: 12,
-    weeklyTotal: 45
   };
 
-  // Filter data based on period and criteria
-  const filteredReports = reportData.filter(item => {
-    const matchesPeriod = selectedPeriod === "all" || item.period === selectedPeriod;
-    const matchesStatus = selectedStatus === "all" || item.status === selectedStatus;
-    const matchesCategory = selectedCategory === "all" || item.category === selectedCategory;
-    
-    const matchesStartDate = !startDate || item.scanDate >= startDate;
-    const matchesEndDate = !endDate || item.scanDate <= endDate;
-
-    return matchesPeriod && matchesStatus && matchesCategory && matchesStartDate && matchesEndDate;
+  const filteredPeriods = periodReports.filter((period) => {
+    return selectedPeriod === "all" || period.periodType === selectedPeriod;
   });
 
-  // Toggle select item
-  const toggleSelectItem = (id) => {
-    setSelectedItems(prev =>
-      prev.includes(id) ? prev.filter(itemId => itemId !== id) : [...prev, id]
+  const toggleSelectPeriod = (periodId) => {
+    setSelectedItems((prev) =>
+      prev.includes(periodId)
+        ? prev.filter((id) => id !== periodId)
+        : [...prev, periodId]
     );
   };
 
-  // Select all items
   const toggleSelectAll = () => {
-    if (selectedItems.length === filteredReports.length) {
+    if (selectedItems.length === filteredPeriods.length) {
       setSelectedItems([]);
     } else {
-      setSelectedItems(filteredReports.map(item => item.id));
+      setSelectedItems(filteredPeriods.map((period) => period.periodId));
     }
   };
 
@@ -295,265 +308,608 @@ export default function ReportsAnalyticsPage() {
       case "Material":
         return <Cable className="w-4 h-4 text-green-600" />;
       default:
-        return <Shield className="w-4 h-4 text-gray-600" />;
+        return <Cpu className="w-4 h-4 text-gray-600" />;
     }
   };
 
-  const getCategoryColor = (category) => {
-    switch (category) {
-      case "Perangkat":
-        return "bg-blue-100 text-blue-700";
-      case "Material":
-        return "bg-green-100 text-green-700";
-      default:
-        return "bg-gray-100 text-gray-700";
-    }
-  };
-
-  // Helper function for active tab colors
   const getActiveTabColor = (color) => {
     switch (color) {
       case "blue":
         return "bg-blue-600 text-white shadow-md";
-      case "yellow":
-        return "bg-yellow-500 text-white shadow-md";
-      case "green":
-        return "bg-green-600 text-white shadow-md";
-      case "red":
-        return "bg-red-600 text-white shadow-md";
       default:
         return "bg-blue-600 text-white shadow-md";
     }
   };
 
-  // Helper function for active badge colors
   const getActiveBadgeColor = (color) => {
     switch (color) {
       case "blue":
         return "bg-blue-500 text-white";
-      case "yellow":
-        return "bg-yellow-400 text-white";
-      case "green":
-        return "bg-green-500 text-white";
-      case "red":
-        return "bg-red-500 text-white";
       default:
         return "bg-blue-500 text-white";
     }
   };
 
-  const toggleItemExpansion = (id) => {
-    setExpandedItem(expandedItem === id ? null : id);
+  const togglePeriodExpansion = (periodId) => {
+    setExpandedPeriod(expandedPeriod === periodId ? null : periodId);
   };
 
-  // Function to show details with SweetAlert
-  const showDetail = (item) => {
+  const showPeriodDetail = (period) => {
     Swal.fire({
-      title: `<div class="font-poppins text-lg font-semibold text-black">Inspection Report Details</div>`,
+      title: `<div class="font-poppins text-lg font-semibold text-black">${period.displayDate} - Inspection Report</div>`,
       html: `
-        <div class="font-poppins text-left space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-          <!-- Header Info -->
+        <div class="font-poppins text-left space-y-4 max-h-[70vh] overflow-y-auto pr-2">
           <div class="bg-white rounded-lg p-4 border border-gray-200">
-            <h4 class="text-base font-semibold text-gray-900">${item.assetType}</h4>
-            <p class="text-xs text-gray-500 mt-1">${item.category} • ${item.scanMethod}</p>
-          </div>
-
-          <!-- Asset Information -->
-          <div>
-            <h5 class="text-xs font-medium text-gray-700 mb-2">ASSET INFORMATION</h5>
-            <div class="bg-white rounded-lg p-3 space-y-2 border border-gray-200">
-              <div class="flex justify-between items-center">
-                <span class="text-xs text-gray-600">Scan ID</span>
-                <span class="text-xs font-medium text-blue-700">${item.scanId}</span>
+            <div class="grid grid-cols-4 gap-3 text-center">
+              <div class="bg-gray-100 p-3 rounded-lg">
+                <div class="text-xl font-bold text-gray-800">${period.totalScans}</div>
+                <div class="text-xs text-gray-600">Total Scans</div>
               </div>
-              <div class="flex justify-between items-center">
-                <span class="text-xs text-gray-600">Report ID</span>
-                <span class="text-xs font-medium text-gray-700">${item.id}</span>
+              <div class="bg-gray-100 p-3 rounded-lg">
+                <div class="text-xl font-bold text-gray-800">${period.valid}</div>
+                <div class="text-xs text-gray-600">Valid</div>
               </div>
-              <div class="flex justify-between items-center">
-                <span class="text-xs text-gray-600">${item.serialNumber ? 'Serial Number' : 'Barcode'}</span>
-                <span class="text-xs font-mono text-blue-600">${item.serialNumber || item.barcode}</span>
+              <div class="bg-gray-100 p-3 rounded-lg">
+                <div class="text-xl font-bold text-gray-800">${period.error}</div>
+                <div class="text-xs text-gray-600">Error</div>
               </div>
-              <div class="flex justify-between items-center">
-                <span class="text-xs text-gray-600">Unique Code</span>
-                <span class="text-xs font-mono text-gray-700">${item.uniqueCode}</span>
+              <div class="bg-gray-100 p-3 rounded-lg">
+                <div class="text-xl font-bold text-gray-800">${period.pending}</div>
+                <div class="text-xs text-gray-600">Pending</div>
               </div>
             </div>
           </div>
 
-          <!-- Location & Department -->
           <div>
-            <h5 class="text-xs font-medium text-gray-700 mb-2">LOCATION & DEPARTMENT</h5>
-            <div class="bg-white rounded-lg p-3 space-y-2 border border-gray-200">
-              <div class="flex justify-between items-center">
-                <span class="text-xs text-gray-600">Location</span>
-                <span class="text-xs font-medium text-gray-700">${item.location}</span>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-xs text-gray-600">Department</span>
-                <span class="text-xs font-medium text-gray-700">${item.department}</span>
-              </div>
-            </div>
-          </div>
+            <h5 class="text-sm font-semibold text-gray-700 mb-3">SCANNED ITEMS (${period.items.length})</h5>
+            <div class="space-y-3">
+              ${period.items
+                .map(
+                  (item) => `
+                <div class="bg-white rounded-lg border border-gray-200 p-3">
+                  <div class="flex justify-between items-start mb-2">
+                    <div class="flex items-center space-x-2">
+                      <span class="font-medium text-gray-900">${item.assetType}</span>
+                      <span class="text-xs px-2 py-1 rounded-full ${getStatusColor(item.status)}">
+                        ${item.status}
+                      </span>
+                    </div>
+                    <div class="text-xs text-gray-500 font-mono">${item.scanId}</div>
+                  </div>
+                  
+                  <div class="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                    <div><strong>Location:</strong> ${item.location}</div>
+                    <div><strong>Verified By:</strong> ${item.verifiedBy}</div>
+                    <div><strong>Scan Time:</strong> ${item.scanTime}</div>
+                    <div><strong>Validation:</strong> ${item.validationTime}</div>
+                  </div>
 
-          <!-- Inspection Time -->
-          <div>
-            <h5 class="text-xs font-medium text-gray-700 mb-2">INSPECTION TIME</h5>
-            <div class="bg-white rounded-lg p-3 space-y-2 border border-gray-200">
-              <div class="flex justify-between items-center">
-                <span class="text-xs text-gray-600">Date</span>
-                <span class="text-xs font-medium text-gray-700">${item.scanDate}</span>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-xs text-gray-600">Time</span>
-                <span class="text-xs font-medium text-gray-700">${item.scanTime}</span>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-xs text-gray-600">Validation Time</span>
-                <span class="text-xs font-medium text-gray-700">${item.validationTime}</span>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-xs text-gray-600">Period</span>
-                <span class="text-xs font-medium text-gray-700">${item.period === "daily" ? "Daily" : "Weekly"}</span>
-              </div>
+                  ${item.notes
+                    ? `
+                    <div class="mt-2 text-xs text-gray-600 bg-gray-50 p-2 rounded">
+                      <strong>Notes:</strong> ${item.notes}
+                    </div>
+                  `
+                    : ""}
+                </div>
+              `
+                )
+                .join("")}
             </div>
           </div>
-
-          <!-- Status & Verification -->
-          <div>
-            <h5 class="text-xs font-medium text-gray-700 mb-2">STATUS & VERIFICATION</h5>
-            <div class="bg-white rounded-lg p-3 space-y-2 border border-gray-200">
-              <div class="flex justify-between items-center">
-                <span class="text-xs text-gray-600">Status</span>
-                <span class="text-xs font-medium ${
-                  item.status === "Valid"
-                    ? "text-green-600"
-                    : item.status === "Pending"
-                    ? "text-yellow-600"
-                    : "text-red-600"
-                }">
-                  ${item.status}
-                </span>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-xs text-gray-600">Scan Method</span>
-                <span class="text-xs font-medium text-gray-700">${item.scanMethod}</span>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-xs text-gray-600">Verified By</span>
-                <span class="text-xs font-medium text-gray-700">${item.verifiedBy}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Notes -->
-          ${
-            item.notes
-              ? `
-          <div>
-            <h5 class="text-xs font-medium text-gray-700 mb-2">NOTES</h5>
-            <div class="bg-white rounded-lg p-3 border border-gray-200">
-              <p class="text-xs text-gray-700">${item.notes}</p>
-            </div>
-          </div>
-          `
-              : ""
-          }
         </div>
       `,
-      width: "500px",
-      padding: "8px",
+      width: "550px",
+      padding: "15px",
       showCloseButton: true,
       showConfirmButton: true,
       confirmButtonText: "Close",
       confirmButtonColor: "#2563eb",
       customClass: {
         popup: "rounded-xl font-poppins bg-white",
-        closeButton: "text-gray-400 hover:text-gray-600 text-lg -mr-1 mt-0",
+        closeButton: "text-gray-400 hover:text-gray-600",
         confirmButton: "font-poppins font-medium text-sm px-8 py-2",
-      }
+      },
     });
   };
 
-  // Export to PDF function
-  const exportToPDF = (selectedOnly = false) => {
-    const dataToExport = selectedOnly && selectedItems.length > 0 
-      ? reportData.filter(item => selectedItems.includes(item.id))
-      : filteredReports;
-    
-    Swal.fire({
-      title: 'Export PDF',
-      text: `Exporting ${dataToExport.length} data to PDF format...`,
-      icon: 'info',
-      confirmButtonText: 'OK',
-      confirmButtonColor: '#2563eb',
-    });
-    // Implement PDF export logic here
+  const getExportData = (selectedOnly = false) => {
+    return selectedOnly && selectedItems.length > 0
+      ? periodReports.filter((period) => selectedItems.includes(period.periodId))
+      : filteredPeriods;
   };
 
-  // Export to Excel function
   const exportToExcel = (selectedOnly = false) => {
-    const dataToExport = selectedOnly && selectedItems.length > 0 
-      ? reportData.filter(item => selectedItems.includes(item.id))
-      : filteredReports;
+    const dataToExport = getExportData(selectedOnly);
     
-    Swal.fire({
-      title: 'Export Excel',
-      text: `Exporting ${dataToExport.length} data to Excel format...`,
-      icon: 'info',
-      confirmButtonText: 'OK',
-      confirmButtonColor: '#2563eb',
-    });
-    // Implement Excel export logic here
+    if (dataToExport.length === 0) {
+      Swal.fire({
+        title: "No Data",
+        text: "There is no data to export.",
+        icon: "warning",
+        confirmButtonColor: "#1e40af",
+      });
+      return;
+    }
+
+    try {
+      const excelData = [];
+      const summaryData = [
+        ["PERIODIC REPORTS SUMMARY"],
+        [""],
+        ["Export Date", new Date().toLocaleDateString()],
+        ["Total Periods", dataToExport.length],
+        ["Total Scans", dataToExport.reduce((sum, p) => sum + p.totalScans, 0)],
+        ["Valid Scans", dataToExport.reduce((sum, p) => sum + p.valid, 0)],
+        ["Error Scans", dataToExport.reduce((sum, p) => sum + p.error, 0)],
+        ["Pending Scans", dataToExport.reduce((sum, p) => sum + p.pending, 0)],
+        [""],
+        ["PERIOD LIST"],
+        ["Period", "Type", "Date", "Total Scans", "Valid", "Error", "Pending", "Success Rate"]
+      ];
+
+      dataToExport.forEach(period => {
+        summaryData.push([
+          period.displayDate,
+          period.periodType === "daily" ? "Daily" : "Weekly",
+          period.date,
+          period.totalScans,
+          period.valid,
+          period.error,
+          period.pending,
+          `${Math.round((period.valid / period.totalScans) * 100)}%`
+        ]);
+      });
+
+      const detailData = [
+        ["DETAILED SCAN REPORT"],
+        [""],
+        ["Period", "Scan ID", "Asset Type", "Category", "Location", "Serial/Barcode", "Status", 
+         "Scan Date", "Scan Time", "Verified By", "Department", "Validation Time", "Unique Code", "Scan Method", "Notes"]
+      ];
+
+      dataToExport.forEach(period => {
+        period.items.forEach(item => {
+          detailData.push([
+            period.displayDate,
+            item.scanId,
+            item.assetType,
+            item.category,
+            item.location,
+            item.serialNumber || item.barcode,
+            item.status,
+            item.scanDate,
+            item.scanTime,
+            item.verifiedBy,
+            item.department,
+            item.validationTime,
+            item.uniqueCode,
+            item.scanMethod,
+            item.notes || ""
+          ]);
+        });
+      });
+
+      const workbook = XLSX.utils.book_new();
+      const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+      const detailSheet = XLSX.utils.aoa_to_sheet(detailData);
+      
+      XLSX.utils.book_append_sheet(workbook, summarySheet, "Summary");
+      XLSX.utils.book_append_sheet(workbook, detailSheet, "Detailed Report");
+
+      const summaryColWidths = [
+        { wch: 30 }, { wch: 10 }, { wch: 15 }, { wch: 12 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 12 }
+      ];
+      summarySheet['!cols'] = summaryColWidths;
+
+      const detailColWidths = [
+        { wch: 25 }, { wch: 15 }, { wch: 20 }, { wch: 12 }, { wch: 25 }, { wch: 20 }, 
+        { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 20 }, { wch: 25 }, { wch: 15 }, 
+        { wch: 15 }, { wch: 15 }, { wch: 40 }
+      ];
+      detailSheet['!cols'] = detailColWidths;
+
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, "-");
+      const filename = `Periodic_Reports_${timestamp}.xlsx`;
+
+      XLSX.writeFile(workbook, filename);
+
+      Swal.fire({
+        title: "Success!",
+        text: `Data has been exported to ${filename}`,
+        icon: "success",
+        confirmButtonColor: "#1e40af",
+      });
+
+    } catch (error) {
+      console.error("Error exporting to Excel:", error);
+      Swal.fire({
+        title: "Export Failed",
+        text: "Failed to export data to Excel. Please try again.",
+        icon: "error",
+        confirmButtonColor: "#1e40af",
+      });
+    }
   };
 
-  // Print function
+  const exportToPDF = async (selectedOnly = false) => {
+    const dataToExport = getExportData(selectedOnly);
+    
+    if (dataToExport.length === 0) {
+      Swal.fire({
+        title: "No Data",
+        text: "There is no data to export.",
+        icon: "warning",
+        confirmButtonColor: "#1e40af",
+      });
+      return;
+    }
+
+    try {
+      Swal.fire({
+        title: 'Generating PDF...',
+        text: 'Please wait while we generate your PDF report.',
+        icon: 'info',
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      let yPosition = 20;
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const margin = 15;
+
+      pdf.setFontSize(20);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(40, 40, 40);
+      pdf.text('PERIODIC INSPECTION REPORTS', pageWidth / 2, yPosition, { align: 'center' });
+      
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(100, 100, 100);
+      yPosition += 8;
+      pdf.text(`Generated on: ${new Date().toLocaleDateString()}`, pageWidth / 2, yPosition, { align: 'center' });
+      yPosition += 15;
+
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(40, 40, 40);
+      pdf.text('SUMMARY OVERVIEW', margin, yPosition);
+      yPosition += 8;
+
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`Total Periods: ${dataToExport.length}`, margin, yPosition);
+      yPosition += 5;
+      pdf.text(`Total Scans: ${dataToExport.reduce((sum, p) => sum + p.totalScans, 0)}`, margin, yPosition);
+      yPosition += 5;
+      pdf.text(`Valid: ${dataToExport.reduce((sum, p) => sum + p.valid, 0)}`, margin, yPosition);
+      yPosition += 5;
+      pdf.text(`Error: ${dataToExport.reduce((sum, p) => sum + p.error, 0)}`, margin, yPosition);
+      yPosition += 5;
+      pdf.text(`Pending: ${dataToExport.reduce((sum, p) => sum + p.pending, 0)}`, margin, yPosition);
+      yPosition += 15;
+
+      dataToExport.forEach((period, index) => {
+        if (yPosition > 250) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+
+        pdf.setFontSize(12);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(30, 64, 175);
+        pdf.text(`${period.displayDate} (${period.periodType === 'daily' ? 'Daily' : 'Weekly'})`, margin, yPosition);
+        yPosition += 7;
+
+        pdf.setFontSize(9);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(100, 100, 100);
+        pdf.text(`Scans: ${period.totalScans} | Valid: ${period.valid} | Error: ${period.error} | Pending: ${period.pending} | Success Rate: ${Math.round((period.valid / period.totalScans) * 100)}%`, margin, yPosition);
+        yPosition += 10;
+
+        pdf.setFontSize(8);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(40, 40, 40);
+        pdf.text('Scan ID', margin, yPosition);
+        pdf.text('Asset Type', margin + 30, yPosition);
+        pdf.text('Status', margin + 70, yPosition);
+        pdf.text('Location', margin + 95, yPosition);
+        pdf.text('Verified By', margin + 140, yPosition);
+        yPosition += 4;
+
+        pdf.setDrawColor(200, 200, 200);
+        pdf.line(margin, yPosition, pageWidth - margin, yPosition);
+        yPosition += 6;
+
+        pdf.setFont('helvetica', 'normal');
+        period.items.forEach(item => {
+          if (yPosition > 270) {
+            pdf.addPage();
+            yPosition = 20;
+            pdf.setFontSize(8);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('Scan ID', margin, yPosition);
+            pdf.text('Asset Type', margin + 30, yPosition);
+            pdf.text('Status', margin + 70, yPosition);
+            pdf.text('Location', margin + 95, yPosition);
+            pdf.text('Verified By', margin + 140, yPosition);
+            yPosition += 10;
+          }
+
+          pdf.setFontSize(7);
+          pdf.text(item.scanId, margin, yPosition);
+          pdf.text(item.assetType, margin + 30, yPosition);
+          
+          pdf.setTextColor(
+            item.status === 'Valid' ? 34 : item.status === 'Error' ? 239 : 245,
+            item.status === 'Valid' ? 197 : item.status === 'Error' ? 68 : 158,
+            item.status === 'Valid' ? 94 : item.status === 'Error' ? 68 : 11
+          );
+          pdf.text(item.status, margin + 70, yPosition);
+          
+          pdf.setTextColor(40, 40, 40);
+          pdf.text(item.location.length > 20 ? item.location.substring(0, 20) + '...' : item.location, margin + 95, yPosition);
+          pdf.text(item.verifiedBy, margin + 140, yPosition);
+          
+          yPosition += 5;
+        });
+
+        yPosition += 10;
+      });
+
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, "-");
+      const filename = `Periodic_Reports_${timestamp}.pdf`;
+
+      pdf.save(filename);
+
+      Swal.close();
+      Swal.fire({
+        title: "Success!",
+        text: `PDF report has been generated as ${filename}`,
+        icon: "success",
+        confirmButtonColor: "#1e40af",
+      });
+
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      Swal.close();
+      Swal.fire({
+        title: "PDF Generation Failed",
+        text: "Failed to generate PDF report. Please try again.",
+        icon: "error",
+        confirmButtonColor: "#1e40af",
+      });
+    }
+  };
+
   const printReport = (selectedOnly = false) => {
-    const dataToPrint = selectedOnly && selectedItems.length > 0 
-      ? reportData.filter(item => selectedItems.includes(item.id))
-      : filteredReports;
+    const dataToPrint = getExportData(selectedOnly);
     
-    Swal.fire({
-      title: 'Print Report',
-      text: `Printing ${dataToPrint.length} report data...`,
-      icon: 'info',
-      confirmButtonText: 'OK',
-      confirmButtonColor: '#2563eb',
-    });
-    // Implement print logic here
+    if (dataToPrint.length === 0) {
+      Swal.fire({
+        title: "No Data",
+        text: "There is no data to print.",
+        icon: "warning",
+        confirmButtonColor: "#1e40af",
+      });
+      return;
+    }
+
+    const printWindow = window.open('', '_blank');
+    const timestamp = new Date().toLocaleDateString();
+    
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Periodic Reports - ${timestamp}</title>
+        <style>
+          body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            color: #333;
+          }
+          .header { 
+            text-align: center; 
+            margin-bottom: 30px;
+            border-bottom: 2px solid #2563eb;
+            padding-bottom: 10px;
+          }
+          .header h1 { 
+            color: #2563eb; 
+            margin: 0;
+            font-size: 24px;
+          }
+          .summary { 
+            background: #f8fafc; 
+            padding: 15px; 
+            border-radius: 5px; 
+            margin-bottom: 20px;
+            border-left: 4px solid #2563eb;
+          }
+          .period { 
+            margin-bottom: 25px; 
+            page-break-inside: avoid;
+          }
+          .period-header { 
+            background: #1e40af; 
+            color: white; 
+            padding: 10px; 
+            border-radius: 5px 5px 0 0;
+            font-weight: bold;
+          }
+          .period-summary {
+            background: #dbeafe;
+            padding: 8px 10px;
+            font-size: 14px;
+          }
+          table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 10px;
+          }
+          th { 
+            background: #e2e8f0; 
+            padding: 8px; 
+            text-align: left;
+            border: 1px solid #cbd5e1;
+          }
+          td { 
+            padding: 8px; 
+            border: 1px solid #cbd5e1;
+            font-size: 12px;
+          }
+          .valid { color: #16a34a; font-weight: bold; }
+          .error { color: #dc2626; font-weight: bold; }
+          .pending { color: #d97706; font-weight: bold; }
+          .footer { 
+            text-align: center; 
+            margin-top: 30px; 
+            color: #6b7280; 
+            font-size: 12px;
+          }
+          @media print {
+            body { margin: 0.5in; }
+            .period { page-break-inside: avoid; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>PERIODIC INSPECTION REPORTS</h1>
+          <p>Generated on: ${timestamp}</p>
+        </div>
+
+        <div class="summary">
+          <strong>SUMMARY:</strong> 
+          ${dataToPrint.length} Periods | 
+          ${dataToPrint.reduce((sum, p) => sum + p.totalScans, 0)} Total Scans |
+          ${dataToPrint.reduce((sum, p) => sum + p.valid, 0)} Valid |
+          ${dataToPrint.reduce((sum, p) => sum + p.error, 0)} Error |
+          ${dataToPrint.reduce((sum, p) => sum + p.pending, 0)} Pending
+        </div>
+
+        ${dataToPrint.map(period => `
+          <div class="period">
+            <div class="period-header">
+              ${period.displayDate} - ${period.periodType === 'daily' ? 'Daily Report' : 'Weekly Report'}
+            </div>
+            <div class="period-summary">
+              Total Scans: ${period.totalScans} | 
+              Valid: ${period.valid} | 
+              Error: ${period.error} | 
+              Pending: ${period.pending} | 
+              Success Rate: ${Math.round((period.valid / period.totalScans) * 100)}%
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Scan ID</th>
+                  <th>Asset Type</th>
+                  <th>Category</th>
+                  <th>Location</th>
+                  <th>Status</th>
+                  <th>Verified By</th>
+                  <th>Scan Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${period.items.map(item => `
+                  <tr>
+                    <td>${item.scanId}</td>
+                    <td>${item.assetType}</td>
+                    <td>${item.category}</td>
+                    <td>${item.location}</td>
+                    <td class="${item.status.toLowerCase()}">${item.status}</td>
+                    <td>${item.verifiedBy}</td>
+                    <td>${item.scanTime}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `).join('')}
+
+        <div class="footer">
+          Generated by IT Inventory System - Seatrium &copy; ${new Date().getFullYear()}
+        </div>
+
+        <script>
+          window.onload = function() {
+            window.print();
+            setTimeout(() => {
+              window.close();
+            }, 500);
+          }
+        </script>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(printContent);
+    printWindow.document.close();
   };
 
-  // Mobile Card View
-  const MobileItemCard = ({ item }) => (
+  const handleBulkExport = (type, selectedOnly = false) => {
+    if (selectedOnly && selectedItems.length === 0) {
+      Swal.fire({
+        title: "No Selection",
+        text: "Please select periods to export.",
+        icon: "warning",
+        confirmButtonColor: "#1e40af",
+      });
+      return;
+    }
+
+    switch (type) {
+      case 'excel':
+        exportToExcel(selectedOnly);
+        break;
+      case 'pdf':
+        exportToPDF(selectedOnly);
+        break;
+      case 'print':
+        printReport(selectedOnly);
+        break;
+      default:
+        break;
+    }
+  };
+
+  const MobilePeriodCard = ({ period }) => (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-3">
-      {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center">
           <button
-            onClick={() => toggleSelectItem(item.id)}
+            onClick={() => toggleSelectPeriod(period.periodId)}
             className="mr-3 mt-1"
           >
-            {selectedItems.includes(item.id) ? (
+            {selectedItems.includes(period.periodId) ? (
               <CheckSquare className="w-5 h-5 text-blue-600" />
             ) : (
               <Square className="w-5 h-5 text-gray-400" />
             )}
           </button>
           <div>
-            <div className="font-bold text-blue-700 text-sm">
-              {item.scanId}
+            <div className="font-bold text-blue-700 text-sm flex items-center">
+              <Calendar className="w-4 h-4 mr-2" />
+              {period.displayDate}
             </div>
             <div className="text-xs text-gray-500 mt-1 flex items-center">
-              {getCategoryIcon(item.category)}
-              <span className="ml-1">{item.category}</span>
+              <Package className="w-3 h-3 mr-1" />
+              {period.totalScans} items scanned
             </div>
           </div>
         </div>
         <button
-          onClick={() => toggleItemExpansion(item.id)}
+          onClick={() => togglePeriodExpansion(period.periodId)}
           className="text-gray-400"
         >
-          {expandedItem === item.id ? (
+          {expandedPeriod === period.periodId ? (
             <ChevronUp className="w-5 h-5" />
           ) : (
             <ChevronDown className="w-5 h-5" />
@@ -561,104 +917,66 @@ export default function ReportsAnalyticsPage() {
         </button>
       </div>
 
-      {/* Basic Info */}
-      <div className="mb-3">
-        <div className="font-semibold text-gray-900 text-base">
-          {item.assetType}
-        </div>
-        <div className="text-xs text-gray-400 font-mono mt-1">
-          {item.serialNumber || item.barcode}
-        </div>
-      </div>
-
-      {/* Status & Location */}
       <div className="flex items-center justify-between mb-3">
-        <span
-          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(
-            item.status
-          )}`}
-        >
-          {getStatusIcon(item.status)}
-          <span className="ml-1">{item.status}</span>
-        </span>
-        <div className="text-xs text-gray-500 text-right">
-          <div className="flex items-center">
-            <MapPin className="w-3 h-3 mr-1" />
-            {item.location}
-          </div>
+        <div className="flex space-x-2">
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">
+            <CheckCircle className="w-3 h-3 mr-1" />
+            {period.valid}
+          </span>
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-red-100 text-red-700">
+            <XCircle className="w-3 h-3 mr-1" />
+            {period.error}
+          </span>
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-700">
+            <Clock className="w-3 h-3 mr-1" />
+            {period.pending}
+          </span>
+        </div>
+        <div className="text-xs text-gray-500">
+          {period.periodType === "daily" ? "Daily" : "Weekly"} Report
         </div>
       </div>
 
-      {/* Expanded Details */}
-      {expandedItem === item.id && (
+      {expandedPeriod === period.periodId && (
         <div className="border-t border-gray-200 pt-3 mt-3 space-y-3">
-          {/* Department & Verification */}
           <div>
-            <div className="text-xs font-semibold text-gray-500 mb-1">
-              DEPARTMENT & VERIFICATION
+            <div className="text-xs font-semibold text-gray-500 mb-2">
+              RECENT SCANS ({period.items.length} items)
             </div>
-            <div className="text-sm text-gray-700">{item.department}</div>
-            <div className="text-xs text-gray-600 mt-1 flex items-center">
-              <User className="w-3 h-3 mr-1" />
-              {item.verifiedBy}
-            </div>
-            <div className="text-xs text-gray-600 mt-1 flex items-center">
-              <Calendar className="w-3 h-3 mr-1" />
-              {item.scanDate} - {item.scanTime}
+            <div className="space-y-2">
+              {period.items.slice(0, 3).map((item, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between text-xs"
+                >
+                  <div className="flex items-center">
+                    {getCategoryIcon(item.category)}
+                    <span className="ml-2 font-medium">{item.assetType}</span>
+                  </div>
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs ${getStatusColor(
+                      item.status
+                    )}`}
+                  >
+                    {item.status}
+                  </span>
+                </div>
+              ))}
+              {period.items.length > 3 && (
+                <div className="text-xs text-gray-500 text-center">
+                  + {period.items.length - 3} more items...
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Unique Code */}
-          <div>
-            <div className="text-xs font-semibold text-gray-500 mb-1">
-              UNIQUE CODE
-            </div>
-            <div className="text-sm font-mono text-blue-600">
-              {item.uniqueCode}
-            </div>
-          </div>
-
-          {/* Scan Details */}
-          <div>
-            <div className="text-xs font-semibold text-gray-500 mb-1">
-              SCAN DETAILS
-            </div>
-            <div className="text-xs text-gray-600 space-y-1">
-              <div className="flex justify-between">
-                <span>Scan Method:</span>
-                <span>{item.scanMethod}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Validation Time:</span>
-                <span>{item.validationTime}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Period:</span>
-                <span>{item.period === "daily" ? "Daily" : "Weekly"}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Notes */}
-          {item.notes && (
-            <div>
-              <div className="text-xs font-semibold text-gray-500 mb-1">
-                NOTES
-              </div>
-              <div className="text-xs text-gray-600 bg-white p-2 rounded border">
-                {item.notes}
-              </div>
-            </div>
-          )}
-
-          {/* Action Buttons */}
           <div className="flex gap-2 pt-2">
             <button
-              onClick={() => showDetail(item)}
+              onClick={() => showPeriodDetail(period)}
               className="flex-1 flex items-center justify-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-xs"
             >
               <Eye className="w-3 h-3 mr-1" />
-               Details
+              View Full Report
             </button>
           </div>
         </div>
@@ -669,64 +987,54 @@ export default function ReportsAnalyticsPage() {
   return (
     <LayoutDashboard activeMenu={5}>
       <div className="max-w-7xl mx-auto px-3 md:px-4 py-2 md:py-2 space-y-6">
-        {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-600 rounded-xl shadow-lg p-6 text-white">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h1 className="text-2xl font-semibold flex items-center">
                 <BarChart3 className="w-6 h-6 mr-3" />
-               REPORTS & ANALYTICS
+                PERIODIC REPORTS & ANALYTICS
               </h1>
               <p className="text-blue-100 text-sm mt-2">
-                Complete reports and analysis of IT asset inspection data per period
+                Complete inspection reports and analytics organized by period
+                (Daily/Weekly)
               </p>
             </div>
             <div className="mt-4 lg:mt-0 flex items-center space-x-4 text-blue-100 text-sm">
               <div className="flex items-center">
                 <Database className="w-4 h-4 mr-2" />
-                <span>Total Data: {stats.total}</span>
+                <span>Total Periods: {periodReports.length}</span>
               </div>
               <div className="flex items-center">
                 <Activity className="w-4 h-4 mr-2" />
-                <span>Real-time Analytics</span>
+                <span>Period-based Analytics</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Quick Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white rounded-xl shadow-lg p-4 text-center border-l-4 border-blue-500">
             <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
             <div className="text-sm text-gray-500">Total Scans</div>
-            <div className="text-xs text-blue-600 font-medium mt-1">
-             All Periods
-            </div>
+            <div className="text-xs text-blue-600 font-medium mt-1">All Periods</div>
           </div>
           <div className="bg-white rounded-xl shadow-lg p-4 text-center border-l-4 border-green-500">
             <div className="text-2xl font-bold text-gray-900">{stats.valid}</div>
             <div className="text-sm text-gray-500">Valid</div>
-            <div className="text-xs text-green-600 font-medium mt-1">
-               Successfully Validated
-            </div>
+            <div className="text-xs text-green-600 font-medium mt-1">Successfully Validated</div>
           </div>
           <div className="bg-white rounded-xl shadow-lg p-4 text-center border-l-4 border-red-500">
             <div className="text-2xl font-bold text-gray-900">{stats.error}</div>
             <div className="text-sm text-gray-500">Error</div>
-            <div className="text-xs text-red-600 font-medium mt-1">
-               Requires Action
-            </div>
+            <div className="text-xs text-red-600 font-medium mt-1">Requires Action</div>
           </div>
           <div className="bg-white rounded-xl shadow-lg p-4 text-center border-l-4 border-yellow-500">
             <div className="text-2xl font-bold text-gray-900">{stats.pending}</div>
             <div className="text-sm text-gray-500">Pending</div>
-            <div className="text-xs text-yellow-600 font-medium mt-1">
-               Waiting Verification
-            </div>
+            <div className="text-xs text-yellow-600 font-medium mt-1">Waiting Verification</div>
           </div>
         </div>
 
-        {/* Analytics Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white rounded-xl shadow-lg p-4">
             <div className="flex items-center justify-between">
@@ -777,112 +1085,34 @@ export default function ReportsAnalyticsPage() {
           </div>
         </div>
 
-        {/* Combined Control Panel and Table */}
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-          {/* Search, Filter, and Bulk Actions Section */}
           <div className="p-4 md:p-6 space-y-4 border-b border-gray-200">
             <h3 className="text-base md:text-lg font-semibold text-gray-800 mb-3 md:mb-4 flex items-center">
-              <BarChart3 className="w-4 h-4 md:w-5 md:h-5 mr-2 text-black-600" />
-              Report Data & Analytics Overview
+              <List className="w-4 h-4 md:w-5 md:h-5 mr-2 text-blue-600" />
+              Period-Based Reports Overview
             </h3>
 
-            {/* Search and Filter Row */}
-            <div className="flex flex-col space-y-3 md:space-y-0 md:flex-row gap-3 md:gap-4">
-              {/* Search Input */}
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    type="text"
-                    placeholder="Search scan ID, asset type, location, or serial number..."
-                    value={""}
-                    onChange={(e) => {}}
-                    className="w-full pl-10 pr-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
-                  />
-                </div>
-              </div>
-
-              {/* Filters - Mobile Collapsible */}
-              <div className="flex flex-col md:flex-row gap-2">
-                {!isMobile ? (
-                  <>
-                    <select
-                      value={selectedStatus}
-                      onChange={(e) => setSelectedStatus(e.target.value)}
-                      className="px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
-                    >
-                      <option value="all">All Status</option>
-                      <option value="Valid">Valid</option>
-                      <option value="Error">Error</option>
-                      <option value="Pending">Pending</option>
-                    </select>
-
-                    <select
-                      value={selectedCategory}
-                      onChange={(e) => setSelectedCategory(e.target.value)}
-                      className="px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
-                    >
-                      <option value="all">All Categories</option>
-                      <option value="Perangkat">Perangkat</option>
-                      <option value="Material">Material</option>
-                    </select>
-
-                    <button className="flex items-center px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm">
-                      <Filter className="w-4 h-4 mr-2" />
-                      <span className="hidden md:inline">More Filters</span>
-                      <span className="md:hidden">Filter</span>
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => setShowFilters(!showFilters)}
-                      className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm"
-                    >
-                      <Filter className="w-4 h-4 mr-2" />
-                      Filter
-                      {showFilters ? (
-                        <ChevronUp className="w-4 h-4 ml-2" />
-                      ) : (
-                        <ChevronDown className="w-4 h-4 ml-2" />
-                      )}
-                    </button>
-
-                    {showFilters && (
-                      <div className="flex gap-2 mt-2">
-                        <select
-                          value={selectedStatus}
-                          onChange={(e) => setSelectedStatus(e.target.value)}
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
-                        >
-                          <option value="all">All Status</option>
-                          <option value="Valid">Valid</option>
-                          <option value="Error">Error</option>
-                          <option value="Pending">Pending</option>
-                        </select>
-                        <select
-                          value={selectedCategory}
-                          onChange={(e) => setSelectedCategory(e.target.value)}
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
-                        >
-                          <option value="all">All Categories</option>
-                          <option value="Perangkat">Perangkat</option>
-                          <option value="Material">Material</option>
-                        </select>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Period Selection */}
             <div className="border-t border-gray-200 pt-4">
               <div className="flex space-x-1 overflow-x-auto">
                 {[
-                  { id: "all", label: "All", count: stats.total, color: "blue" },
-                  { id: "daily", label: "Daily", count: stats.daily, color: "blue" },
-                  { id: "weekly", label: "Weekly", count: stats.weekly, color: "blue" },
+                  {
+                    id: "all",
+                    label: "All Periods",
+                    count: periodReports.length,
+                    color: "blue",
+                  },
+                  {
+                    id: "daily",
+                    label: "Daily Reports",
+                    count: stats.daily,
+                    color: "blue",
+                  },
+                  {
+                    id: "weekly",
+                    label: "Weekly Reports",
+                    count: stats.weekly,
+                    color: "blue",
+                  },
                 ].map((tab) => (
                   <button
                     key={tab.id}
@@ -910,31 +1140,30 @@ export default function ReportsAnalyticsPage() {
               </div>
             </div>
 
-            {/* Bulk Actions - Only shown if items are selected */}
             {selectedItems.length > 0 && (
               <div className="mt-4 p-3 md:p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-3">
                   <div className="text-blue-800 text-sm font-medium flex items-center">
                     <CheckSquare className="w-4 h-4 mr-2" />
-                    {selectedItems.length} reports selected for bulk export
+                    {selectedItems.length} periods selected for bulk export
                   </div>
                   <div className="flex gap-1 md:gap-2 flex-wrap">
                     <button
-                      onClick={() => exportToPDF(true)}
+                      onClick={() => handleBulkExport('pdf', true)}
                       className="flex items-center px-3 py-1.5 md:px-4 md:py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-xs"
                     >
                       <FileDown className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
                       Export PDF
                     </button>
                     <button
-                      onClick={() => exportToExcel(true)}
+                      onClick={() => handleBulkExport('excel', true)}
                       className="flex items-center px-3 py-1.5 md:px-4 md:py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-xs"
                     >
                       <Download className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
                       Export Excel
                     </button>
-                    <button 
-                      onClick={() => printReport(true)}
+                    <button
+                      onClick={() => handleBulkExport('print', true)}
                       className="flex items-center px-3 py-1.5 md:px-4 md:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-xs"
                     >
                       <Printer className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
@@ -946,9 +1175,7 @@ export default function ReportsAnalyticsPage() {
             )}
           </div>
 
-          {/* Table/Cards Section */}
           {!isMobile ? (
-            /* Desktop Table View */
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50">
@@ -958,26 +1185,23 @@ export default function ReportsAnalyticsPage() {
                         onClick={toggleSelectAll}
                         className="flex items-center text-gray-700 font-medium"
                       >
-                        {selectedItems.length === filteredReports.length &&
-                        filteredReports.length > 0 ? (
+                        {selectedItems.length === filteredPeriods.length &&
+                        filteredPeriods.length > 0 ? (
                           <CheckSquare className="w-4 h-4 mr-2 text-blue-600" />
                         ) : (
                           <Square className="w-4 h-4 mr-2 text-gray-400" />
                         )}
-                        Scan ID
+                        Period Date
                       </button>
                     </th>
                     <th className="px-4 py-3 text-left text-gray-700 font-medium">
-                      Type & Category
+                      Scan Summary
                     </th>
                     <th className="px-4 py-3 text-left text-gray-700 font-medium">
-                      Location & Department
+                      Status Overview
                     </th>
                     <th className="px-4 py-3 text-left text-gray-700 font-medium">
-                      Scan Details
-                    </th>
-                    <th className="px-4 py-3 text-left text-gray-700 font-medium">
-                      Report Status
+                      Report Type
                     </th>
                     <th className="px-4 py-3 text-left text-gray-700 font-medium">
                       Actions
@@ -985,100 +1209,88 @@ export default function ReportsAnalyticsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {filteredReports.map((item) => (
+                  {filteredPeriods.map((period) => (
                     <tr
-                      key={item.id}
+                      key={period.periodId}
                       className="hover:bg-gray-50 transition-colors"
                     >
                       <td className="px-4 py-4">
                         <div className="flex items-center">
                           <button
-                            onClick={() => toggleSelectItem(item.id)}
+                            onClick={() => toggleSelectPeriod(period.periodId)}
                             className="mr-3"
                           >
-                            {selectedItems.includes(item.id) ? (
+                            {selectedItems.includes(period.periodId) ? (
                               <CheckSquare className="w-4 h-4 text-blue-600" />
                             ) : (
                               <Square className="w-4 h-4 text-gray-400" />
                             )}
                           </button>
                           <div>
-                            <div className="font-medium text-blue-700">
-                              {item.scanId}
+                            <div className="font-medium text-blue-700 flex items-center">
+                              <Calendar className="w-4 h-4 mr-2" />
+                              {period.displayDate}
                             </div>
-                            <div className="text-xs text-gray-500 mt-1 flex items-center">
-                              {getCategoryIcon(item.category)}
-                              <span className="ml-1">{item.category}</span>
-                            </div>
-                            <div className="text-xs text-gray-400 font-mono mt-1">
-                              {item.serialNumber || item.barcode}
+                            <div className="text-xs text-gray-500 mt-1">
+                              {period.periodType === "daily"
+                                ? "Daily Inspection Report"
+                                : "Weekly Summary Report"}
                             </div>
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-4">
                         <div className="font-medium text-gray-900">
-                          {item.assetType}
+                          {period.totalScans} Items Scanned
                         </div>
                         <div className="text-xs text-gray-500 mt-1">
-                          <span
-                            className={`px-2 py-1 rounded-full ${getCategoryColor(
-                              item.category
-                            )}`}
-                          >
-                            {item.category}
+                          <div className="flex items-center space-x-4">
+                            <span className="flex items-center">
+                              <Package className="w-3 h-3 mr-1" />
+                              {period.items.length} detailed records
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="flex space-x-2 mb-2">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            {period.valid} Valid
+                          </span>
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-red-100 text-red-700">
+                            <XCircle className="w-3 h-3 mr-1" />
+                            {period.error} Error
+                          </span>
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-700">
+                            <Clock className="w-3 h-3 mr-1" />
+                            {period.pending} Pending
                           </span>
                         </div>
-                        <div className="text-xs text-gray-400 mt-1">
-                          Code: {item.uniqueCode}
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="flex items-center text-gray-700">
-                          <MapPin className="w-4 h-4 mr-1 text-gray-400" />
-                          {item.location}
-                        </div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          {item.department}
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="text-xs text-gray-600 space-y-1">
-                          <div className="flex items-center">
-                            <Calendar className="w-3 h-3 mr-1" />
-                            {item.scanDate} - {item.scanTime}
-                          </div>
-                          <div className="flex items-center">
-                            <User className="w-3 h-3 mr-1" />
-                            {item.verifiedBy}
-                          </div>
-                          <div className="flex items-center text-blue-600">
-                            <Clock className="w-3 h-3 mr-1" />
-                            <span className="text-xs">{item.validationTime}</span>
-                          </div>
+                        <div className="text-xs text-gray-500">
+                          Success Rate:{" "}
+                          {Math.round((period.valid / period.totalScans) * 100)}%
                         </div>
                       </td>
                       <td className="px-4 py-4">
                         <span
-                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(
-                            item.status
-                          )}`}
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                            period.periodType === "daily"
+                              ? "bg-blue-100 text-blue-700"
+                              : "bg-purple-100 text-purple-700"
+                          }`}
                         >
-                          {getStatusIcon(item.status)}
-                          <span className="ml-1">{item.status}</span>
+                          {period.periodType === "daily" ? "Daily" : "Weekly"}
                         </span>
-                        <div className="text-xs text-gray-500 mt-1">
-                          {item.period === "daily" ? "Daily Report" : "Weekly Report"}
-                        </div>
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex gap-2">
                           <button
-                            onClick={() => showDetail(item)}
+                            onClick={() => showPeriodDetail(period)}
                             className="flex items-center px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-xs"
                           >
                             <Eye className="w-3 h-3 mr-1" />
-                            Details
+                            View Report
                           </button>
                         </div>
                       </td>
@@ -1088,38 +1300,34 @@ export default function ReportsAnalyticsPage() {
               </table>
             </div>
           ) : (
-            /* Mobile Card View */
             <div className="p-3 md:p-4">
-              {filteredReports.map((item) => (
-                <MobileItemCard key={item.id} item={item} />
+              {filteredPeriods.map((period) => (
+                <MobilePeriodCard key={period.periodId} period={period} />
               ))}
             </div>
           )}
 
-          {/* Empty State */}
-          {filteredReports.length === 0 && (
+          {filteredPeriods.length === 0 && (
             <div className="text-center py-8 md:py-12">
               <FileText className="w-10 h-10 md:w-12 md:h-12 text-gray-400 mx-auto mb-3 md:mb-4" />
               <p className="text-gray-500 text-base md:text-lg">
-                No report data found
+                No period reports found
               </p>
               <p className="text-gray-400 text-sm mt-1 md:mt-2">
-                Try adjusting your search or filter criteria
+                Try adjusting your period filter criteria
               </p>
             </div>
           )}
 
-          {/* Summary Footer */}
           <div className="bg-gray-50 px-4 py-3 border-t border-gray-200">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm text-gray-600">
               <div>
-                Showing {filteredReports.length} of {stats.total} reports
+                Showing {filteredPeriods.length} of {periodReports.length} period reports
               </div>
               <div className="flex gap-4 mt-2 sm:mt-0">
-                <span>Perangkat: {stats.perangkat}</span>
-                <span>Material: {stats.material}</span>
                 <span>Daily: {stats.daily}</span>
                 <span>Weekly: {stats.weekly}</span>
+                <span>Total Scans: {stats.total}</span>
               </div>
             </div>
           </div>
