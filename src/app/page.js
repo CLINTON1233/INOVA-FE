@@ -2,7 +2,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import "../globals.css";
+import "./globals.css";
 
 export default function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -20,8 +20,8 @@ export default function LandingPage() {
           <Image
             src="/seatrium.png"
             alt="Seatrium Logo"
-            width={150}
-            height={150}
+            width={140}
+            height={140}
             className="object-contain cursor-pointer"
             priority
           />
