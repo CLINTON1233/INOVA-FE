@@ -196,7 +196,7 @@ export default function LayoutDashboard({ children, activeMenu }) {
                   Welcome back! 👋
                 </h4>
                 <p className="text-xs text-gray-600 mt-1">
-                  Hello <span className="font-medium text-blue-600">{user.name}</span>, good to see you again!
+                  Hello <span className="font-medium text-blue-600">{user.username}</span>, good to see you again!
                 </p>
                 <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
                   <span>Department: {user.department}</span>
@@ -250,7 +250,7 @@ export default function LayoutDashboard({ children, activeMenu }) {
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
               >
                 <User className="w-4 h-4" />
-                <span>{user.name}</span>
+                <span>{user.username}</span>
                 <ChevronDown className={`w-4 h-4 transition-transform ${userDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
 
@@ -258,7 +258,7 @@ export default function LayoutDashboard({ children, activeMenu }) {
               {userDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
                   <div className="px-4 py-2 border-b border-gray-100">
-                    <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                    <p className="text-sm font-medium text-gray-900">{user.username}</p>
                     <p className="text-xs text-gray-500">{user.email}</p>
                     <p className="text-xs text-gray-500">{user.department}</p>
                   </div>

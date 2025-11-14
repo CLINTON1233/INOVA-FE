@@ -319,7 +319,7 @@ const { login } = useAuth();
 
         {/* Footer */}
         <footer className="text-center py-3 sm:py-4 text-xs sm:text-sm text-gray-500 border-t">
-          IT Inventory System 2025 Created by Clinton Alfaro
+          IT Inventory System 2025 
         </footer>
       </div>
     </div>
