@@ -1,5 +1,5 @@
 // src/lib/auth.js
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'; 
 
 export const authUtils = {
   // Get token from localStorage

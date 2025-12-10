@@ -20,6 +20,7 @@ import {
   MapPin,
   X,
   Trash2,
+  Upload,
 } from "lucide-react";
 import Swal from "sweetalert2";
 import LayoutDashboard from "../components/LayoutDashboard";
@@ -29,17 +30,18 @@ export default function SerialScanningPage() {
   const [scanResult, setScanResult] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [cameraError, setCameraError] = useState(null);
-  const [inputType, setInputType] = useState(""); // "serial" atau "barcode"
+  const [inputType, setInputType] = useState(""); 
   const [checkHistory, setCheckHistory] = useState([]);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState("");
   const [currentScanData, setCurrentScanData] = useState(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [dataToDelete, setDataToDelete] = useState(null);
   const [isSubmittingAll, setIsSubmittingAll] = useState(false);
-  const [showDeleteSuccessModal, setShowDeleteSuccessModal] = useState(false);
-  const [deletedDataInfo, setDeletedDataInfo] = useState(null);
+  const [isDetecting, setIsDetecting] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const videoRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   const router = useRouter();
 
@@ -57,6 +59,9 @@ export default function SerialScanningPage() {
     "Facilities Area",
   ];
 
+  // API Base URL
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
+
   // Load riwayat dari localStorage saat komponen mount
   useEffect(() => {
     const savedHistory = localStorage.getItem("scanCheckHistory");
@@ -71,6 +76,8 @@ export default function SerialScanningPage() {
       localStorage.setItem("scanCheckHistory", JSON.stringify(checkHistory));
     }
   }, [checkHistory]);
+
+  // Inisialisasi kamera
   useEffect(() => {
     const startCamera = async () => {
       try {
@@ -102,116 +109,350 @@ export default function SerialScanningPage() {
   // Fungsi untuk menambah data ke riwayat pengecekan
   const addToCheckHistory = (scanData) => {
     const newCheckItem = {
-      id: `CHK-${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      tanggal: new Date().toLocaleDateString("id-ID"),
-      waktu: new Date().toLocaleTimeString("id-ID", {
+      id: scanData.id || `CHK-${Date.now()}`,
+      timestamp: scanData.timestamp || new Date().toISOString(),
+      tanggal: scanData.tanggal || new Date().toLocaleDateString("id-ID"),
+      waktu: scanData.waktu || new Date().toLocaleTimeString("id-ID", {
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
       }),
       ...scanData,
-      status: "Checked", // Status sementara sebelum submit
-      submitted: false,
+      status: scanData.status || "Checked",
+      submitted: scanData.submitted || false,
     };
 
-    setCheckHistory((prev) => [newCheckItem, ...prev]); // Simpan semua item tanpa batasan
+    setCheckHistory((prev) => [newCheckItem, ...prev]);
     return newCheckItem;
   };
 
-  // Fungsi simulasi scan dengan data sesuai proposal
-  const handleScan = () => {
+  // ============================================
+  // FUNGSI DETECTION DENGAN BACKEND YOLO
+  // ============================================
+
+  // Fungsi untuk capture gambar dari kamera dan deteksi
+  const handleCameraCapture = async () => {
+    if (!videoRef.current) {
+      Swal.fire({
+        title: "Camera Error",
+        text: "Camera not available. Please check camera permissions.",
+        icon: "error",
+        confirmButtonText: "OK"
+      });
+      return;
+    }
+
+    setIsDetecting(true);
     setScanResult("loading");
-    setManualInput("");
-    setIsSubmitting(false);
-    setInputType("");
 
-    setTimeout(() => {
-      const isError = Math.random() < 0.2; // 20% chance of error
-      const isDevice = Math.random() < 0.6; // 60% device, 40% material
-
-      if (isError) {
+    try {
+      // Ambil frame dari video
+      const canvas = document.createElement('canvas');
+      canvas.width = videoRef.current.videoWidth;
+      canvas.height = videoRef.current.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+      
+      // Konversi ke base64 dengan kualitas 80%
+      const imageData = canvas.toDataURL('image/jpeg', 0.8);
+      
+      // Kirim ke backend untuk deteksi
+      const response = await fetch(`${API_BASE_URL}/api/detect/camera`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ image_data: imageData }),
+      });
+      
+      const result = await response.json();
+      
+      if (result.success && result.detected_items && result.detected_items.length > 0) {
+        // Proses setiap item yang terdeteksi
+        const detectedItems = result.detected_items.map((item, index) => {
+          const scanData = {
+            id: item.id,
+            jenisAset: item.asset_type,
+            kategori: item.category,
+            lokasi: item.location || "",
+            nomorSeri: item.serial_number,
+            brand: item.brand,
+            confidence: item.confidence,
+            confidencePercent: (item.confidence * 100).toFixed(1),
+            inputType: "camera",
+            status: "success",
+            message: `Detected: ${item.asset_type} ${item.brand !== 'N/A' ? `(${item.brand})` : ''} with ${(item.confidence * 100).toFixed(1)}% confidence`,
+            timestamp: new Date().toISOString(),
+            tanggal: new Date().toLocaleDateString("id-ID"),
+            waktu: new Date().toLocaleTimeString("id-ID", {
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit"
+            }),
+            resultImageUrl: result.result_image_url,
+            originalImageUrl: result.original_image_url
+          };
+          
+          return scanData;
+        });
+        
+        // Tambahkan semua item ke history
+        detectedItems.forEach(item => addToCheckHistory(item));
+        
+        // Tampilkan hasil pertama sebagai scan result
+        if (detectedItems.length > 0) {
+          setScanResult(detectedItems[0]);
+        }
+        
+        // Tampilkan notifikasi sukses
+        Swal.fire({
+          title: 'Detection Complete!',
+          html: `
+            <div class="text-center">
+              <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+              <p class="text-lg font-semibold">Found ${result.total_detected} device(s)/material(s)</p>
+              <div class="mt-3 space-y-1">
+                ${detectedItems.map(item => 
+                  `<p class="text-sm text-gray-600">• ${item.jenisAset} (${item.confidencePercent}%)</p>`
+                ).join('')}
+              </div>
+            </div>
+          `,
+          icon: 'success',
+          confirmButtonText: 'OK',
+          customClass: {
+            popup: 'font-poppins rounded-xl',
+            confirmButton: 'px-6 py-2 text-sm font-medium rounded-lg bg-green-600 hover:bg-green-700'
+          }
+        });
+        
+      } else {
+        // Tidak ada yang terdeteksi
         const errorData = {
           status: "error",
-          id: "ERR-SCAN-001",
-          assetType: "Unrecognized",
-          category: "Error",
-          location: "",
-          message: "Invalid serial number/barcode format. Please rescan.",
-          inputType: "scan",
+          id: "NO-DETECTION",
+          jenisAset: "No Device Detected",
+          kategori: "Error",
+          message: result.message || "No devices detected in the image. Please try again with better lighting.",
+          inputType: "camera"
+        };
+        
+        setScanResult(errorData);
+        addToCheckHistory(errorData);
+        
+        Swal.fire({
+          title: 'No Devices Detected',
+          text: 'Try to capture a clearer image with better lighting.',
+          icon: 'info',
+          confirmButtonText: 'Try Again'
+        });
+      }
+      
+    } catch (error) {
+      console.error('Detection error:', error);
+      
+      const errorData = {
+        status: "error",
+        id: "DETECTION-ERROR",
+        jenisAset: "Detection Failed",
+        kategori: "Error",
+        message: "Failed to process image. Please check if the backend server is running.",
+        inputType: "camera"
+      };
+      
+      setScanResult(errorData);
+      addToCheckHistory(errorData);
+      
+      Swal.fire({
+        title: 'Detection Failed',
+        text: 'Please make sure the backend server is running on port 5000.',
+        icon: 'error',
+        confirmButtonText: 'OK'
+      });
+      
+    } finally {
+      setIsDetecting(false);
+    }
+  };
+
+  // Fungsi untuk upload file gambar dan deteksi
+  const handleFileUpload = async (file) => {
+    if (!file) return;
+
+    setIsDetecting(true);
+    setScanResult("loading");
+
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await fetch(`${API_BASE_URL}/api/detect`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (result.success && result.detected_items && result.detected_items.length > 0) {
+        // Proses setiap item yang terdeteksi
+        const detectedItems = result.detected_items.map((item, index) => {
+          const scanData = {
+            id: item.id,
+            jenisAset: item.asset_type,
+            kategori: item.category,
+            lokasi: item.location || "",
+            nomorSeri: item.serial_number,
+            brand: item.brand,
+            confidence: item.confidence,
+            confidencePercent: (item.confidence * 100).toFixed(1),
+            inputType: "upload",
+            status: "success",
+            message: `Detected: ${item.asset_type} ${item.brand !== 'N/A' ? `(${item.brand})` : ''} with ${(item.confidence * 100).toFixed(1)}% confidence`,
+            timestamp: new Date().toISOString(),
+            tanggal: new Date().toLocaleDateString("id-ID"),
+            waktu: new Date().toLocaleTimeString("id-ID", {
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit"
+            }),
+            resultImageUrl: result.result_image_url,
+            originalImageUrl: result.original_image_url,
+            filename: file.name
+          };
+          
+          return scanData;
+        });
+
+        // Tambahkan semua item ke history
+        detectedItems.forEach(item => addToCheckHistory(item));
+
+        // Tampilkan hasil pertama sebagai scan result
+        if (detectedItems.length > 0) {
+          setScanResult(detectedItems[0]);
+        }
+
+        // Tampilkan notifikasi sukses
+        Swal.fire({
+          title: 'File Analysis Complete!',
+          html: `
+            <div class="text-center">
+              <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+              <p class="text-lg font-semibold">Found ${result.total_detected} device(s)/material(s)</p>
+              <div class="mt-3 space-y-1">
+                ${detectedItems.map(item => 
+                  `<p class="text-sm text-gray-600">• ${item.jenisAset} (${item.confidencePercent}%)</p>`
+                ).join('')}
+              </div>
+            </div>
+          `,
+          icon: 'success',
+          confirmButtonText: 'OK',
+          customClass: {
+            popup: 'font-poppins rounded-xl',
+            confirmButton: 'px-6 py-2 text-sm font-medium rounded-lg bg-green-600 hover:bg-green-700'
+          }
+        });
+
+      } else {
+        // Tidak ada yang terdeteksi
+        const errorData = {
+          status: "error",
+          id: "NO-DETECTION",
+          jenisAset: "No Device Detected",
+          kategori: "Error",
+          message: result.message || "No devices detected in the image.",
+          inputType: "upload",
+          filename: file.name
         };
 
         setScanResult(errorData);
         addToCheckHistory(errorData);
-      } else {
-        const assets = isDevice
-          ? // Device data (Serial Numbers)
-            [
-              {
-                id: "PC-IT-2025-001",
-                assetType: "Computer",
-                category: "Device",
-                location: "",
-                serialNumber: "SN-PC-887632",
-              },
-              {
-                id: "SRV-NET-012",
-                assetType: "Server",
-                category: "Device",
-                location: "",
-                serialNumber: "SN-SRV-992345",
-              },
-              {
-                id: "CCTV-SEC-003",
-                assetType: "CCTV",
-                category: "Device",
-                location: "",
-                serialNumber: "SN-CCTV-661234",
-              },
-            ]
-          : // Material data (Barcodes)
-            [
-              {
-                id: "MAT-CBL-045",
-                assetType: "RJ45 Cable",
-                category: "Material",
-                location: "",
-                barcode: "BC-RJ45-554321",
-              },
-              {
-                id: "MAT-TRK-987",
-                assetType: "Trunking",
-                category: "Material",
-                location: "",
-                barcode: "BC-TRK-773216",
-              },
-              {
-                id: "MAT-PVC-123",
-                assetType: "PVC Pipe",
-                category: "Material",
-                location: "",
-                barcode: "BC-PVC-445533",
-              },
-            ];
 
-        const randomAsset = assets[Math.floor(Math.random() * assets.length)];
-        const successData = {
-          status: "success",
-          ...randomAsset,
-          message: `Success! ${
-            isDevice ? "Serial Number" : "Barcode"
-          } detected.`,
-          inputType: "scan",
-        };
-
-        setScanResult(successData);
-        addToCheckHistory(successData);
-        setInputType(isDevice ? "serial" : "barcode");
+        Swal.fire({
+          title: 'No Devices Detected',
+          text: 'The uploaded image does not contain any detectable devices.',
+          icon: 'info',
+          confirmButtonText: 'Try Another Image'
+        });
       }
-    }, 2000);
+
+    } catch (error) {
+      console.error('Upload detection error:', error);
+
+      const errorData = {
+        status: "error",
+        id: "UPLOAD-ERROR",
+        jenisAset: "Upload Failed",
+        kategori: "Error",
+        message: "Failed to upload and process image.",
+        inputType: "upload",
+        filename: file.name
+      };
+
+      setScanResult(errorData);
+      addToCheckHistory(errorData);
+
+      Swal.fire({
+        title: 'Upload Failed',
+        text: 'Failed to process the uploaded image. Please try again.',
+        icon: 'error',
+        confirmButtonText: 'OK'
+      });
+
+    } finally {
+      setIsDetecting(false);
+      setSelectedFile(null);
+      setImagePreview(null);
+      setShowUploadModal(false);
+    }
   };
 
-  // Fungsi untuk manual check
+  // Fungsi untuk menangani pemilihan file
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Cek tipe file
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+    if (!validTypes.includes(file.type)) {
+      Swal.fire({
+        title: 'Invalid File Type',
+        text: 'Please select an image file (JPEG, PNG, GIF)',
+        icon: 'error',
+        confirmButtonText: 'OK'
+      });
+      return;
+    }
+
+    // Cek ukuran file (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      Swal.fire({
+        title: 'File Too Large',
+        text: 'Please select an image smaller than 5MB',
+        icon: 'error',
+        confirmButtonText: 'OK'
+      });
+      return;
+    }
+
+    setSelectedFile(file);
+
+    // Buat preview gambar
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImagePreview(e.target.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Fungsi untuk memulai deteksi dari file yang dipilih
+  const handleStartUploadDetection = () => {
+    if (selectedFile) {
+      handleFileUpload(selectedFile);
+    }
+  };
+
+  // Fungsi untuk manual check (simulasi)
   const handleManualCheck = (e) => {
     e.preventDefault();
     if (!manualInput) return;
@@ -365,29 +606,7 @@ export default function SerialScanningPage() {
     });
   };
 
-  // Fungsi untuk menyimpan lokasi saja
-  const handleSaveLocation = () => {
-    if (!selectedLocation || !currentScanData) return;
-
-    // Update data dengan lokasi yang dipilih
-    const updatedData = {
-      ...currentScanData,
-      lokasi: selectedLocation,
-    };
-
-    // Update riwayat dengan lokasi baru
-    setCheckHistory((prev) =>
-      prev.map((item) =>
-        item.id === currentScanData.id ? { ...item, ...updatedData } : item
-      )
-    );
-
-    setShowLocationModal(false);
-    setSelectedLocation("");
-  };
-
   // Fungsi untuk submit data individual
-  // Fungsi untuk submit data individual dengan SweetAlert
   const handleSubmitSingle = async (scanData) => {
     if (!scanData.lokasi) {
       Swal.fire({
@@ -438,8 +657,18 @@ export default function SerialScanningPage() {
 
     console.log("Submitting Single Data:", submittedData);
 
-    // Simulasi proses pengiriman
-    setTimeout(() => {
+    // Simulasi proses pengiriman ke backend
+    try {
+      // TODO: Implementasikan API call ke backend untuk menyimpan data
+      // const response = await fetch(`${API_BASE_URL}/api/submit`, {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(submittedData)
+      // });
+
+      // Simulasi delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
       setIsSubmitting(false);
 
       // Tutup loading dan tampilkan sukses
@@ -447,7 +676,6 @@ export default function SerialScanningPage() {
         title: "Successfully Sent!",
         html: `
     <div class="text-center">
-   
       <p class="text-gray-700 font-grey-700 mb-2 mt-0">The data has been successfully sent for validation!</p>
       <div class="bg-gray-50 p-3 rounded-lg mt-3">
         <p class="text-sm text-gray-600"><strong>Data Details:</strong></p>
@@ -465,10 +693,19 @@ export default function SerialScanningPage() {
           confirmButton: "px-6 py-2 text-sm font-medium rounded-lg",
         },
       });
-    }, 1500);
+    } catch (error) {
+      console.error('Submission error:', error);
+      setIsSubmitting(false);
+      Swal.fire({
+        title: 'Submission Failed',
+        text: 'Failed to submit data. Please try again.',
+        icon: 'error',
+        confirmButtonText: 'OK'
+      });
+    }
   };
 
-  // Fungsi untuk submit semua data dengan SweetAlert
+  // Fungsi untuk submit semua data
   const handleSubmitAll = async () => {
     const dataToSubmit = checkHistory.filter(
       (item) => item.status === "Checked" && item.lokasi && !item.submitted
@@ -527,8 +764,17 @@ export default function SerialScanningPage() {
 
     console.log("Submitting All Data:", submittedData);
 
-    // Simulasi proses pengiriman
-    setTimeout(() => {
+    try {
+      // TODO: Implementasikan API call batch ke backend
+      // const response = await fetch(`${API_BASE_URL}/api/submit/batch`, {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(submittedData)
+      // });
+
+      // Simulasi delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
       setIsSubmittingAll(false);
 
       // Close loading and show success
@@ -546,11 +792,10 @@ export default function SerialScanningPage() {
   `,
         icon: "success",
         showCancelButton: true,
-        confirmButtonColor: "#20a051ff", // hijau pekat
-        cancelButtonColor: "#374151", // abu-abu pekat
+        confirmButtonColor: "#20a051ff",
+        cancelButtonColor: "#374151",
         confirmButtonText: "View Verification",
         cancelButtonText: "Continue Scanning",
-
         reverseButtons: true,
         customClass: {
           popup: "font-poppins rounded-xl",
@@ -566,10 +811,19 @@ export default function SerialScanningPage() {
           router.push("/validation-verification");
         }
       });
-    }, 2000);
+    } catch (error) {
+      console.error('Batch submission error:', error);
+      setIsSubmittingAll(false);
+      Swal.fire({
+        title: 'Submission Failed',
+        text: 'Failed to submit data. Please try again.',
+        icon: 'error',
+        confirmButtonText: 'OK'
+      });
+    }
   };
 
-  // Fungsi untuk menghapus data dari riwayat - PERBAIKAN
+  // Fungsi untuk menghapus data dari riwayat
   const handleDeleteData = async (scanData) => {
     const result = await Swal.fire({
       title: `Delete ${scanData.jenisAset}?`,
@@ -619,6 +873,7 @@ export default function SerialScanningPage() {
     }
   };
 
+  // Helper functions
   const getStatusColor = (status) => {
     switch (status) {
       case "success":
@@ -675,10 +930,12 @@ export default function SerialScanningPage() {
             SCAN IT DEVICES & MATERIALS
           </h1>
           <p className="text-blue-100 text-xs sm:text-sm mt-1 sm:mt-2">
-            Scan IT devices or materials, select the location, and submit for
-            verification. The checking data will be temporarily stored before
-            being sent.
+            Scan IT devices or materials using camera, upload images, select the location, and submit for verification.
           </p>
+          {/* <div className="mt-2 flex items-center text-sm">
+            <span className="bg-blue-500 px-2 py-1 rounded mr-2">Backend:</span>
+            <span className="font-mono">{API_BASE_URL}</span>
+          </div> */}
         </div>
 
         {/* 1. Camera / Scanner Area */}
@@ -699,7 +956,9 @@ export default function SerialScanningPage() {
 
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-4/5 h-4/5 border-4 border-dashed border-white/50 rounded-lg"></div>
-              {/* Red line removed */}
+              {/* Scanning guide lines */}
+              <div className="absolute top-1/2 left-0 right-0 h-1 bg-red-500/50 animate-pulse"></div>
+              <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-red-500/50 animate-pulse"></div>
             </div>
 
             {cameraError && (
@@ -716,27 +975,28 @@ export default function SerialScanningPage() {
             <div className="flex items-center">
               <Cpu className="w-3 h-3 sm:w-4 sm:h-4 mr-2 text-blue-600" />
               <span>
-                Scan <strong>Serial Number</strong> for IT Devices
+                Detects: <strong>Monitor, Laptop, PC, Printer, etc.</strong>
               </span>
             </div>
             <div className="flex items-center">
               <Cable className="w-3 h-3 sm:w-4 sm:h-4 mr-2 text-green-600" />
               <span>
-                Scan <strong>Barcode</strong> for Materials
+                Detects: <strong>Cable, Connector, Rack, Trunking, etc.</strong>
               </span>
             </div>
           </div>
 
-          <div className="flex justify-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Capture from Camera Button */}
             <button
-              onClick={handleScan}
-              className="flex items-center justify-center px-6 sm:px-8 py-3 sm:py-4 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition shadow-lg disabled:opacity-50 text-sm sm:text-base w-full sm:w-auto"
-              disabled={scanResult === "loading" || isSubmitting}
+              onClick={handleCameraCapture}
+              className="flex items-center justify-center px-4 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition shadow-lg disabled:opacity-50 text-sm"
+              disabled={isDetecting || scanResult === "loading"}
             >
-              {scanResult === "loading" ? (
+              {isDetecting ? (
                 <>
                   <svg
-                    className="animate-spin -ml-1 mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 text-white"
+                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
                     fill="none"
                     viewBox="0 0 24 24"
                   >
@@ -754,17 +1014,127 @@ export default function SerialScanningPage() {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     ></path>
                   </svg>
-                  Scanning in Progress...
+                  Detecting Devices...
                 </>
               ) : (
                 <>
-                  <ScanLine className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                  Start Camera Scanning
+                  <Camera className="w-4 h-4 mr-2" />
+                  Capture & Detect
                 </>
               )}
             </button>
+
+            {/* Upload Image Button */}
+            <button
+              onClick={() => {
+                setShowUploadModal(true);
+                if (fileInputRef.current) {
+                  fileInputRef.current.click();
+                }
+              }}
+              className="flex items-center justify-center px-4 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition shadow-lg disabled:opacity-50 text-sm"
+              disabled={isDetecting}
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Upload & Detect
+            </button>
           </div>
+
+          {/* Hidden file input */}
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept="image/*"
+            onChange={handleFileSelect}
+          />
         </div>
+
+        {/* Upload Modal */}
+        {showUploadModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+                  <Upload className="w-5 h-5 mr-2 text-green-600" />
+                  Upload Image for Detection
+                </h3>
+                <button
+                  onClick={() => setShowUploadModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {!selectedFile ? (
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                    <Upload className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-600 mb-2">Click to select an image file</p>
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
+                      Choose File
+                    </button>
+                    <p className="text-xs text-gray-500 mt-2">Max file size: 5MB</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="relative">
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="w-full h-48 object-cover rounded-lg"
+                      />
+                      <button
+                        onClick={() => {
+                          setSelectedFile(null);
+                          setImagePreview(null);
+                        }}
+                        className="absolute top-2 right-2 bg-red-600 text-white p-1 rounded-full"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      Selected: <span className="font-medium">{selectedFile.name}</span>
+                    </p>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => setShowUploadModal(false)}
+                        className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleStartUploadDetection}
+                        disabled={isDetecting}
+                        className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center justify-center"
+                      >
+                        {isDetecting ? (
+                          <>
+                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <ScanLine className="w-4 h-4 mr-2" />
+                            Detect Devices
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* 2. Manual Input & Scan Results */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
@@ -772,7 +1142,7 @@ export default function SerialScanningPage() {
           <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200">
             <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center">
               <Clipboard className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-gray-600" />
-              Manual Input
+              Manual Input (Simulation)
             </h2>
             <form
               onSubmit={handleManualCheck}
@@ -780,7 +1150,7 @@ export default function SerialScanningPage() {
             >
               <div>
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-                  Enter Serial Number or Barcode
+                  Enter Serial Number or Barcode (Simulation)
                 </label>
                 <input
                   type="text"
@@ -797,7 +1167,7 @@ export default function SerialScanningPage() {
                 disabled={scanResult === "loading" || isSubmitting}
               >
                 <Search className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                Check Validity
+                Check Validity (Simulate)
               </button>
             </form>
           </div>
@@ -806,7 +1176,7 @@ export default function SerialScanningPage() {
           <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200">
             <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center">
               <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-gray-400" />
-              Latest Inspection Result
+              Latest Detection Result
             </h2>
 
             {scanResult === "loading" && (
@@ -831,10 +1201,10 @@ export default function SerialScanningPage() {
                   ></path>
                 </svg>
                 <p className="font-medium text-sm sm:text-base">
-                  Processing inspection...
+                  Processing detection...
                 </p>
                 <p className="text-xs sm:text-sm mt-1">
-                  Detecting format and validity
+                  Analyzing image with YOLO model
                 </p>
               </div>
             )}
@@ -884,30 +1254,75 @@ export default function SerialScanningPage() {
                       <span className="ml-1">{scanResult.kategori}</span>
                     </span>
                   </div>
+                  {scanResult.brand && scanResult.brand !== 'N/A' && (
+                    <div className="flex justify-between">
+                      <span className="font-medium text-gray-600">Brand:</span>
+                      <span className="text-blue-600 font-medium">
+                        {scanResult.brand}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="font-medium text-gray-600">
-                      {inputType === "serial" ? "Serial Number:" : "Barcode:"}
+                      {scanResult.nomorSeri ? "Serial Number:" : "Barcode:"}
                     </span>
                     <span className="font-mono text-blue-600 text-xs sm:text-sm">
                       {scanResult.nomorSeri || scanResult.barcode}
                     </span>
                   </div>
+                  {scanResult.confidencePercent && (
+                    <div className="flex justify-between">
+                      <span className="font-medium text-gray-600">Confidence:</span>
+                      <span className="font-bold text-green-600">
+                        {scanResult.confidencePercent}%
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <p className="text-xs sm:text-sm text-gray-600 mt-2 sm:mt-3 border-t pt-2 sm:pt-3">
                   {scanResult.message}
                 </p>
+
+                {/* Show image links if available */}
+                {(scanResult.resultImageUrl || scanResult.originalImageUrl) && (
+                  <div className="mt-2 pt-2 border-t border-gray-200">
+                    <p className="text-xs text-gray-500 mb-1">Images:</p>
+                    <div className="flex gap-2">
+                      {scanResult.originalImageUrl && (
+                        <a
+                          href={`${API_BASE_URL}${scanResult.originalImageUrl}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-600 hover:underline"
+                        >
+                          Original
+                        </a>
+                      )}
+                      {scanResult.resultImageUrl && (
+                        <a
+                          href={`${API_BASE_URL}${scanResult.resultImageUrl}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-green-600 hover:underline"
+                        >
+                          Result
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
             {!scanResult && scanResult !== "loading" && (
               <div className="text-center py-6 sm:py-8 text-gray-500">
-                <Box className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 text-gray-400" />
+                <Camera className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 text-gray-400" />
                 <p className="font-medium text-sm sm:text-base">
-                  No inspection results yet
+                  No detection results yet
                 </p>
                 <p className="text-xs sm:text-sm mt-1">
-                  Use the Camera Scanner or Manual Input
+                  Use the Camera Capture or Upload Image to detect devices
                 </p>
               </div>
             )}
@@ -919,7 +1334,7 @@ export default function SerialScanningPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sm:mb-4 gap-2">
             <h2 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center">
               <Calendar className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-gray-600" />
-              Recent Inspection History
+              Recent Detection History
             </h2>
             <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto">
               <span className="text-xs sm:text-sm text-gray-500">
@@ -937,10 +1352,10 @@ export default function SerialScanningPage() {
             <div className="text-center py-6 sm:py-8 text-gray-500">
               <Box className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 text-gray-400" />
               <p className="font-medium text-sm sm:text-base">
-                No inspection history yet
+                No detection history yet
               </p>
               <p className="text-xs sm:text-sm mt-1">
-                Use the camera scanner or manual input to start checking
+                Use the camera scanner, upload image, or manual input to start
               </p>
             </div>
           ) : (
@@ -953,6 +1368,8 @@ export default function SerialScanningPage() {
                       <th className="py-2 font-medium">Asset ID</th>
                       <th className="py-2 font-medium">Asset Type</th>
                       <th className="py-2 font-medium">Category</th>
+                      <th className="py-2 font-medium">Brand</th>
+                      <th className="py-2 font-medium">Confidence</th>
                       <th className="py-2 font-medium">Location</th>
                       <th className="py-2 font-medium">Status</th>
                       <th className="py-2 font-medium">Date</th>
@@ -984,6 +1401,18 @@ export default function SerialScanningPage() {
                             }`}
                           >
                             {item.kategori}
+                          </span>
+                        </td>
+                        <td className="py-3 text-gray-600 text-sm">
+                          {item.brand || "N/A"}
+                        </td>
+                        <td className="py-3">
+                          <span className={`px-2 py-1 text-xs rounded-full font-semibold ${
+                            item.confidencePercent >= 80 ? 'bg-green-100 text-green-700' :
+                            item.confidencePercent >= 60 ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-red-100 text-red-700'
+                          }`}>
+                            {item.confidencePercent || "N/A"}%
                           </span>
                         </td>
                         <td className="py-3 text-gray-600 text-sm">
@@ -1087,6 +1516,18 @@ export default function SerialScanningPage() {
                           {item.kategori}
                         </span>
                       </div>
+                      {item.brand && item.brand !== 'N/A' && (
+                        <div className="flex justify-between">
+                          <span className="font-medium">Brand:</span>
+                          <span className="text-blue-600">{item.brand}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between">
+                        <span className="font-medium">Confidence:</span>
+                        <span className="font-bold text-green-600">
+                          {item.confidencePercent}%
+                        </span>
+                      </div>
                       <div className="flex justify-between">
                         <span className="font-medium">Location:</span>
                         {item.lokasi ? (
@@ -1188,172 +1629,6 @@ export default function SerialScanningPage() {
             </>
           )}
         </div>
-        {/* Location Selection Modal */}
-        {showLocationModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 sm:p-4 z-50">
-            <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-4 sm:p-6 mx-2">
-              <div className="flex items-center justify-between mb-3 sm:mb-4">
-                <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center">
-                  <MapPin className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-600" />
-                  Select Asset Inspection Location
-                </h3>
-                <button
-                  onClick={() => setShowLocationModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="space-y-3 sm:space-y-4">
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-                    Choose Location
-                  </label>
-                  <select
-                    value={selectedLocation}
-                    onChange={(e) => setSelectedLocation(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                  >
-                    <option value="">Select location...</option>
-                    {locationOptions.map((location, index) => (
-                      <option key={index} value={location}>
-                        {location}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="bg-gray-100 p-2 sm:p-3 rounded-lg">
-                  <p className="text-xs sm:text-sm text-blue-700">
-                    <strong>Data to be updated:</strong>
-                    <br />
-                    Asset: {currentScanData?.jenisAset}
-                    <br />
-                    Category: {currentScanData?.kategori}
-                    <br />
-                    ID: {currentScanData?.id}
-                  </p>
-                </div>
-
-                <div className="flex gap-2 sm:gap-3 pt-3 sm:pt-4">
-                  <button
-                    onClick={() => setShowLocationModal(false)}
-                    className="flex-1 px-3 sm:px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition text-sm"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSaveLocation}
-                    disabled={!selectedLocation}
-                    className="flex-1 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 flex items-center justify-center text-sm"
-                  >
-                    <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                    Save Location
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Delete Confirmation Modal */}
-        {showDeleteModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 sm:p-4 z-50">
-            <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-4 sm:p-6 mx-2">
-              <div className="flex items-center justify-between mb-3 sm:mb-4">
-                <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center">
-                  <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-red-600" />
-                  Confirm Delete Data
-                </h3>
-                <button
-                  onClick={() => setShowDeleteModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="space-y-3 sm:space-y-4">
-                <p className="text-gray-600 text-sm sm:text-base">
-                  Are you sure you want to delete this inspection record?
-                </p>
-
-                <div className="bg-gray-100 p-2 sm:p-3 rounded-lg">
-                  <p className="text-xs sm:text-sm text-red-700">
-                    <strong>Data to be deleted:</strong>
-                    <br />
-                    ID: {dataToDelete?.id}
-                    <br />
-                    Type: {dataToDelete?.jenisAset}
-                    <br />
-                    Category: {dataToDelete?.kategori}
-                    <br />
-                    Status: {getStatusText(dataToDelete?.status)}
-                  </p>
-                </div>
-
-                <div className="flex gap-2 sm:gap-3 pt-3 sm:pt-4">
-                  <button
-                    onClick={() => setShowDeleteModal(false)}
-                    className="flex-1 px-3 sm:px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition text-sm"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={confirmDelete}
-                    className="flex-1 px-3 sm:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition flex items-center justify-center text-sm"
-                  >
-                    <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                    Delete Data
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Delete Success Modal */}
-        {showDeleteSuccessModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 sm:p-4 z-50">
-            <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-4 sm:p-6 mx-2">
-              <div className="flex items-center justify-between mb-3 sm:mb-4">
-                <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center">
-                  <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-green-600" />
-                  Successfully Deleted
-                </h3>
-                <button
-                  onClick={() => setShowDeleteSuccessModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="space-y-3 sm:space-y-4">
-                <div className="text-center">
-                  <CheckCircle className="w-8 h-8 sm:w-12 sm:h-12 text-green-500 mx-auto mb-3 sm:mb-4" />
-                  <p className="text-gray-700 font-medium text-sm sm:text-base">
-                    The record has been successfully deleted from history!
-                  </p>
-                  <p className="text-xs sm:text-sm text-gray-600 mt-1 sm:mt-2">
-                    {deletedDataInfo?.jenisAset} ({deletedDataInfo?.id})
-                  </p>
-                </div>
-
-                <div className="flex justify-center pt-3 sm:pt-4">
-                  <button
-                    onClick={() => setShowDeleteSuccessModal(false)}
-                    className="px-4 sm:px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center justify-center text-sm"
-                  >
-                    <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                    OK
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </LayoutDashboard>
   );

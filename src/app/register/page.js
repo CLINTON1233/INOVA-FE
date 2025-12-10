@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 // Gunakan URL langsung ke backend Flask
-const API_BASE_URL = 'http://localhost:5000'
+const API_BASE_URL = 'http://localhost:5001'
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({

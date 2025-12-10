@@ -8,7 +8,7 @@ import Swal from 'sweetalert2'
 import { useAuth } from '../context/AuthContext'; 
 
 // URL backend - sesuaikan dengan environment
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
