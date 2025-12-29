@@ -30,7 +30,7 @@ export default function SerialScanningPage() {
   const [scanResult, setScanResult] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [cameraError, setCameraError] = useState(null);
-  const [inputType, setInputType] = useState(""); 
+  const [inputType, setInputType] = useState("");
   const [checkHistory, setCheckHistory] = useState([]);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState("");
@@ -60,7 +60,8 @@ export default function SerialScanningPage() {
   ];
 
   // API Base URL
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
+  const API_BASE_URL =
+    process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
 
   // Load riwayat dari localStorage saat komponen mount
   useEffect(() => {
@@ -112,11 +113,13 @@ export default function SerialScanningPage() {
       id: scanData.id || `CHK-${Date.now()}`,
       timestamp: scanData.timestamp || new Date().toISOString(),
       tanggal: scanData.tanggal || new Date().toLocaleDateString("id-ID"),
-      waktu: scanData.waktu || new Date().toLocaleTimeString("id-ID", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      }),
+      waktu:
+        scanData.waktu ||
+        new Date().toLocaleTimeString("id-ID", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        }),
       ...scanData,
       status: scanData.status || "Checked",
       submitted: scanData.submitted || false,
@@ -137,7 +140,7 @@ export default function SerialScanningPage() {
         title: "Camera Error",
         text: "Camera not available. Please check camera permissions.",
         icon: "error",
-        confirmButtonText: "OK"
+        confirmButtonText: "OK",
       });
       return;
     }
@@ -147,27 +150,31 @@ export default function SerialScanningPage() {
 
     try {
       // Ambil frame dari video
-      const canvas = document.createElement('canvas');
+      const canvas = document.createElement("canvas");
       canvas.width = videoRef.current.videoWidth;
       canvas.height = videoRef.current.videoHeight;
-      const ctx = canvas.getContext('2d');
+      const ctx = canvas.getContext("2d");
       ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-      
+
       // Konversi ke base64 dengan kualitas 80%
-      const imageData = canvas.toDataURL('image/jpeg', 0.8);
-      
+      const imageData = canvas.toDataURL("image/jpeg", 0.8);
+
       // Kirim ke backend untuk deteksi
       const response = await fetch(`${API_BASE_URL}/api/detect/camera`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ image_data: imageData }),
       });
-      
+
       const result = await response.json();
-      
-      if (result.success && result.detected_items && result.detected_items.length > 0) {
+
+      if (
+        result.success &&
+        result.detected_items &&
+        result.detected_items.length > 0
+      ) {
         // Proses setiap item yang terdeteksi
         const detectedItems = result.detected_items.map((item, index) => {
           const scanData = {
@@ -181,51 +188,58 @@ export default function SerialScanningPage() {
             confidencePercent: (item.confidence * 100).toFixed(1),
             inputType: "camera",
             status: "success",
-            message: `Detected: ${item.asset_type} ${item.brand !== 'N/A' ? `(${item.brand})` : ''} with ${(item.confidence * 100).toFixed(1)}% confidence`,
+            message: `Detected: ${item.asset_type} ${
+              item.brand !== "N/A" ? `(${item.brand})` : ""
+            } with ${(item.confidence * 100).toFixed(1)}% confidence`,
             timestamp: new Date().toISOString(),
             tanggal: new Date().toLocaleDateString("id-ID"),
             waktu: new Date().toLocaleTimeString("id-ID", {
               hour: "2-digit",
               minute: "2-digit",
-              second: "2-digit"
+              second: "2-digit",
             }),
             resultImageUrl: result.result_image_url,
-            originalImageUrl: result.original_image_url
+            originalImageUrl: result.original_image_url,
           };
-          
+
           return scanData;
         });
-        
+
         // Tambahkan semua item ke history
-        detectedItems.forEach(item => addToCheckHistory(item));
-        
+        detectedItems.forEach((item) => addToCheckHistory(item));
+
         // Tampilkan hasil pertama sebagai scan result
         if (detectedItems.length > 0) {
           setScanResult(detectedItems[0]);
         }
-        
+
         // Tampilkan notifikasi sukses
         Swal.fire({
-          title: 'Detection Complete!',
+          title: "Detection Complete!",
           html: `
             <div class="text-center">
               <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
-              <p class="text-lg font-semibold">Found ${result.total_detected} device(s)/material(s)</p>
+              <p class="text-lg font-semibold">Found ${
+                result.total_detected
+              } device(s)/material(s)</p>
               <div class="mt-3 space-y-1">
-                ${detectedItems.map(item => 
-                  `<p class="text-sm text-gray-600">• ${item.jenisAset} (${item.confidencePercent}%)</p>`
-                ).join('')}
+                ${detectedItems
+                  .map(
+                    (item) =>
+                      `<p class="text-sm text-gray-600">• ${item.jenisAset} (${item.confidencePercent}%)</p>`
+                  )
+                  .join("")}
               </div>
             </div>
           `,
-          icon: 'success',
-          confirmButtonText: 'OK',
+          icon: "success",
+          confirmButtonText: "OK",
           customClass: {
-            popup: 'font-poppins rounded-xl',
-            confirmButton: 'px-6 py-2 text-sm font-medium rounded-lg bg-green-600 hover:bg-green-700'
-          }
+            popup: "font-poppins rounded-xl",
+            confirmButton:
+              "px-6 py-2 text-sm font-medium rounded-lg bg-green-600 hover:bg-green-700",
+          },
         });
-        
       } else {
         // Tidak ada yang terdeteksi
         const errorData = {
@@ -233,43 +247,44 @@ export default function SerialScanningPage() {
           id: "NO-DETECTION",
           jenisAset: "No Device Detected",
           kategori: "Error",
-          message: result.message || "No devices detected in the image. Please try again with better lighting.",
-          inputType: "camera"
+          message:
+            result.message ||
+            "No devices detected in the image. Please try again with better lighting.",
+          inputType: "camera",
         };
-        
+
         setScanResult(errorData);
         addToCheckHistory(errorData);
-        
+
         Swal.fire({
-          title: 'No Devices Detected',
-          text: 'Try to capture a clearer image with better lighting.',
-          icon: 'info',
-          confirmButtonText: 'Try Again'
+          title: "No Devices Detected",
+          text: "Try to capture a clearer image with better lighting.",
+          icon: "info",
+          confirmButtonText: "Try Again",
         });
       }
-      
     } catch (error) {
-      console.error('Detection error:', error);
-      
+      console.error("Detection error:", error);
+
       const errorData = {
         status: "error",
         id: "DETECTION-ERROR",
         jenisAset: "Detection Failed",
         kategori: "Error",
-        message: "Failed to process image. Please check if the backend server is running.",
-        inputType: "camera"
+        message:
+          "Failed to process image. Please check if the backend server is running.",
+        inputType: "camera",
       };
-      
+
       setScanResult(errorData);
       addToCheckHistory(errorData);
-      
+
       Swal.fire({
-        title: 'Detection Failed',
-        text: 'Please make sure the backend server is running on port 5000.',
-        icon: 'error',
-        confirmButtonText: 'OK'
+        title: "Detection Failed",
+        text: "Please make sure the backend server is running on port 5000.",
+        icon: "error",
+        confirmButtonText: "OK",
       });
-      
     } finally {
       setIsDetecting(false);
     }
@@ -284,16 +299,20 @@ export default function SerialScanningPage() {
 
     try {
       const formData = new FormData();
-      formData.append('image', file);
+      formData.append("image", file);
 
       const response = await fetch(`${API_BASE_URL}/api/detect`, {
-        method: 'POST',
+        method: "POST",
         body: formData,
       });
 
       const result = await response.json();
 
-      if (result.success && result.detected_items && result.detected_items.length > 0) {
+      if (
+        result.success &&
+        result.detected_items &&
+        result.detected_items.length > 0
+      ) {
         // Proses setiap item yang terdeteksi
         const detectedItems = result.detected_items.map((item, index) => {
           const scanData = {
@@ -307,24 +326,26 @@ export default function SerialScanningPage() {
             confidencePercent: (item.confidence * 100).toFixed(1),
             inputType: "upload",
             status: "success",
-            message: `Detected: ${item.asset_type} ${item.brand !== 'N/A' ? `(${item.brand})` : ''} with ${(item.confidence * 100).toFixed(1)}% confidence`,
+            message: `Detected: ${item.asset_type} ${
+              item.brand !== "N/A" ? `(${item.brand})` : ""
+            } with ${(item.confidence * 100).toFixed(1)}% confidence`,
             timestamp: new Date().toISOString(),
             tanggal: new Date().toLocaleDateString("id-ID"),
             waktu: new Date().toLocaleTimeString("id-ID", {
               hour: "2-digit",
               minute: "2-digit",
-              second: "2-digit"
+              second: "2-digit",
             }),
             resultImageUrl: result.result_image_url,
             originalImageUrl: result.original_image_url,
-            filename: file.name
+            filename: file.name,
           };
-          
+
           return scanData;
         });
 
         // Tambahkan semua item ke history
-        detectedItems.forEach(item => addToCheckHistory(item));
+        detectedItems.forEach((item) => addToCheckHistory(item));
 
         // Tampilkan hasil pertama sebagai scan result
         if (detectedItems.length > 0) {
@@ -333,26 +354,31 @@ export default function SerialScanningPage() {
 
         // Tampilkan notifikasi sukses
         Swal.fire({
-          title: 'File Analysis Complete!',
+          title: "File Analysis Complete!",
           html: `
             <div class="text-center">
               <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
-              <p class="text-lg font-semibold">Found ${result.total_detected} device(s)/material(s)</p>
+              <p class="text-lg font-semibold">Found ${
+                result.total_detected
+              } device(s)/material(s)</p>
               <div class="mt-3 space-y-1">
-                ${detectedItems.map(item => 
-                  `<p class="text-sm text-gray-600">• ${item.jenisAset} (${item.confidencePercent}%)</p>`
-                ).join('')}
+                ${detectedItems
+                  .map(
+                    (item) =>
+                      `<p class="text-sm text-gray-600">• ${item.jenisAset} (${item.confidencePercent}%)</p>`
+                  )
+                  .join("")}
               </div>
             </div>
           `,
-          icon: 'success',
-          confirmButtonText: 'OK',
+          icon: "success",
+          confirmButtonText: "OK",
           customClass: {
-            popup: 'font-poppins rounded-xl',
-            confirmButton: 'px-6 py-2 text-sm font-medium rounded-lg bg-green-600 hover:bg-green-700'
-          }
+            popup: "font-poppins rounded-xl",
+            confirmButton:
+              "px-6 py-2 text-sm font-medium rounded-lg bg-green-600 hover:bg-green-700",
+          },
         });
-
       } else {
         // Tidak ada yang terdeteksi
         const errorData = {
@@ -362,22 +388,21 @@ export default function SerialScanningPage() {
           kategori: "Error",
           message: result.message || "No devices detected in the image.",
           inputType: "upload",
-          filename: file.name
+          filename: file.name,
         };
 
         setScanResult(errorData);
         addToCheckHistory(errorData);
 
         Swal.fire({
-          title: 'No Devices Detected',
-          text: 'The uploaded image does not contain any detectable devices.',
-          icon: 'info',
-          confirmButtonText: 'Try Another Image'
+          title: "No Devices Detected",
+          text: "The uploaded image does not contain any detectable devices.",
+          icon: "info",
+          confirmButtonText: "Try Another Image",
         });
       }
-
     } catch (error) {
-      console.error('Upload detection error:', error);
+      console.error("Upload detection error:", error);
 
       const errorData = {
         status: "error",
@@ -386,19 +411,18 @@ export default function SerialScanningPage() {
         kategori: "Error",
         message: "Failed to upload and process image.",
         inputType: "upload",
-        filename: file.name
+        filename: file.name,
       };
 
       setScanResult(errorData);
       addToCheckHistory(errorData);
 
       Swal.fire({
-        title: 'Upload Failed',
-        text: 'Failed to process the uploaded image. Please try again.',
-        icon: 'error',
-        confirmButtonText: 'OK'
+        title: "Upload Failed",
+        text: "Failed to process the uploaded image. Please try again.",
+        icon: "error",
+        confirmButtonText: "OK",
       });
-
     } finally {
       setIsDetecting(false);
       setSelectedFile(null);
@@ -413,13 +437,13 @@ export default function SerialScanningPage() {
     if (!file) return;
 
     // Cek tipe file
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+    const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
     if (!validTypes.includes(file.type)) {
       Swal.fire({
-        title: 'Invalid File Type',
-        text: 'Please select an image file (JPEG, PNG, GIF)',
-        icon: 'error',
-        confirmButtonText: 'OK'
+        title: "Invalid File Type",
+        text: "Please select an image file (JPEG, PNG, GIF)",
+        icon: "error",
+        confirmButtonText: "OK",
       });
       return;
     }
@@ -427,10 +451,10 @@ export default function SerialScanningPage() {
     // Cek ukuran file (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       Swal.fire({
-        title: 'File Too Large',
-        text: 'Please select an image smaller than 5MB',
-        icon: 'error',
-        confirmButtonText: 'OK'
+        title: "File Too Large",
+        text: "Please select an image smaller than 5MB",
+        icon: "error",
+        confirmButtonText: "OK",
       });
       return;
     }
@@ -658,7 +682,7 @@ export default function SerialScanningPage() {
     console.log("Submitting Single Data:", submittedData);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
       setIsSubmitting(false);
 
@@ -685,13 +709,13 @@ export default function SerialScanningPage() {
         },
       });
     } catch (error) {
-      console.error('Submission error:', error);
+      console.error("Submission error:", error);
       setIsSubmitting(false);
       Swal.fire({
-        title: 'Submission Failed',
-        text: 'Failed to submit data. Please try again.',
-        icon: 'error',
-        confirmButtonText: 'OK'
+        title: "Submission Failed",
+        text: "Failed to submit data. Please try again.",
+        icon: "error",
+        confirmButtonText: "OK",
       });
     }
   };
@@ -756,7 +780,7 @@ export default function SerialScanningPage() {
     console.log("Submitting All Data:", submittedData);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       setIsSubmittingAll(false);
 
@@ -795,13 +819,13 @@ export default function SerialScanningPage() {
         }
       });
     } catch (error) {
-      console.error('Batch submission error:', error);
+      console.error("Batch submission error:", error);
       setIsSubmittingAll(false);
       Swal.fire({
-        title: 'Submission Failed',
-        text: 'Failed to submit data. Please try again.',
-        icon: 'error',
-        confirmButtonText: 'OK'
+        title: "Submission Failed",
+        text: "Failed to submit data. Please try again.",
+        icon: "error",
+        confirmButtonText: "OK",
       });
     }
   };
@@ -857,113 +881,116 @@ export default function SerialScanningPage() {
   };
 
   // Tambahkan fungsi untuk menghapus semua data
-const handleDeleteAll = async () => {
-  if (checkHistory.length === 0) return;
+  const handleDeleteAll = async () => {
+    if (checkHistory.length === 0) return;
 
-  const result = await Swal.fire({
-    title: 'Delete All Detection Results?',
-    html: `
+    const result = await Swal.fire({
+      title: "Delete All Detection Results?",
+      html: `
       <div class="text-center">
         <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-3" />
         <p class="text-gray-700">You are about to delete <strong>${checkHistory.length} items</strong> from detection history.</p>
         <p class="text-sm text-red-600 mt-2">This action cannot be undone!</p>
       </div>
     `,
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#d33',
-    cancelButtonColor: '#3085d6',
-    confirmButtonText: 'Yes, delete all!',
-    cancelButtonText: 'Cancel',
-    reverseButtons: true,
-    customClass: {
-      popup: 'font-poppins rounded-xl',
-      confirmButton: 'px-6 py-2 text-sm font-medium rounded-lg',
-      cancelButton: 'px-6 py-2 text-sm font-medium rounded-lg'
-    }
-  });
-
-  if (result.isConfirmed) {
-    // Hapus semua data dari state
-    setCheckHistory([]);
-    // Hapus dari localStorage
-    localStorage.removeItem("scanCheckHistory");
-    // Reset scan result
-    setScanResult(null);
-
-    // Tampilkan notifikasi sukses
-    Swal.fire({
-      title: 'All Data Deleted!',
-      text: `${checkHistory.length} items have been removed from history.`,
-      icon: 'success',
-      confirmButtonColor: '#10b981',
-      confirmButtonText: 'OK',
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete all!",
+      cancelButtonText: "Cancel",
+      reverseButtons: true,
       customClass: {
-        popup: 'font-poppins rounded-xl',
-        confirmButton: 'px-6 py-2 text-sm font-medium rounded-lg'
-      }
+        popup: "font-poppins rounded-xl",
+        confirmButton: "px-6 py-2 text-sm font-medium rounded-lg",
+        cancelButton: "px-6 py-2 text-sm font-medium rounded-lg",
+      },
     });
-  }
-};
 
-// Tambahkan fungsi untuk menghapus hanya data yang belum disubmit
-const handleDeleteUnsubmitted = async () => {
-  const unsubmittedItems = checkHistory.filter(item => !item.submitted);
-  
-  if (unsubmittedItems.length === 0) {
-    Swal.fire({
-      title: 'No Unsubmitted Data',
-      text: 'All items have already been submitted.',
-      icon: 'info',
-      confirmButtonText: 'OK'
-    });
-    return;
-  }
+    if (result.isConfirmed) {
+      // Hapus semua data dari state
+      setCheckHistory([]);
+      // Hapus dari localStorage
+      localStorage.removeItem("scanCheckHistory");
+      // Reset scan result
+      setScanResult(null);
 
-  const result = await Swal.fire({
-    title: 'Delete Unsubmitted Data?',
-    html: `
+      // Tampilkan notifikasi sukses
+      Swal.fire({
+        title: "All Data Deleted!",
+        text: `${checkHistory.length} items have been removed from history.`,
+        icon: "success",
+        confirmButtonColor: "#10b981",
+        confirmButtonText: "OK",
+        customClass: {
+          popup: "font-poppins rounded-xl",
+          confirmButton: "px-6 py-2 text-sm font-medium rounded-lg",
+        },
+      });
+    }
+  };
+
+  // Tambahkan fungsi untuk menghapus hanya data yang belum disubmit
+  const handleDeleteUnsubmitted = async () => {
+    const unsubmittedItems = checkHistory.filter((item) => !item.submitted);
+
+    if (unsubmittedItems.length === 0) {
+      Swal.fire({
+        title: "No Unsubmitted Data",
+        text: "All items have already been submitted.",
+        icon: "info",
+        confirmButtonText: "OK",
+      });
+      return;
+    }
+
+    const result = await Swal.fire({
+      title: "Delete Unsubmitted Data?",
+      html: `
       <div class="text-center">
         <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-3" />
         <p class="text-gray-700">Delete <strong>${unsubmittedItems.length} unsubmitted items</strong>?</p>
         <p class="text-sm text-gray-600 mt-2">Submitted items will be kept.</p>
       </div>
     `,
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#d33',
-    cancelButtonColor: '#3085d6',
-    confirmButtonText: 'Yes, delete!',
-    cancelButtonText: 'Cancel',
-    reverseButtons: true,
-    customClass: {
-      popup: 'font-poppins rounded-xl',
-      confirmButton: 'px-6 py-2 text-sm font-medium rounded-lg',
-      cancelButton: 'px-6 py-2 text-sm font-medium rounded-lg'
-    }
-  });
-
-  if (result.isConfirmed) {
-    // Hanya simpan data yang sudah disubmit
-    const submittedItems = checkHistory.filter(item => item.submitted);
-    setCheckHistory(submittedItems);
-    
-    // Update localStorage
-    if (submittedItems.length > 0) {
-      localStorage.setItem("scanCheckHistory", JSON.stringify(submittedItems));
-    } else {
-      localStorage.removeItem("scanCheckHistory");
-    }
-
-    Swal.fire({
-      title: 'Unsubmitted Data Deleted!',
-      text: `${unsubmittedItems.length} items have been removed.`,
-      icon: 'success',
-      confirmButtonColor: '#10b981',
-      confirmButtonText: 'OK'
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete!",
+      cancelButtonText: "Cancel",
+      reverseButtons: true,
+      customClass: {
+        popup: "font-poppins rounded-xl",
+        confirmButton: "px-6 py-2 text-sm font-medium rounded-lg",
+        cancelButton: "px-6 py-2 text-sm font-medium rounded-lg",
+      },
     });
-  }
-};
+
+    if (result.isConfirmed) {
+      // Hanya simpan data yang sudah disubmit
+      const submittedItems = checkHistory.filter((item) => item.submitted);
+      setCheckHistory(submittedItems);
+
+      // Update localStorage
+      if (submittedItems.length > 0) {
+        localStorage.setItem(
+          "scanCheckHistory",
+          JSON.stringify(submittedItems)
+        );
+      } else {
+        localStorage.removeItem("scanCheckHistory");
+      }
+
+      Swal.fire({
+        title: "Unsubmitted Data Deleted!",
+        text: `${unsubmittedItems.length} items have been removed.`,
+        icon: "success",
+        confirmButtonColor: "#10b981",
+        confirmButtonText: "OK",
+      });
+    }
+  };
 
   // Helper functions
   const getStatusColor = (status) => {
@@ -1022,7 +1049,8 @@ const handleDeleteUnsubmitted = async () => {
             SCAN IT DEVICES & MATERIALS
           </h1>
           <p className="text-blue-100 text-xs sm:text-sm mt-1 sm:mt-2">
-            Scan IT devices or materials using camera, upload images, select the location, and submit for verification.
+            Scan IT devices or materials using camera, upload images, select the
+            location, and submit for verification.
           </p>
           {/* <div className="mt-2 flex items-center text-sm">
             <span className="bg-blue-500 px-2 py-1 rounded mr-2">Backend:</span>
@@ -1163,14 +1191,18 @@ const handleDeleteUnsubmitted = async () => {
                 {!selectedFile ? (
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                     <Upload className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-600 mb-2">Click to select an image file</p>
+                    <p className="text-gray-600 mb-2">
+                      Click to select an image file
+                    </p>
                     <button
                       onClick={() => fileInputRef.current?.click()}
                       className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                     >
                       Choose File
                     </button>
-                    <p className="text-xs text-gray-500 mt-2">Max file size: 5MB</p>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Max file size: 5MB
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -1191,7 +1223,8 @@ const handleDeleteUnsubmitted = async () => {
                       </button>
                     </div>
                     <p className="text-sm text-gray-600">
-                      Selected: <span className="font-medium">{selectedFile.name}</span>
+                      Selected:{" "}
+                      <span className="font-medium">{selectedFile.name}</span>
                     </p>
                     <div className="flex gap-3">
                       <button
@@ -1207,9 +1240,24 @@ const handleDeleteUnsubmitted = async () => {
                       >
                         {isDetecting ? (
                           <>
-                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            <svg
+                              className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              ></circle>
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              ></path>
                             </svg>
                             Processing...
                           </>
@@ -1346,7 +1394,7 @@ const handleDeleteUnsubmitted = async () => {
                       <span className="ml-1">{scanResult.kategori}</span>
                     </span>
                   </div>
-                  {scanResult.brand && scanResult.brand !== 'N/A' && (
+                  {scanResult.brand && scanResult.brand !== "N/A" && (
                     <div className="flex justify-between">
                       <span className="font-medium text-gray-600">Brand:</span>
                       <span className="text-blue-600 font-medium">
@@ -1364,7 +1412,9 @@ const handleDeleteUnsubmitted = async () => {
                   </div>
                   {scanResult.confidencePercent && (
                     <div className="flex justify-between">
-                      <span className="font-medium text-gray-600">Confidence:</span>
+                      <span className="font-medium text-gray-600">
+                        Confidence:
+                      </span>
                       <span className="font-bold text-green-600">
                         {scanResult.confidencePercent}%
                       </span>
@@ -1424,11 +1474,23 @@ const handleDeleteUnsubmitted = async () => {
         {/* 3. Recent Inspection History */}
         <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sm:mb-4 gap-2">
-            <h2 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center">
-              <Calendar className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-gray-600" />
-              Recent Detection History
-            </h2>
-            <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto">
+            <div className="flex items-center">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center">
+                <Calendar className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-gray-600" />
+                Recent Detection History
+              </h2>
+            </div>
+            <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-2">
+              {checkHistory.length > 0 && (
+                <button
+                  onClick={handleDeleteAll}
+                  className="flex items-center px-3 py-1.5 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition ml-2"
+                  title="Delete All History"
+                >
+                  <Trash2 className="w-3 h-3 mr-1" />
+                  Delete All
+                </button>
+              )}
               <span className="text-xs sm:text-sm text-gray-500">
                 {checkHistory.length} items
               </span>
@@ -1499,11 +1561,15 @@ const handleDeleteUnsubmitted = async () => {
                           {item.brand || "N/A"}
                         </td>
                         <td className="py-3">
-                          <span className={`px-2 py-1 text-xs rounded-full font-semibold ${
-                            item.confidencePercent >= 80 ? 'bg-green-100 text-green-700' :
-                            item.confidencePercent >= 60 ? 'bg-yellow-100 text-yellow-700' :
-                            'bg-red-100 text-red-700'
-                          }`}>
+                          <span
+                            className={`px-2 py-1 text-xs rounded-full font-semibold ${
+                              item.confidencePercent >= 80
+                                ? "bg-green-100 text-green-700"
+                                : item.confidencePercent >= 60
+                                ? "bg-yellow-100 text-yellow-700"
+                                : "bg-red-100 text-red-700"
+                            }`}
+                          >
                             {item.confidencePercent || "N/A"}%
                           </span>
                         </td>
@@ -1608,7 +1674,7 @@ const handleDeleteUnsubmitted = async () => {
                           {item.kategori}
                         </span>
                       </div>
-                      {item.brand && item.brand !== 'N/A' && (
+                      {item.brand && item.brand !== "N/A" && (
                         <div className="flex justify-between">
                           <span className="font-medium">Brand:</span>
                           <span className="text-blue-600">{item.brand}</span>

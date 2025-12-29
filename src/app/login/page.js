@@ -38,120 +38,133 @@ const { login } = useAuth();
     }))
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setIsLoading(true)
+const handleSubmit = async (e) => {
+  e.preventDefault()
+  setIsLoading(true)
 
-    try {
-      // Validasi form
-      if (!formData.email || !formData.password) {
-        Swal.fire({
-          title: 'Login Failed',
-          text: 'Please fill in all required fields.',
-          icon: 'error',
-          confirmButtonColor: '#d33',
-          background: '#ffffff',
-          color: '#333333',
-          customClass: {
-            popup: 'rounded-xl font-poppins',
-            confirmButton: 'px-6 py-2 rounded-lg font-medium'
-          }
-        })
-        return
-      }
-
-      // Show loading
+  try {
+    // Validasi form
+    if (!formData.email || !formData.password) {
       Swal.fire({
-        title: 'Logging in...',
-        text: 'Please wait while we authenticate your account.',
-        icon: 'info',
-        iconColor: '#2794ecff',
-        showConfirmButton: false,
-        allowOutsideClick: false,
-        didOpen: () => {
-          Swal.showLoading()
-        }
-      })
-
-      // Kirim request login ke backend
-      const response = await fetch(`${API_URL}/api/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      })
-
-      const result = await response.json()
-
- if (response.ok && result.success) {
-  // Simpan token dan user data
-  if (result.token) {
-    localStorage.setItem('auth_token', result.token);
-    localStorage.setItem('user_data', JSON.stringify(result.user));
-    
-    // Panggil login function dari context
-    login(result.user, result.token);
-    
-    if (rememberMe) {
-      localStorage.setItem('remember_me', 'true');
-    }
-  }
-
-  // Success
-  Swal.fire({
-    title: 'Login Successful!',
-    text: `Welcome back, ${result.user.name}!`,
-    icon: 'success',
-    iconColor: '#28a745',
-    showConfirmButton: false,
-    timer: 1500,
-    background: '#ffffff',
-    color: '#333333',
-    customClass: {
-      popup: 'rounded-xl font-poppins',
-    }
-  }).then(() => {
-    router.push('/dashboard');
-  });
-} else {
-        // Error dari backend
-        throw new Error(result.message || 'Login failed')
-      }
-
-    } catch (error) {
-      console.error('Login error:', error)
-      
-      let errorMessage = 'Login failed. Please try again.'
-      
-      if (error.message.includes('Invalid email') || error.message.includes('Invalid username')) {
-        errorMessage = 'Invalid email/username or password.'
-      } else if (error.message.includes('account is not active')) {
-        errorMessage = 'Your account is not active. Please contact administrator.'
-      } else if (error.message.includes('Network') || error.message.includes('fetch')) {
-        errorMessage = 'Cannot connect to server. Please check your connection.'
-      } else {
-        errorMessage = error.message
-      }
-
-      Swal.fire({
-        title: 'Login Failed',
-        text: errorMessage,
+        title: 'Validation Error',
+        text: 'Please fill in all required fields.',
         icon: 'error',
-        iconColor: '#dc3545',
-        confirmButtonColor: '#28a745',
-        confirmButtonText: 'OK',
+        confirmButtonColor: '#1e40af',
         background: '#ffffff',
         color: '#333333',
         customClass: {
           popup: 'rounded-xl font-poppins',
-          confirmButton: 'px-6 py-2 rounded-lg font-medium'
+          confirmButton: 'px-4 py-2 text-sm font-medium rounded-lg'
         }
       })
-    } finally {
       setIsLoading(false)
+      return
     }
+
+    // Show loading (sama seperti di profile page)
+    Swal.fire({
+      title: 'Authenticating...',
+      text: 'Please wait while we verify your credentials.',
+      icon: 'info',
+      showConfirmButton: false,
+      allowOutsideClick: false,
+      background: '#ffffff',
+      color: '#333333',
+      customClass: {
+        popup: 'rounded-xl font-poppins'
+      },
+      didOpen: () => {
+        Swal.showLoading()
+      }
+    })
+
+    // Kirim request login ke backend
+    const response = await fetch(`${API_URL}/api/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData)
+    })
+
+    const result = await response.json()
+
+    if (response.ok && result.success) {
+      // Simpan token dan user data
+      if (result.token) {
+        localStorage.setItem('auth_token', result.token);
+        localStorage.setItem('user_data', JSON.stringify(result.user));
+        
+        // Panggil login function dari context
+        login(result.user, result.token);
+        
+        if (rememberMe) {
+          localStorage.setItem('remember_me', 'true');
+        }
+      }
+
+      // Tutup loading SweetAlert
+      Swal.close();
+
+      // Success Notification (SAMA PERSIS dengan profile page)
+      await Swal.fire({
+        title: 'Success!',
+        text: `Login successful! Welcome back, ${result.user.name || result.user.username}!`,
+        icon: 'success',
+        confirmButtonColor: '#1e40af',
+        background: '#ffffff',
+        color: '#333333',
+        customClass: {
+          popup: 'rounded-xl font-poppins',
+          confirmButton: 'px-4 py-2 text-sm font-medium rounded-lg'
+        },
+        timer: 1500,
+        showConfirmButton: false
+      });
+
+      // Redirect ke dashboard
+      router.push('/dashboard');
+      
+    } else {
+      // Error dari backend
+      throw new Error(result.message || 'Login failed')
+    }
+
+  } catch (error) {
+    console.error('Login error:', error)
+    
+    // Tutup loading SweetAlert jika ada
+    Swal.close();
+    
+    let errorMessage = 'Login failed. Please try again.'
+    
+    if (error.message.includes('Invalid email') || error.message.includes('Invalid username')) {
+      errorMessage = 'Invalid email/username or password.'
+    } else if (error.message.includes('account is not active')) {
+      errorMessage = 'Your account is not active. Please contact administrator.'
+    } else if (error.message.includes('Network') || error.message.includes('fetch')) {
+      errorMessage = 'Cannot connect to server. Please check your connection.'
+    } else {
+      errorMessage = error.message
+    }
+
+    // Error Notification (dengan style yang sama)
+    Swal.fire({
+      title: 'Error',
+      text: errorMessage,
+      icon: 'error',
+      confirmButtonColor: '#1e40af',
+      background: '#ffffff',
+      color: '#333333',
+      customClass: {
+        popup: 'rounded-xl font-poppins',
+        confirmButton: 'px-4 py-2 text-sm font-medium rounded-lg'
+      }
+    })
+  } finally {
+    setIsLoading(false)
   }
+}
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row relative bg-white">

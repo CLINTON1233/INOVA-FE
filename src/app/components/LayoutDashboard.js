@@ -107,12 +107,12 @@ export default function LayoutDashboard({ children, activeMenu }) {
       hasDropdown: true,
       href: "/reports-analytics",
     },
-    {
-      icon: Settings,
-      label: "System Settings",
-      hasDropdown: true,
-      href: "/system-settings",
-    },
+    // {
+    //   icon: Settings,
+    //   label: "System Settings",
+    //   hasDropdown: true,
+    //   href: "/system-settings",
+    // },
   ];
 
   // Handle click outside untuk menutup dropdown
@@ -174,22 +174,23 @@ export default function LayoutDashboard({ children, activeMenu }) {
 
         setTimeout(() => {
           logout();
-          Swal.fire({
-            title: "Logout Successful!",
-            text: "You have been successfully logged out of the system.",
-            icon: "success",
-            iconColor: "#28a745",
-            confirmButtonColor: "#28a745",
-            confirmButtonText: "OK",
-            background: "#ffffff",
-            color: "#333333",
-            customClass: {
-              popup: "rounded-xl font-poppins",
-              confirmButton: "px-6 py-2 rounded-lg font-medium",
-            },
-          }).then(() => {
-            router.push("/login");
-          });
+           Swal.fire({
+          title: "Success!",
+          text: "You have been successfully logged out",
+          icon: "success",
+          confirmButtonColor: "#1e40af",
+          background: "#ffffff",
+          color: "#333333",
+          customClass: {
+            popup: "rounded-xl font-poppins",
+            confirmButton: "px-4 py-2 text-sm font-medium rounded-lg"
+          },
+          timer: 1500,
+          showConfirmButton: false
+        }).then(() => {
+          // Redirect ke login page setelah notifikasi selesai
+          router.push("/login");
+        });
         }, 1500);
       }
     });
