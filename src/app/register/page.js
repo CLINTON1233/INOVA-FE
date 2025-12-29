@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import Swal from 'sweetalert2'
 
 // Gunakan URL langsung ke backend Flask
 const API_BASE_URL = 'http://localhost:5001'
@@ -18,11 +19,7 @@ export default function RegisterPage() {
   })
   const [agree, setAgree] = useState(false)
   const [currentImage, setCurrentImage] = useState(0)
-  const [showSnackbar, setShowSnackbar] = useState(false)
-  const [snackbarMessage, setSnackbarMessage] = useState('')
-  const [snackbarType, setSnackbarType] = useState('success')
   const [isLoading, setIsLoading] = useState(false)
-  const [backendStatus, setBackendStatus] = useState('checking')
   const router = useRouter()
 
   const images = ['/bg_seatrium 3.png', '/smoe_images2.png', '/offshore.jpg']
@@ -34,30 +31,6 @@ export default function RegisterPage() {
     return () => clearInterval(interval)
   }, [images.length])
 
-  // Cek status backend saat component mount
-  useEffect(() => {
-    checkBackendStatus()
-  }, [])
-
-  const checkBackendStatus = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/health`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-      if (response.ok) {
-        setBackendStatus('connected')
-      } else {
-        setBackendStatus('disconnected')
-      }
-    } catch (error) {
-      console.error('Backend connection test failed:', error)
-      setBackendStatus('disconnected')
-    }
-  }
-
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData(prev => ({
@@ -66,33 +39,27 @@ export default function RegisterPage() {
     }))
   }
 
-  const showMessage = (message, type = 'success') => {
-    setSnackbarMessage(message)
-    setSnackbarType(type)
-    setShowSnackbar(true)
-    setTimeout(() => {
-      setShowSnackbar(false)
-    }, 3000)
-  }
-
   const handleSubmit = async (e) => {
     e.preventDefault()
     
     if (!agree) {
-      showMessage('Please agree to the terms & policy', 'error')
+      Swal.fire({
+        title: 'Perhatian',
+        text: 'Please agree to the terms & policy',
+        icon: 'warning',
+        confirmButtonColor: '#1e40af',
+      })
       return
     }
 
     // Validasi form
     if (!formData.no_badge || !formData.department || !formData.username || !formData.email || !formData.password) {
-      showMessage('Please fill all required fields', 'error')
-      return
-    }
-
-    // Cek backend status sebelum submit
-    if (backendStatus !== 'connected') {
-      showMessage('Backend server is not running. Please start the Flask backend server on port 5000.', 'error')
-      await checkBackendStatus() // Refresh status
+      Swal.fire({
+        title: 'Perhatian',
+        text: 'Please fill all required fields',
+        icon: 'warning',
+        confirmButtonColor: '#1e40af',
+      })
       return
     }
 
@@ -125,25 +92,46 @@ export default function RegisterPage() {
       const data = await response.json()
       console.log('Response data:', data)
 
-      showMessage('Registration successful! Redirecting to login...')
-      setTimeout(() => {
-        router.push('/login')
-      }, 2000)
+      // Tampilkan SweetAlert sukses
+      await Swal.fire({
+        title: 'Registration Successful!',
+        text: 'Your account has been created successfully. Redirecting to login...',
+        icon: 'success',
+        confirmButtonColor: '#1e40af',
+        timer: 2000,
+        timerProgressBar: true,
+        showConfirmButton: false,
+      })
+
+      // Redirect ke login setelah sukses
+      router.push('/login')
 
     } catch (error) {
       console.error('Registration error:', error)
-      showMessage(error.message || 'Registration failed. Please try again.', 'error')
+      
+      // Periksa jika error karena backend tidak terhubung
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        Swal.fire({
+          title: 'Connection Error',
+          text: 'Failed to connect to server. Please ensure the backend server is running.',
+          icon: 'error',
+          confirmButtonColor: '#1e40af',
+        })
+      } else {
+        Swal.fire({
+          title: 'Registration Failed',
+          text: error.message || 'Registration failed. Please try again.',
+          icon: 'error',
+          confirmButtonColor: '#1e40af',
+        })
+      }
     } finally {
       setIsLoading(false)
     }
   }
 
-  // JSX - Hapus input field untuk "name"
   return (
     <div className="min-h-screen flex flex-col lg:flex-row relative">
-      {/* Backend Status Indicator */}
-    
-
       {/* Logo pojok kiri atas */}
       <div className="absolute top-4 left-4 z-20 flex items-center space-x-2">
         <Image
@@ -201,15 +189,6 @@ export default function RegisterPage() {
               </p>
             </div>
 
-            {/* Backend Warning */}
-            {backendStatus === 'disconnected' && (
-              <div className="bg-red-50 border border-red-200 rounded-md p-3">
-                <p className="text-red-700 text-sm">
-                  <strong>Backend server not detected.</strong> Please ensure the Flask backend is running on port 5000.
-                </p>
-              </div>
-            )}
-
             {/* Form */}
             <form className="mt-3 space-y-4 sm:mt-4 sm:space-y-5" onSubmit={handleSubmit}>
               <div className="space-y-3 sm:space-y-4">
@@ -233,7 +212,6 @@ export default function RegisterPage() {
                   />
                 </div>
 
-            
                 {/* Email */}
                 <div>
                   <label
@@ -275,6 +253,8 @@ export default function RegisterPage() {
                     placeholder="Enter your password"
                   />
                 </div>
+                
+                {/* Badge Number */}
                 <div>
                   <label
                     htmlFor="no_badge"
@@ -338,15 +318,14 @@ export default function RegisterPage() {
               <div>
                 <button
                   type="submit"
-                  disabled={isLoading || backendStatus !== 'connected'}
+                  disabled={isLoading}
                   className={`w-full flex justify-center py-2 sm:py-3 px-3 sm:px-4 text-xs sm:text-sm font-medium rounded-md text-white transition ${
-                    isLoading || backendStatus !== 'connected'
+                    isLoading
                       ? 'bg-gray-400 cursor-not-allowed' 
                       : 'bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
                   }`}
                 >
-                  {isLoading ? 'Registering...' : 
-                   backendStatus !== 'connected' ? 'Backend Offline' : 'Signup'}
+                  {isLoading ? 'Registering...' : 'Signup'}
                 </button>
               </div>
 
@@ -368,15 +347,6 @@ export default function RegisterPage() {
           IT Inventory System 2025 
         </footer>
       </div>
-
-      {/* Snackbar */}
-      {showSnackbar && (
-        <div className={`fixed bottom-4 left-1/2 transform -translate-x-1/2 p-3 sm:p-4 rounded-lg z-50 transition-all duration-300 ease-out animate-fade-in-up ${
-          snackbarType === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-        }`}>
-          {snackbarMessage}
-        </div>
-      )}
     </div>
   )
 }

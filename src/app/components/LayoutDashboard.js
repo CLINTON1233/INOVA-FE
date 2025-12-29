@@ -40,18 +40,18 @@ export default function LayoutDashboard({ children, activeMenu }) {
   useEffect(() => {
     const updateDate = () => {
       const now = new Date();
-      const options = { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
+      const options = {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
       };
-      setCurrentDate(now.toLocaleDateString('en-US', options));
+      setCurrentDate(now.toLocaleDateString("en-US", options));
     };
-    
+
     updateDate();
     const interval = setInterval(updateDate, 60000);
-    
+
     return () => clearInterval(interval);
   }, []);
 
@@ -62,38 +62,66 @@ export default function LayoutDashboard({ children, activeMenu }) {
       const timer = setTimeout(() => {
         setShowWelcome(true);
         setHasShownWelcome(true);
-        
+
         // Auto hide setelah 5 detik
         const hideTimer = setTimeout(() => {
           setShowWelcome(false);
         }, 5000);
-        
+
         return () => clearTimeout(hideTimer);
       }, 1000);
-      
+
       return () => clearTimeout(timer);
     }
   }, [user, hasShownWelcome]);
 
   const menuItems = [
     { icon: Home, label: "Home", hasDropdown: false, href: "/dashboard" },
-    { icon: FileText, label: "Inventory Data", hasDropdown: true, href: "/inventory-data" },
+    {
+      icon: FileText,
+      label: "Inventory Data",
+      hasDropdown: true,
+      href: "/inventory-data",
+    },
     {
       icon: Shield,
       label: "Serial Scanning",
       hasDropdown: true,
       href: "/scanning",
     },
-    { icon: HelpCircle, label: "Validation & Verification", hasDropdown: true , href: "/validation-verification" },
-    { icon: Calendar, label: "History & Activity Log", hasDropdown: true , href: "/history" },
-    { icon: Settings, label: "Reports & Analytics", hasDropdown: true, href: "/reports-analytics" },
-    { icon: Settings, label: "System Settings", hasDropdown: true , href: "/system-settings" },
+    {
+      icon: HelpCircle,
+      label: "Validation & Verification",
+      hasDropdown: true,
+      href: "/validation-verification",
+    },
+    {
+      icon: Calendar,
+      label: "History & Activity Log",
+      hasDropdown: true,
+      href: "/history",
+    },
+    {
+      icon: Settings,
+      label: "Reports & Analytics",
+      hasDropdown: true,
+      href: "/reports-analytics",
+    },
+    {
+      icon: Settings,
+      label: "System Settings",
+      hasDropdown: true,
+      href: "/system-settings",
+    },
   ];
 
   // Handle click outside untuk menutup dropdown
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target)) {
+      if (
+        userDropdownRef.current &&
+        !userDropdownRef.current.contains(event.target)
+      ) {
         setUserDropdownOpen(false);
       }
     };
@@ -113,52 +141,52 @@ export default function LayoutDashboard({ children, activeMenu }) {
     setMobileMenuOpen(false);
 
     Swal.fire({
-      title: 'Logout Confirmation',
+      title: "Logout Confirmation",
       text: "Are you sure you want to log out of the system?",
-      icon: 'warning',
-      iconColor: '#FACC15',
+      icon: "warning",
+      iconColor: "#FACC15",
       showCancelButton: true,
       confirmButtonColor: "#28a745",
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, Log Out!',
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, Log Out!",
       reverseButtons: true,
-      cancelButtonText: 'Cancel',
-      background: '#ffffff',
-      color: '#333333',
+      cancelButtonText: "Cancel",
+      background: "#ffffff",
+      color: "#333333",
       customClass: {
-        popup: 'rounded-xl font-poppins',
-        confirmButton: 'px-6 py-2 rounded-lg font-medium',
-        cancelButton: 'px-6 py-2 rounded-lg font-medium'
-      }
+        popup: "rounded-xl font-poppins",
+        confirmButton: "px-6 py-2 rounded-lg font-medium",
+        cancelButton: "px-6 py-2 rounded-lg font-medium",
+      },
     }).then((result) => {
       if (result.isConfirmed) {
         Swal.fire({
-          title: 'Logging out...',
-          text: 'Processing your logout...',
-          icon: 'info',
-          iconColor: '#2794ecff',
+          title: "Logging out...",
+          text: "Processing your logout...",
+          icon: "info",
+          iconColor: "#2794ecff",
           showConfirmButton: false,
           allowOutsideClick: false,
           didOpen: () => {
             Swal.showLoading();
-          }
+          },
         });
 
         setTimeout(() => {
           logout();
           Swal.fire({
-            title: 'Logout Successful!',
-            text: 'You have been successfully logged out of the system.',
-            icon: 'success',
-            iconColor: '#28a745',
+            title: "Logout Successful!",
+            text: "You have been successfully logged out of the system.",
+            icon: "success",
+            iconColor: "#28a745",
             confirmButtonColor: "#28a745",
-            confirmButtonText: 'OK',
-            background: '#ffffff',
-            color: '#333333',
+            confirmButtonText: "OK",
+            background: "#ffffff",
+            color: "#333333",
             customClass: {
-              popup: 'rounded-xl font-poppins',
-              confirmButton: 'px-6 py-2 rounded-lg font-medium'
-            }
+              popup: "rounded-xl font-poppins",
+              confirmButton: "px-6 py-2 rounded-lg font-medium",
+            },
           }).then(() => {
             router.push("/login");
           });
@@ -184,40 +212,43 @@ export default function LayoutDashboard({ children, activeMenu }) {
       {/* 🔹 Welcome Notification - Snackbar Style */}
       {showWelcome && (
         <div className="fixed top-4 right-4 z-50 animate-fade-in">
-          <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-4 max-w-sm transform transition-all duration-300 ease-in-out">
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                </div>
+          <div className="w-80 bg-white rounded-lg shadow-md border border-gray-200">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-sm font-semibold text-gray-900">
+                  Welcome
+                </span>
               </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-semibold text-gray-900">
-                  Welcome back! 👋
-                </h4>
-                <p className="text-xs text-gray-600 mt-1">
-                  Hello <span className="font-medium text-blue-600">{user.username}</span>, good to see you again!
-                </p>
-                <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
-                  <span>Department: {user.department}</span>
-                  <span>•</span>
-                  <span>{user.no_badge}</span>
-                </div>
-              </div>
+
               <button
                 onClick={handleCloseWelcome}
-                className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 hover:text-gray-600 transition"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
-            
-            {/* Progress bar untuk auto close */}
-            <div className="mt-2 w-full bg-gray-200 rounded-full h-1">
-              <div 
-                className="bg-green-700 h-1 rounded-full transition-all duration-5000 ease-linear"
-                style={{ width: '100%' }}
-              />
+
+            {/* Body */}
+            <div className="px-4 py-3">
+              <p className="text-sm text-gray-700 leading-relaxed">
+                Welcome back,&nbsp;
+                <span className="font-semibold text-blue-600">
+                  {user.username}
+                </span>
+              </p>
+
+              <div className="mt-2 text-xs text-gray-500 space-y-1">
+                <div>
+                  <span className="font-medium text-gray-600">Department:</span>{" "}
+                  {user.department}
+                </div>
+                <div>
+                  <span className="font-medium text-gray-600">Badge:</span>{" "}
+                  {user.no_badge}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -245,49 +276,57 @@ export default function LayoutDashboard({ children, activeMenu }) {
 
             {/* User Dropdown - Desktop */}
             <div className="hidden md:block relative" ref={userDropdownRef}>
-              <button 
+              <button
                 className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition"
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
               >
                 <User className="w-4 h-4" />
                 <span>{user.username}</span>
-                <ChevronDown className={`w-4 h-4 transition-transform ${userDropdownOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown
+                  className={`w-4 h-4 transition-transform ${
+                    userDropdownOpen ? "rotate-180" : ""
+                  }`}
+                />
               </button>
 
               {/* Dropdown Menu */}
               {userDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
                   <div className="px-4 py-2 border-b border-gray-100">
-                    <p className="text-sm font-medium text-gray-900">{user.username}</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {user.username}
+                    </p>
                     <p className="text-xs text-gray-500">{user.email}</p>
                     <p className="text-xs text-gray-500">{user.department}</p>
                   </div>
-                  
-                  <button 
-                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition"
+
+                  <button
+                    className="flex items-center w-full text-grey text-sm hover:bg-blue-500 px-4 py-1 rounded transition"
                     onClick={() => {
                       setUserDropdownOpen(false);
-                      // Navigate to profile page
+                      setMobileMenuOpen(false);
+                      router.push("/profile");
                     }}
                   >
-                    <UserIcon className="w-4 h-4 mr-3 text-gray-500" />
-                    Profile Saya
+                    <UserIcon className="w-4 h-4 mr-2" />
+                    View Profile
                   </button>
-                  
-                  <button 
+
+                  <button
                     className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition"
                     onClick={() => {
                       setUserDropdownOpen(false);
-                      // Navigate to change password page
+                      setMobileMenuOpen(false);
+                      router.push("/profile");
                     }}
                   >
                     <Key className="w-4 h-4 mr-3 text-gray-500" />
-                    Ubah Password
+                    Change Password
                   </button>
-                  
+
                   <div className="border-t border-gray-100 my-1"></div>
-                  
-                  <button 
+
+                  <button
                     className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition"
                     onClick={handleLogout}
                   >
@@ -330,7 +369,9 @@ export default function LayoutDashboard({ children, activeMenu }) {
                     if (item.href) {
                       router.push(item.href);
                     } else {
-                      setActiveMenuIndex(activeMenuIndex === index ? null : index);
+                      setActiveMenuIndex(
+                        activeMenuIndex === index ? null : index
+                      );
                     }
                   }}
                 >
@@ -380,15 +421,17 @@ export default function LayoutDashboard({ children, activeMenu }) {
                 <div className="text-white font-medium text-sm">
                   {user.name}
                 </div>
-                <div className="text-blue-100 text-xs">
-                  {user.department}
-                </div>
-                <button 
+                <div className="text-blue-100 text-xs">{user.department}</div>
+                <button
                   className="text-blue-100 text-xs flex items-center mt-1"
                   onClick={() => setUserDropdownOpen(!userDropdownOpen)}
                 >
                   <span>Account</span>
-                  <ChevronDown className={`w-3 h-3 ml-1 transition-transform ${userDropdownOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown
+                    className={`w-3 h-3 ml-1 transition-transform ${
+                      userDropdownOpen ? "rotate-180" : ""
+                    }`}
+                  />
                 </button>
               </div>
             </div>
@@ -396,18 +439,42 @@ export default function LayoutDashboard({ children, activeMenu }) {
             {/* Mobile User Dropdown */}
             {userDropdownOpen && (
               <div className="bg-blue-400 px-4 py-2 space-y-2">
-                <button className="flex items-center w-full text-white text-sm hover:bg-blue-500 px-2 py-1 rounded transition">
+                {/* View Profile */}
+                <button
+                  className="flex items-center w-full text-white text-sm hover:bg-blue-500 px-2 py-1 rounded transition"
+                  onClick={() => {
+                    setUserDropdownOpen(false);
+                    setMobileMenuOpen(false);
+                    router.push("/profile");
+                  }}
+                >
                   <UserIcon className="w-4 h-4 mr-2" />
-                  Profile Saya
+                  View Profile
                 </button>
-                <button className="flex items-center w-full text-white text-sm hover:bg-blue-500 px-2 py-1 rounded transition">
+
+                {/* Change Password */}
+                <button
+                  className="flex items-center w-full text-white text-sm hover:bg-blue-500 px-2 py-1 rounded transition"
+                  onClick={() => {
+                    setUserDropdownOpen(false);
+                    setMobileMenuOpen(false);
+                    router.push("/profile");
+                  }}
+                >
                   <Key className="w-4 h-4 mr-2" />
-                  Ubah Password
+                  Change Password
                 </button>
+
                 <div className="border-t border-blue-300 my-1"></div>
-                <button 
+
+                {/* Logout */}
+                <button
                   className="flex items-center w-full text-red-200 text-sm hover:bg-blue-500 px-2 py-1 rounded transition"
-                  onClick={handleLogout}
+                  onClick={() => {
+                    setUserDropdownOpen(false);
+                    setMobileMenuOpen(false);
+                    handleLogout();
+                  }}
                 >
                   <LogOut className="w-4 h-4 mr-2" />
                   Logout

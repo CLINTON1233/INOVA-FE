@@ -657,16 +657,7 @@ export default function SerialScanningPage() {
 
     console.log("Submitting Single Data:", submittedData);
 
-    // Simulasi proses pengiriman ke backend
     try {
-      // TODO: Implementasikan API call ke backend untuk menyimpan data
-      // const response = await fetch(`${API_BASE_URL}/api/submit`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(submittedData)
-      // });
-
-      // Simulasi delay
       await new Promise(resolve => setTimeout(resolve, 1500));
 
       setIsSubmitting(false);
@@ -765,14 +756,6 @@ export default function SerialScanningPage() {
     console.log("Submitting All Data:", submittedData);
 
     try {
-      // TODO: Implementasikan API call batch ke backend
-      // const response = await fetch(`${API_BASE_URL}/api/submit/batch`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(submittedData)
-      // });
-
-      // Simulasi delay
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       setIsSubmittingAll(false);
@@ -872,6 +855,115 @@ export default function SerialScanningPage() {
       });
     }
   };
+
+  // Tambahkan fungsi untuk menghapus semua data
+const handleDeleteAll = async () => {
+  if (checkHistory.length === 0) return;
+
+  const result = await Swal.fire({
+    title: 'Delete All Detection Results?',
+    html: `
+      <div class="text-center">
+        <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-3" />
+        <p class="text-gray-700">You are about to delete <strong>${checkHistory.length} items</strong> from detection history.</p>
+        <p class="text-sm text-red-600 mt-2">This action cannot be undone!</p>
+      </div>
+    `,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#3085d6',
+    confirmButtonText: 'Yes, delete all!',
+    cancelButtonText: 'Cancel',
+    reverseButtons: true,
+    customClass: {
+      popup: 'font-poppins rounded-xl',
+      confirmButton: 'px-6 py-2 text-sm font-medium rounded-lg',
+      cancelButton: 'px-6 py-2 text-sm font-medium rounded-lg'
+    }
+  });
+
+  if (result.isConfirmed) {
+    // Hapus semua data dari state
+    setCheckHistory([]);
+    // Hapus dari localStorage
+    localStorage.removeItem("scanCheckHistory");
+    // Reset scan result
+    setScanResult(null);
+
+    // Tampilkan notifikasi sukses
+    Swal.fire({
+      title: 'All Data Deleted!',
+      text: `${checkHistory.length} items have been removed from history.`,
+      icon: 'success',
+      confirmButtonColor: '#10b981',
+      confirmButtonText: 'OK',
+      customClass: {
+        popup: 'font-poppins rounded-xl',
+        confirmButton: 'px-6 py-2 text-sm font-medium rounded-lg'
+      }
+    });
+  }
+};
+
+// Tambahkan fungsi untuk menghapus hanya data yang belum disubmit
+const handleDeleteUnsubmitted = async () => {
+  const unsubmittedItems = checkHistory.filter(item => !item.submitted);
+  
+  if (unsubmittedItems.length === 0) {
+    Swal.fire({
+      title: 'No Unsubmitted Data',
+      text: 'All items have already been submitted.',
+      icon: 'info',
+      confirmButtonText: 'OK'
+    });
+    return;
+  }
+
+  const result = await Swal.fire({
+    title: 'Delete Unsubmitted Data?',
+    html: `
+      <div class="text-center">
+        <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-3" />
+        <p class="text-gray-700">Delete <strong>${unsubmittedItems.length} unsubmitted items</strong>?</p>
+        <p class="text-sm text-gray-600 mt-2">Submitted items will be kept.</p>
+      </div>
+    `,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#3085d6',
+    confirmButtonText: 'Yes, delete!',
+    cancelButtonText: 'Cancel',
+    reverseButtons: true,
+    customClass: {
+      popup: 'font-poppins rounded-xl',
+      confirmButton: 'px-6 py-2 text-sm font-medium rounded-lg',
+      cancelButton: 'px-6 py-2 text-sm font-medium rounded-lg'
+    }
+  });
+
+  if (result.isConfirmed) {
+    // Hanya simpan data yang sudah disubmit
+    const submittedItems = checkHistory.filter(item => item.submitted);
+    setCheckHistory(submittedItems);
+    
+    // Update localStorage
+    if (submittedItems.length > 0) {
+      localStorage.setItem("scanCheckHistory", JSON.stringify(submittedItems));
+    } else {
+      localStorage.removeItem("scanCheckHistory");
+    }
+
+    Swal.fire({
+      title: 'Unsubmitted Data Deleted!',
+      text: `${unsubmittedItems.length} items have been removed.`,
+      icon: 'success',
+      confirmButtonColor: '#10b981',
+      confirmButtonText: 'OK'
+    });
+  }
+};
 
   // Helper functions
   const getStatusColor = (status) => {
