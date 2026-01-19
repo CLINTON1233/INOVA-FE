@@ -19,7 +19,7 @@ import LayoutDashboard from "../components/LayoutDashboard";
 import Swal from "sweetalert2";
 import { useAuth } from "../context/AuthContext";
 
-const API_BASE_URL = 'http://localhost:5001';
+const API_BASE_URL = "http://localhost:5001";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -50,7 +50,9 @@ export default function ProfilePage() {
         email: user.email || "",
         no_badge: user.no_badge || "",
         department: user.department || "",
-        join_date: user.created_at ? new Date(user.created_at).toISOString().split('T')[0] : "2024-01-01",
+        join_date: user.created_at
+          ? new Date(user.created_at).toISOString().split("T")[0]
+          : "2024-01-01",
       });
     }
   }, [user]);
@@ -78,7 +80,12 @@ export default function ProfilePage() {
     }
 
     // Validation
-    if (!formData.username || !formData.email || !formData.no_badge || !formData.department) {
+    if (
+      !formData.username ||
+      !formData.email ||
+      !formData.no_badge ||
+      !formData.department
+    ) {
       Swal.fire({
         title: "Validation Error",
         text: "Please fill in all required fields",
@@ -101,7 +108,7 @@ export default function ProfilePage() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           user_id: user.id, // Kirim user_id dari context
@@ -109,7 +116,7 @@ export default function ProfilePage() {
           email: formData.email,
           no_badge: formData.no_badge,
           department: formData.department,
-        })
+        }),
       });
 
       const data = await response.json();
@@ -119,7 +126,9 @@ export default function ProfilePage() {
       }
 
       // Update localStorage dengan data baru
-      const currentUserData = JSON.parse(localStorage.getItem("user_data") || "{}");
+      const currentUserData = JSON.parse(
+        localStorage.getItem("user_data") || "{}",
+      );
       const updatedUserData = {
         ...currentUserData,
         username: formData.username,
@@ -128,7 +137,7 @@ export default function ProfilePage() {
         department: formData.department,
         created_at: data.user.created_at,
       };
-      
+
       localStorage.setItem("user_data", JSON.stringify(updatedUserData));
 
       await Swal.fire({
@@ -140,7 +149,7 @@ export default function ProfilePage() {
 
       // Refresh page untuk update context
       window.location.reload();
-      
+
       setIsEditing(false);
     } catch (error) {
       console.error("Update profile error:", error);
@@ -157,7 +166,11 @@ export default function ProfilePage() {
 
   const handleChangePassword = async () => {
     // Validation
-    if (!passwordData.current_password || !passwordData.new_password || !passwordData.confirm_password) {
+    if (
+      !passwordData.current_password ||
+      !passwordData.new_password ||
+      !passwordData.confirm_password
+    ) {
       Swal.fire({
         title: "Validation Error",
         text: "Please fill in all password fields",
@@ -200,13 +213,13 @@ export default function ProfilePage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           user_id: user.id, // Kirim user_id dari context
           current_password: passwordData.current_password,
-          new_password: passwordData.new_password
-        })
+          new_password: passwordData.new_password,
+        }),
       });
 
       const data = await response.json();
@@ -249,7 +262,9 @@ export default function ProfilePage() {
         email: user.email || "",
         no_badge: user.no_badge || "",
         department: user.department || "",
-        join_date: user.created_at ? new Date(user.created_at).toISOString().split('T')[0] : "2024-01-01",
+        join_date: user.created_at
+          ? new Date(user.created_at).toISOString().split("T")[0]
+          : "2024-01-01",
       });
     }
     setIsEditing(false);
@@ -470,56 +485,60 @@ export default function ProfilePage() {
             </div>
 
             {/* Profile Summary Card - 1/3 kolom */}
-            <div>
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-full">
-                <div className="px-6 py-4 border-b border-gray-100">
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    Profile Summary
-                  </h2>
-                </div>
-                <div className="p-6">
-                  <div className="flex flex-col items-center">
-                    <div className="w-32 h-32 bg-gradient-to-br from-blue-100 to-blue-50 rounded-full flex items-center justify-center mb-6 border-4 border-white shadow-md">
-                      <div className="w-28 h-28 bg-blue-600 rounded-full flex items-center justify-center text-white text-4xl font-bold">
-                        {formData.username?.charAt(0).toUpperCase() || "U"}
-                      </div>
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900">
-                      {formData.username}
-                    </h3>
-                    <p className="text-gray-600 mt-1">Staff</p>
-                    <div className="mt-4 text-sm text-gray-500 text-center">
-                      <p className="flex items-center justify-center">
-                        <Mail className="w-4 h-4 mr-2" />
-                        {formData.email}
-                      </p>
-                      <p className="flex items-center justify-center mt-2">
-                        <BadgeCheck className="w-4 h-4 mr-2" />
-                        {formData.no_badge}
-                      </p>
-                    </div>
-                  </div>
+         <div>
+  <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-full">
+    <div className="px-6 py-4 border-b border-gray-100">
+      <h2 className="text-lg font-semibold text-gray-900">
+        Profile Summary
+      </h2>
+    </div>
 
-                  <div className="mt-8 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Department:</span>
-                      <span className="font-medium">{formData.department}</span>
-                    </div>
+    <div className="p-6">
+      <div className="flex flex-col items-center">
+        {/* Avatar */}
+        <div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center mb-6 border border-gray-200 shadow-sm">
+          <User className="w-16 h-16 text-gray-500" />
+        </div>
 
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Account Created:</span>
-                      <span className="font-medium">{formData.join_date}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Status:</span>
-                      <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
-                        Active
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+        <h3 className="text-xl font-bold text-gray-900">
+          {formData.username}
+        </h3>
+        <p className="text-gray-600 mt-1">Staff</p>
+
+        <div className="mt-4 text-sm text-gray-500 text-center">
+          <p className="flex items-center justify-center">
+            <Mail className="w-4 h-4 mr-2" />
+            {formData.email}
+          </p>
+          <p className="flex items-center justify-center mt-2">
+            <BadgeCheck className="w-4 h-4 mr-2" />
+            {formData.no_badge}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-8 space-y-4">
+        <div className="flex items-center justify-between">
+          <span className="text-gray-600">Department:</span>
+          <span className="font-medium">{formData.department}</span>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <span className="text-gray-600">Account Created:</span>
+          <span className="font-medium">{formData.join_date}</span>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <span className="text-gray-600">Status:</span>
+          <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+            Active
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
           </div>
 
           {/* Row 2: Security Settings - Full width di bawah kedua card */}
@@ -614,7 +633,9 @@ export default function ProfilePage() {
                           />
                           <button
                             type="button"
-                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            onClick={() =>
+                              setShowConfirmPassword(!showConfirmPassword)
+                            }
                             className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                           >
                             {showConfirmPassword ? (
