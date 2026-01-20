@@ -20,7 +20,7 @@ import {
   MapPin,
   X,
   Trash2,
-  Upload,
+  Loader2,
 } from "lucide-react";
 import Swal from "sweetalert2";
 import LayoutDashboard from "../components/LayoutDashboard";
@@ -32,32 +32,17 @@ export default function SerialScanningPage() {
   const [cameraError, setCameraError] = useState(null);
   const [inputType, setInputType] = useState("");
   const [checkHistory, setCheckHistory] = useState([]);
-  const [showLocationModal, setShowLocationModal] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState("");
   const [currentScanData, setCurrentScanData] = useState(null);
   const [isSubmittingAll, setIsSubmittingAll] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false);
-  const [showUploadModal, setShowUploadModal] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
+  const [isLoadingLocations, setIsLoadingLocations] = useState(false);
+  const [locations, setLocations] = useState([]);
+  const [filteredLocations, setFilteredLocations] = useState([]);
+  const [locationSearch, setLocationSearch] = useState("");
   const videoRef = useRef(null);
-  const fileInputRef = useRef(null);
 
   const router = useRouter();
-
-  // Daftar lokasi sesuai dengan proposal
-  const locationOptions = [
-    "Infrastruktur & Jaringan",
-    "Workshop 1",
-    "Workshop 2",
-    "Ruang Server L3",
-    "Kantor Utama L1",
-    "Pintu Gerbang",
-    "Main Office L2",
-    "Gudang Material",
-    "Operations Center",
-    "Facilities Area",
-  ];
 
   // API Base URL
   const API_BASE_URL =
@@ -77,6 +62,82 @@ export default function SerialScanningPage() {
       localStorage.setItem("scanCheckHistory", JSON.stringify(checkHistory));
     }
   }, [checkHistory]);
+
+  // ============================================
+  // FUNGSI UNTUK MENGAMBIL LOKASI DARI DATABASE
+  // ============================================
+
+  // Fungsi untuk mengambil data lokasi dari backend
+  const fetchLocations = async (searchTerm = "") => {
+    try {
+      setIsLoadingLocations(true);
+      let url = `${API_BASE_URL}/api/location/all`;
+      
+      if (searchTerm) {
+        url = `${API_BASE_URL}/api/location/search?q=${encodeURIComponent(searchTerm)}`;
+      }
+      
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      if (data.success) {
+        // Format data lokasi untuk frontend
+        const formattedLocations = data.locations.map(loc => ({
+          value: loc.location_code,
+          label: `${loc.area} - ${loc.location_name}`,
+          fullData: loc
+        }));
+        
+        setLocations(formattedLocations);
+        setFilteredLocations(formattedLocations);
+      } else {
+        console.error("Failed to fetch locations:", data.error);
+        // Fallback ke data dummy jika API gagal
+        setFallbackLocations();
+      }
+    } catch (error) {
+      console.error("Error fetching locations:", error);
+      // Fallback ke data dummy jika ada error
+      setFallbackLocations();
+    } finally {
+      setIsLoadingLocations(false);
+    }
+  };
+
+  // Data fallback jika API gagal
+  const setFallbackLocations = () => {
+    const fallbackLocations = [
+      { value: "INF-JAR", label: "Infrastruktur & Jaringan" },
+      { value: "WS-01", label: "Workshop 1" },
+      { value: "WS-02", label: "Workshop 2" },
+      { value: "RSV-L3", label: "Ruang Server L3" },
+      { value: "KAN-L1", label: "Kantor Utama L1" },
+      { value: "PG-MAIN", label: "Pintu Gerbang" },
+      { value: "OFF-L2", label: "Main Office L2" },
+      { value: "GUD-MAT", label: "Gudang Material" },
+      { value: "OPC-CTR", label: "Operations Center" },
+      { value: "FAC-AREA", label: "Facilities Area" },
+    ];
+    setLocations(fallbackLocations);
+    setFilteredLocations(fallbackLocations);
+  };
+
+  // Load lokasi saat komponen mount
+  useEffect(() => {
+    fetchLocations();
+  }, []);
+
+  // Filter lokasi berdasarkan pencarian
+  useEffect(() => {
+    if (locationSearch) {
+      const filtered = locations.filter(loc =>
+        loc.label.toLowerCase().includes(locationSearch.toLowerCase())
+      );
+      setFilteredLocations(filtered);
+    } else {
+      setFilteredLocations(locations);
+    }
+  }, [locationSearch, locations]);
 
   // Inisialisasi kamera
   useEffect(() => {
@@ -109,20 +170,24 @@ export default function SerialScanningPage() {
 
   // Fungsi untuk menambah data ke riwayat pengecekan
   const addToCheckHistory = (scanData) => {
+    if (scanData.status === "error" || scanData.id.includes("NO-DETECTION") || scanData.id.includes("ERROR")) {
+      return null;
+    }
+
     const newCheckItem = {
       id: scanData.id || `CHK-${Date.now()}`,
       timestamp: scanData.timestamp || new Date().toISOString(),
       tanggal: scanData.tanggal || new Date().toLocaleDateString("id-ID"),
-      waktu:
-        scanData.waktu ||
-        new Date().toLocaleTimeString("id-ID", {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        }),
+      waktu: scanData.waktu || new Date().toLocaleTimeString("id-ID", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      }),
       ...scanData,
       status: scanData.status || "Checked",
       submitted: scanData.submitted || false,
+      lokasi: scanData.lokasi || "", // Kode lokasi
+      lokasiLabel: scanData.lokasiLabel || "", // Label lokasi untuk display
     };
 
     setCheckHistory((prev) => [newCheckItem, ...prev]);
@@ -133,7 +198,6 @@ export default function SerialScanningPage() {
   // FUNGSI DETECTION DENGAN BACKEND YOLO
   // ============================================
 
-  // Fungsi untuk capture gambar dari kamera dan deteksi
   const handleCameraCapture = async () => {
     if (!videoRef.current) {
       Swal.fire({
@@ -149,17 +213,14 @@ export default function SerialScanningPage() {
     setScanResult("loading");
 
     try {
-      // Ambil frame dari video
       const canvas = document.createElement("canvas");
       canvas.width = videoRef.current.videoWidth;
       canvas.height = videoRef.current.videoHeight;
       const ctx = canvas.getContext("2d");
       ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
 
-      // Konversi ke base64 dengan kualitas 80%
       const imageData = canvas.toDataURL("image/jpeg", 0.8);
 
-      // Kirim ke backend untuk deteksi
       const response = await fetch(`${API_BASE_URL}/api/detect/camera`, {
         method: "POST",
         headers: {
@@ -170,27 +231,21 @@ export default function SerialScanningPage() {
 
       const result = await response.json();
 
-      if (
-        result.success &&
-        result.detected_items &&
-        result.detected_items.length > 0
-      ) {
-        // Proses setiap item yang terdeteksi
+      if (result.success && result.detected_items && result.detected_items.length > 0) {
         const detectedItems = result.detected_items.map((item, index) => {
           const scanData = {
             id: item.id,
             jenisAset: item.asset_type,
             kategori: item.category,
             lokasi: item.location || "",
+            lokasiLabel: "",
             nomorSeri: item.serial_number,
             brand: item.brand,
             confidence: item.confidence,
             confidencePercent: (item.confidence * 100).toFixed(1),
             inputType: "camera",
             status: "success",
-            message: `Detected: ${item.asset_type} ${
-              item.brand !== "N/A" ? `(${item.brand})` : ""
-            } with ${(item.confidence * 100).toFixed(1)}% confidence`,
+            message: `Detected: ${item.asset_type} ${item.brand !== "N/A" ? `(${item.brand})` : ""} with ${(item.confidence * 100).toFixed(1)}% confidence`,
             timestamp: new Date().toISOString(),
             tanggal: new Date().toLocaleDateString("id-ID"),
             waktu: new Date().toLocaleTimeString("id-ID", {
@@ -205,28 +260,23 @@ export default function SerialScanningPage() {
           return scanData;
         });
 
-        // Tambahkan semua item ke history
         detectedItems.forEach((item) => addToCheckHistory(item));
 
-        // Tampilkan hasil pertama sebagai scan result
         if (detectedItems.length > 0) {
           setScanResult(detectedItems[0]);
         }
 
-        // Tampilkan notifikasi sukses
         Swal.fire({
           title: "Detection Complete!",
           html: `
             <div class="text-center">
               <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
-              <p class="text-lg font-semibold">Found ${
-                result.total_detected
-              } device(s)/material(s)</p>
+              <p class="text-lg font-semibold">Found ${result.total_detected} device(s)/material(s)</p>
               <div class="mt-3 space-y-1">
                 ${detectedItems
                   .map(
                     (item) =>
-                      `<p class="text-sm text-gray-600">• ${item.jenisAset} (${item.confidencePercent}%)</p>`
+                      `<p class="text-sm text-gray-600">• ${item.jenisAset} (${item.brand}) - ${item.confidencePercent}%</p>`
                   )
                   .join("")}
               </div>
@@ -236,25 +286,20 @@ export default function SerialScanningPage() {
           confirmButtonText: "OK",
           customClass: {
             popup: "font-poppins rounded-xl",
-            confirmButton:
-              "px-6 py-2 text-sm font-medium rounded-lg bg-green-600 hover:bg-green-700",
+            confirmButton: "px-6 py-2 text-sm font-medium rounded-lg bg-green-600 hover:bg-green-700",
           },
         });
       } else {
-        // Tidak ada yang terdeteksi
         const errorData = {
           status: "error",
           id: "NO-DETECTION",
           jenisAset: "No Device Detected",
           kategori: "Error",
-          message:
-            result.message ||
-            "No devices detected in the image. Please try again with better lighting.",
+          message: result.message || "No devices detected in the image. Please try again with better lighting.",
           inputType: "camera",
         };
 
         setScanResult(errorData);
-        addToCheckHistory(errorData);
 
         Swal.fire({
           title: "No Devices Detected",
@@ -271,13 +316,11 @@ export default function SerialScanningPage() {
         id: "DETECTION-ERROR",
         jenisAset: "Detection Failed",
         kategori: "Error",
-        message:
-          "Failed to process image. Please check if the backend server is running.",
+        message: "Failed to process image. Please check if the backend server is running.",
         inputType: "camera",
       };
 
       setScanResult(errorData);
-      addToCheckHistory(errorData);
 
       Swal.fire({
         title: "Detection Failed",
@@ -290,193 +333,7 @@ export default function SerialScanningPage() {
     }
   };
 
-  // Fungsi untuk upload file gambar dan deteksi
-  const handleFileUpload = async (file) => {
-    if (!file) return;
-
-    setIsDetecting(true);
-    setScanResult("loading");
-
-    try {
-      const formData = new FormData();
-      formData.append("image", file);
-
-      const response = await fetch(`${API_BASE_URL}/api/detect`, {
-        method: "POST",
-        body: formData,
-      });
-
-      const result = await response.json();
-
-      if (
-        result.success &&
-        result.detected_items &&
-        result.detected_items.length > 0
-      ) {
-        // Proses setiap item yang terdeteksi
-        const detectedItems = result.detected_items.map((item, index) => {
-          const scanData = {
-            id: item.id,
-            jenisAset: item.asset_type,
-            kategori: item.category,
-            lokasi: item.location || "",
-            nomorSeri: item.serial_number,
-            brand: item.brand,
-            confidence: item.confidence,
-            confidencePercent: (item.confidence * 100).toFixed(1),
-            inputType: "upload",
-            status: "success",
-            message: `Detected: ${item.asset_type} ${
-              item.brand !== "N/A" ? `(${item.brand})` : ""
-            } with ${(item.confidence * 100).toFixed(1)}% confidence`,
-            timestamp: new Date().toISOString(),
-            tanggal: new Date().toLocaleDateString("id-ID"),
-            waktu: new Date().toLocaleTimeString("id-ID", {
-              hour: "2-digit",
-              minute: "2-digit",
-              second: "2-digit",
-            }),
-            resultImageUrl: result.result_image_url,
-            originalImageUrl: result.original_image_url,
-            filename: file.name,
-          };
-
-          return scanData;
-        });
-
-        // Tambahkan semua item ke history
-        detectedItems.forEach((item) => addToCheckHistory(item));
-
-        // Tampilkan hasil pertama sebagai scan result
-        if (detectedItems.length > 0) {
-          setScanResult(detectedItems[0]);
-        }
-
-        // Tampilkan notifikasi sukses
-        Swal.fire({
-          title: "File Analysis Complete!",
-          html: `
-            <div class="text-center">
-              <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
-              <p class="text-lg font-semibold">Found ${
-                result.total_detected
-              } device(s)/material(s)</p>
-              <div class="mt-3 space-y-1">
-                ${detectedItems
-                  .map(
-                    (item) =>
-                      `<p class="text-sm text-gray-600">• ${item.jenisAset} (${item.confidencePercent}%)</p>`
-                  )
-                  .join("")}
-              </div>
-            </div>
-          `,
-          icon: "success",
-          confirmButtonText: "OK",
-          customClass: {
-            popup: "font-poppins rounded-xl",
-            confirmButton:
-              "px-6 py-2 text-sm font-medium rounded-lg bg-green-600 hover:bg-green-700",
-          },
-        });
-      } else {
-        // Tidak ada yang terdeteksi
-        const errorData = {
-          status: "error",
-          id: "NO-DETECTION",
-          jenisAset: "No Device Detected",
-          kategori: "Error",
-          message: result.message || "No devices detected in the image.",
-          inputType: "upload",
-          filename: file.name,
-        };
-
-        setScanResult(errorData);
-        addToCheckHistory(errorData);
-
-        Swal.fire({
-          title: "No Devices Detected",
-          text: "The uploaded image does not contain any detectable devices.",
-          icon: "info",
-          confirmButtonText: "Try Another Image",
-        });
-      }
-    } catch (error) {
-      console.error("Upload detection error:", error);
-
-      const errorData = {
-        status: "error",
-        id: "UPLOAD-ERROR",
-        jenisAset: "Upload Failed",
-        kategori: "Error",
-        message: "Failed to upload and process image.",
-        inputType: "upload",
-        filename: file.name,
-      };
-
-      setScanResult(errorData);
-      addToCheckHistory(errorData);
-
-      Swal.fire({
-        title: "Upload Failed",
-        text: "Failed to process the uploaded image. Please try again.",
-        icon: "error",
-        confirmButtonText: "OK",
-      });
-    } finally {
-      setIsDetecting(false);
-      setSelectedFile(null);
-      setImagePreview(null);
-      setShowUploadModal(false);
-    }
-  };
-
-  // Fungsi untuk menangani pemilihan file
-  const handleFileSelect = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    // Cek tipe file
-    const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
-    if (!validTypes.includes(file.type)) {
-      Swal.fire({
-        title: "Invalid File Type",
-        text: "Please select an image file (JPEG, PNG, GIF)",
-        icon: "error",
-        confirmButtonText: "OK",
-      });
-      return;
-    }
-
-    // Cek ukuran file (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      Swal.fire({
-        title: "File Too Large",
-        text: "Please select an image smaller than 5MB",
-        icon: "error",
-        confirmButtonText: "OK",
-      });
-      return;
-    }
-
-    setSelectedFile(file);
-
-    // Buat preview gambar
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setImagePreview(e.target.result);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  // Fungsi untuk memulai deteksi dari file yang dipilih
-  const handleStartUploadDetection = () => {
-    if (selectedFile) {
-      handleFileUpload(selectedFile);
-    }
-  };
-
-  // Fungsi untuk manual check (simulasi)
+  // Fungsi untuk manual check
   const handleManualCheck = (e) => {
     e.preventDefault();
     if (!manualInput) return;
@@ -484,7 +341,6 @@ export default function SerialScanningPage() {
     setScanResult("loading");
     setIsSubmitting(false);
 
-    // Deteksi apakah input nomor seri atau barcode
     const isSerial = manualInput.toUpperCase().includes("NS-");
     const isBarcode = manualInput.toUpperCase().includes("BC-");
     setInputType(isSerial ? "serial" : isBarcode ? "barcode" : "");
@@ -494,92 +350,134 @@ export default function SerialScanningPage() {
         const errorData = {
           status: "error",
           id: "INVALID-INPUT",
-          jenisAset: "Tidak Valid",
+          jenisAset: "Invalid Input",
           kategori: "Error",
           lokasi: "",
-          message:
-            "Format input tidak valid. Pastikan format nomor seri (NS-XXX) atau barcode (BC-XXX).",
+          brand: "N/A",
+          confidencePercent: "0",
+          message: "Format input tidak valid. Pastikan format nomor seri (NS-XXX) atau barcode (BC-XXX).",
           inputType: isSerial ? "serial" : "barcode",
         };
 
         setScanResult(errorData);
-        addToCheckHistory(errorData);
       } else {
         const isPerangkat = isSerial || Math.random() < 0.5;
         const successData = isPerangkat
           ? {
-              id: "PC-MAN-001",
+              id: `PC-MAN-${Date.now().toString().slice(-6)}`,
               jenisAset: "Komputer",
               kategori: "Perangkat",
               lokasi: "",
+              lokasiLabel: "",
               nomorSeri: manualInput,
+              brand: Math.random() > 0.5 ? "Dell" : "HP",
+              confidencePercent: "95.0",
             }
           : {
-              id: "MAT-MAN-001",
+              id: `MAT-MAN-${Date.now().toString().slice(-6)}`,
               jenisAset: "Material",
               kategori: "Material",
               lokasi: "",
+              lokasiLabel: "",
               barcode: manualInput,
+              brand: "N/A",
+              confidencePercent: "98.0",
             };
         const finalData = {
           status: "success",
           ...successData,
-          message: `Valid! Manual input ${
-            isPerangkat ? "serial number" : "barcode"
-          } detected.`,
+          message: `Valid! Manual input ${isPerangkat ? "serial number" : "barcode"} detected.`,
           inputType: isSerial ? "serial" : "barcode",
         };
 
         setScanResult(finalData);
         addToCheckHistory(finalData);
-        setManualInput(""); // Reset input manual setelah berhasil
+        setManualInput("");
       }
     }, 1500);
   };
 
-  // Fungsi untuk membuka modal lokasi dengan SweetAlert
-  const handleOpenLocationModal = (scanData) => {
-    let selectedLocation = scanData.lokasi || "";
+  // ============================================
+  // FUNGSI SET LOCATION UNTUK SEMUA ITEM
+  // ============================================
 
-    Swal.fire({
-      title: `<div class="font-poppins text-lg font-semibold text-black">Select Asset Checking Location</div>`,
+  const handleSetLocationForAll = async () => {
+    const itemsWithoutLocation = checkHistory.filter(
+      (item) => !item.lokasi && item.status !== "error"
+    );
+
+    if (itemsWithoutLocation.length === 0) {
+      Swal.fire({
+        title: "All Items Scanning Have Location",
+        text: "All detected items already have location assigned.",
+        icon: "info",
+        confirmButtonText: "OK",
+      });
+      return;
+    }
+
+    // Tampilkan modal dengan data lokasi dari database
+    const { value: location } = await Swal.fire({
+      title: `<div class="font-poppins text-lg font-semibold text-black">Set Location Scanning for All Items</div>`,
       html: `
-  <div class="font-poppins text-left space-y-4">
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-2">Select Location</label>
-      <select 
-        id="locationSelect" 
-        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-      >
-        <option value="">Select location...</option>
-        ${locationOptions
-          .map(
-            (location) =>
-              `<option value="${location}" ${
-                location === selectedLocation ? "selected" : ""
-              }>${location}</option>`
-          )
-          .join("")}
-      </select>
-    </div>
+        <div class="font-poppins text-left space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Select Location for ${itemsWithoutLocation.length} items
+            </label>
+            
+            <div class="relative">
+              <input 
+                type="text" 
+                id="locationSearchInput"
+                placeholder="Search location..." 
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm mb-2"
+                oninput="document.getElementById('locationSelectAll').dispatchEvent(new Event('input'))"
+              />
+              
+              <select 
+                id="locationSelectAll" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                size="5"
+              >
+                <option value="">Select location...</option>
+                ${locations
+                  .map((location) => 
+                    `<option value="${location.value}" data-label="${location.label}">${location.label}</option>`
+                  )
+                  .join("")}
+              </select>
+              
+              ${
+                isLoadingLocations 
+                  ? `<div class="text-center py-2 text-sm text-gray-500">
+                      <Loader2 class="w-4 h-4 animate-spin inline mr-1" />
+                      Loading locations...
+                    </div>`
+                  : ""
+              }
+            </div>
+          </div>
 
-    <div class="bg-gray-100 p-3 rounded-lg">
-      <p class="text-sm text-blue-700">
-        <strong>Data to be updated:</strong><br/>
-        Asset: ${scanData.jenisAset}<br/>
-        Category: ${scanData.kategori}<br/>
-        ID: ${scanData.id}
-      </p>
-    </div>
-  </div>
-  `,
+          <div class="bg-gray-100 p-3 rounded-lg">
+            <p class="text-sm text-blue-700">
+              <strong>Items to be updated:</strong><br/>
+              <span class="text-xs">
+                ${itemsWithoutLocation
+                  .map((item) => `• ${item.jenisAset} (${item.id})`)
+                  .join("<br/>")}
+              </span>
+            </p>
+          </div>
+        </div>
+      `,
       width: "500px",
       padding: "8px",
       showCloseButton: true,
       showCancelButton: true,
       showConfirmButton: true,
       cancelButtonText: "Cancel",
-      confirmButtonText: "Save Location",
+      confirmButtonText: "Apply to All Items",
       confirmButtonColor: "#2563eb",
       cancelButtonColor: "#6b7280",
       reverseButtons: true,
@@ -588,54 +486,224 @@ export default function SerialScanningPage() {
         confirmButton: "px-4 py-2 text-sm font-medium",
         cancelButton: "px-6 py-2 text-sm font-medium",
       },
+      didOpen: () => {
+        // Tambahkan event listener untuk pencarian
+        const searchInput = document.getElementById('locationSearchInput');
+        const select = document.getElementById('locationSelectAll');
+        
+        if (searchInput) {
+          searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const options = select.querySelectorAll('option');
+            
+            options.forEach(option => {
+              if (option.value === '') return;
+              const label = option.textContent.toLowerCase();
+              option.style.display = label.includes(searchTerm) ? '' : 'none';
+            });
+          });
+        }
+      },
       preConfirm: () => {
-        const select = document.getElementById("locationSelect");
-        const location = select.value;
-        if (!location) {
+        const select = document.getElementById('locationSelectAll');
+        const selectedOption = select.options[select.selectedIndex];
+        const locationCode = select.value;
+        const locationLabel = selectedOption ? selectedOption.getAttribute('data-label') : '';
+        
+        if (!locationCode) {
           Swal.showValidationMessage("Please select a location first");
           return false;
         }
-        return location;
+        return { locationCode, locationLabel };
       },
-    }).then((result) => {
-      if (result.isConfirmed) {
-        const updatedLocation = result.value;
-
-        // Update data with selected location
-        const updatedData = {
-          ...scanData,
-          lokasi: updatedLocation,
-        };
-
-        // Update check history with new location
-        setCheckHistory((prev) =>
-          prev.map((item) =>
-            item.id === scanData.id ? { ...item, ...updatedData } : item
-          )
-        );
-
-        // Tampilkan konfirmasi sukses
-        Swal.fire({
-          title: "Location Saved Successfully!",
-          text: `Location ${updatedLocation} has been added to ${scanData.jenisAset}.`,
-          icon: "success",
-          confirmButtonColor: "#28a745",
-          confirmButtonText: "OK",
-          customClass: {
-            popup: "font-poppins rounded-xl",
-            confirmButton: "px-8 py-2 text-sm font-medium",
-          },
-        });
-      }
     });
+
+    if (location) {
+      // Update semua item yang belum memiliki lokasi
+      const updatedHistory = checkHistory.map((item) => {
+        if (!item.lokasi && item.status !== "error") {
+          return { 
+            ...item, 
+            lokasi: location.locationCode,
+            lokasiLabel: location.locationLabel
+          };
+        }
+        return item;
+      });
+
+      setCheckHistory(updatedHistory);
+
+      // Tampilkan konfirmasi sukses
+      Swal.fire({
+        title: "Location Applied Successfully!",
+        html: `
+          <div class="text-center">
+            <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+            <p class="text-lg font-semibold">Location set for ${itemsWithoutLocation.length} items</p>
+            <p class="text-sm text-gray-600">Location: <strong>${location.locationLabel}</strong></p>
+            <p class="text-xs text-gray-500">Code: ${location.locationCode}</p>
+          </div>
+        `,
+        icon: "success",
+        confirmButtonColor: "#28a745",
+        confirmButtonText: "OK",
+        customClass: {
+          popup: "font-poppins rounded-xl",
+          confirmButton: "px-8 py-2 text-sm font-medium",
+        },
+      });
+    }
   };
 
-  // Fungsi untuk submit data individual
+  // ============================================
+  // FUNGSI SET LOCATION UNTUK SATU ITEM
+  // ============================================
+
+  const handleSetLocationForItem = async (item) => {
+    const { value: location } = await Swal.fire({
+      title: `<div class="font-poppins text-lg font-semibold text-black">Set Location for ${item.jenisAset}</div>`,
+      html: `
+        <div class="font-poppins text-left space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Select Location
+            </label>
+            
+            <div class="relative">
+              <input 
+                type="text" 
+                id="locationSearchInputSingle"
+                placeholder="Search location..." 
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm mb-2"
+              />
+              
+              <select 
+                id="locationSelectSingle" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                size="5"
+              >
+                <option value="">Select location...</option>
+                ${locations
+                  .map((location) => 
+                    `<option value="${location.value}" data-label="${location.label}">${location.label}</option>`
+                  )
+                  .join("")}
+              </select>
+              
+              ${
+                isLoadingLocations 
+                  ? `<div class="text-center py-2 text-sm text-gray-500">
+                      <Loader2 class="w-4 h-4 animate-spin inline mr-1" />
+                      Loading locations...
+                    </div>`
+                  : ""
+              }
+            </div>
+          </div>
+
+          <div class="bg-gray-100 p-3 rounded-lg">
+            <p class="text-sm text-blue-700">
+              <strong>Item Details:</strong><br/>
+              <span class="text-xs">
+                • ${item.jenisAset} (${item.id})<br/>
+                • Brand: ${item.brand || "N/A"}<br/>
+                • Category: ${item.kategori}
+              </span>
+            </p>
+          </div>
+        </div>
+      `,
+      width: "500px",
+      padding: "8px",
+      showCloseButton: true,
+      showCancelButton: true,
+      showConfirmButton: true,
+      cancelButtonText: "Cancel",
+      confirmButtonText: "Apply Location",
+      confirmButtonColor: "#2563eb",
+      cancelButtonColor: "#6b7280",
+      reverseButtons: true,
+      customClass: {
+        popup: "rounded-xl font-poppins",
+        confirmButton: "px-4 py-2 text-sm font-medium",
+        cancelButton: "px-6 py-2 text-sm font-medium",
+      },
+      didOpen: () => {
+        const searchInput = document.getElementById('locationSearchInputSingle');
+        const select = document.getElementById('locationSelectSingle');
+        
+        if (searchInput && select) {
+          searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const options = select.querySelectorAll('option');
+            
+            options.forEach(option => {
+              if (option.value === '') return;
+              const label = option.textContent.toLowerCase();
+              option.style.display = label.includes(searchTerm) ? '' : 'none';
+            });
+          });
+        }
+      },
+      preConfirm: () => {
+        const select = document.getElementById('locationSelectSingle');
+        const selectedOption = select.options[select.selectedIndex];
+        const locationCode = select.value;
+        const locationLabel = selectedOption ? selectedOption.getAttribute('data-label') : '';
+        
+        if (!locationCode) {
+          Swal.showValidationMessage("Please select a location first");
+          return false;
+        }
+        return { locationCode, locationLabel };
+      },
+    });
+
+    if (location) {
+      // Update item dengan lokasi baru
+      const updatedHistory = checkHistory.map((historyItem) => {
+        if (historyItem.id === item.id) {
+          return { 
+            ...historyItem, 
+            lokasi: location.locationCode,
+            lokasiLabel: location.locationLabel
+          };
+        }
+        return historyItem;
+      });
+
+      setCheckHistory(updatedHistory);
+
+      Swal.fire({
+        title: "Location Applied Successfully!",
+        html: `
+          <div class="text-center">
+            <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+            <p class="text-sm text-gray-600">Location set for <strong>${item.jenisAset}</strong></p>
+            <p class="text-sm text-gray-600">Location: <strong>${location.locationLabel}</strong></p>
+            <p class="text-xs text-gray-500">Code: ${location.locationCode}</p>
+          </div>
+        `,
+        icon: "success",
+        confirmButtonColor: "#28a745",
+        confirmButtonText: "OK",
+        customClass: {
+          popup: "font-poppins rounded-xl",
+          confirmButton: "px-8 py-2 text-sm font-medium",
+        },
+      });
+    }
+  };
+
+  // ============================================
+  // FUNGSI SUBMIT DATA KE BACKEND
+  // ============================================
+
   const handleSubmitSingle = async (scanData) => {
     if (!scanData.lokasi) {
       Swal.fire({
         title: "Location Not Selected",
-        text: "Please select a location before submitting the data.",
+        text: "Please set location before submitting the data.",
         icon: "warning",
         confirmButtonColor: "#2563eb",
         confirmButtonText: "OK",
@@ -649,7 +717,6 @@ export default function SerialScanningPage() {
 
     setIsSubmitting(true);
 
-    // Show loading SweetAlert
     Swal.fire({
       title: "Sending Data...",
       text: `Submitting data for ${scanData.jenisAset}`,
@@ -664,59 +731,73 @@ export default function SerialScanningPage() {
       },
     });
 
-    const submittedData = {
-      ...scanData,
-      uniqueCode: `V-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-      status: "Pending Validation",
-      submitted: true,
-      submittedAt: new Date().toISOString(),
-    };
-
-    // Update riwayat dengan status submitted
-    setCheckHistory((prev) =>
-      prev.map((item) =>
-        item.id === scanData.id ? { ...item, ...submittedData } : item
-      )
-    );
-
-    console.log("Submitting Single Data:", submittedData);
-
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      setIsSubmitting(false);
-
-      // Tutup loading dan tampilkan sukses
-      Swal.fire({
-        title: "Successfully Sent!",
-        html: `
-    <div class="text-center">
-      <p class="text-gray-700 font-grey-700 mb-2 mt-0">The data has been successfully sent for validation!</p>
-      <div class="bg-gray-50 p-3 rounded-lg mt-3">
-        <p class="text-sm text-gray-600"><strong>Data Details:</strong></p>
-        <p class="text-xs text-gray-600">${submittedData.jenisAset} (${submittedData.id})</p>
-        <p class="text-xs text-gray-600">Location: ${submittedData.lokasi}</p>
-        <p class="text-xs text-blue-600 font-mono mt-1">Code: ${submittedData.uniqueCode}</p>
-      </div>
-    </div>
-  `,
-        icon: "success",
-        confirmButtonColor: "#10B981",
-        confirmButtonText: "Continue Scanning",
-        customClass: {
-          popup: "font-poppins rounded-xl",
-          confirmButton: "px-6 py-2 text-sm font-medium rounded-lg",
+      // Kirim ke API untuk assign lokasi
+      const response = await fetch(`${API_BASE_URL}/api/location/assign-multiple`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+          asset_ids: [scanData.id],
+          location_code: scanData.lokasi,
+          scanned_by: "Scanner User", // Ganti dengan user yang login
+          notes: `Submitted via scanning app - ${scanData.jenisAset}`
+        }),
       });
+
+      const result = await response.json();
+
+      if (result.success) {
+        const submittedData = {
+          ...scanData,
+          uniqueCode: `V-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+          status: "Pending Validation",
+          submitted: true,
+          submittedAt: new Date().toISOString(),
+        };
+
+        // Update riwayat
+        setCheckHistory((prev) =>
+          prev.map((item) =>
+            item.id === scanData.id ? { ...item, ...submittedData } : item
+          )
+        );
+
+        Swal.fire({
+          title: "Successfully Sent!",
+          html: `
+            <div class="text-center">
+              <p class="text-gray-700 font-grey-700 mb-2 mt-0">The data has been successfully sent for validation!</p>
+              <div class="bg-gray-50 p-3 rounded-lg mt-3">
+                <p class="text-sm text-gray-600"><strong>Data Details:</strong></p>
+                <p class="text-xs text-gray-600">${scanData.jenisAset} (${scanData.id})</p>
+                <p class="text-xs text-gray-600">Location: ${scanData.lokasiLabel || scanData.lokasi}</p>
+                <p class="text-xs text-gray-600">Status: ${result.message}</p>
+              </div>
+            </div>
+          `,
+          icon: "success",
+          confirmButtonColor: "#10B981",
+          confirmButtonText: "Continue Scanning",
+          customClass: {
+            popup: "font-poppins rounded-xl",
+            confirmButton: "px-6 py-2 text-sm font-medium rounded-lg",
+          },
+        });
+      } else {
+        throw new Error(result.message || "Failed to submit data");
+      }
     } catch (error) {
       console.error("Submission error:", error);
-      setIsSubmitting(false);
       Swal.fire({
         title: "Submission Failed",
-        text: "Failed to submit data. Please try again.",
+        text: error.message || "Failed to submit data. Please try again.",
         icon: "error",
         confirmButtonText: "OK",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -743,17 +824,16 @@ export default function SerialScanningPage() {
 
     setIsSubmittingAll(true);
 
-    // Show loading SweetAlert
     Swal.fire({
       title: "Submitting All Data...",
       html: `
-    <div class="text-center">
-      <p class="text-gray-700 mb-2">Sending ${dataToSubmit.length} data item(s)...</p>
-      <div class="w-full bg-gray-200 rounded-full h-2 mb-4">
-        <div class="bg-blue-600 h-2 rounded-full animate-pulse"></div>
-      </div>
-    </div>
-  `,
+        <div class="text-center">
+          <p class="text-gray-700 mb-2">Sending ${dataToSubmit.length} data item(s)...</p>
+          <div class="w-full bg-gray-200 rounded-full h-2 mb-4">
+            <div class="bg-blue-600 h-2 rounded-full animate-pulse"></div>
+          </div>
+        </div>
+      `,
       showConfirmButton: false,
       allowOutsideClick: false,
       customClass: {
@@ -761,76 +841,92 @@ export default function SerialScanningPage() {
       },
     });
 
-    const submittedData = dataToSubmit.map((item) => ({
-      ...item,
-      uniqueCode: `V-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-      status: "Pending Validation",
-      submitted: true,
-      submittedAt: new Date().toISOString(),
-    }));
-
-    // Update semua data yang dikirim
-    setCheckHistory((prev) =>
-      prev.map((item) => {
-        const submittedItem = submittedData.find((sub) => sub.id === item.id);
-        return submittedItem ? { ...item, ...submittedItem } : item;
-      })
-    );
-
-    console.log("Submitting All Data:", submittedData);
-
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      setIsSubmittingAll(false);
-
-      // Close loading and show success
-      Swal.fire({
-        title: "All Data Successfully Submitted!",
-        html: `
-    <div class="text-center">
-      <p class="text-gray-700 font-grey-700 mb-2 mt-0">${submittedData.length} data item(s) have been successfully submitted!</p>
-      <div class="bg-gray-50 p-3 rounded-lg mt-3">
-        <p class="text-sm text-gray-600"><strong>Details:</strong></p>
-        <p class="text-xs text-gray-600">Total items: ${submittedData.length}</p>
-        <p class="text-xs text-gray-600">Status: Awaiting Manager Validation</p>
-      </div>
-    </div>
-  `,
-        icon: "success",
-        showCancelButton: true,
-        confirmButtonColor: "#20a051ff",
-        cancelButtonColor: "#374151",
-        confirmButtonText: "View Verification",
-        cancelButtonText: "Continue Scanning",
-        reverseButtons: true,
-        customClass: {
-          popup: "font-poppins rounded-xl",
-          confirmButton: "px-6 py-2 text-sm font-medium rounded-lg",
-          cancelButton: "px-6 py-2 text-sm font-medium rounded-lg",
+      // Kirim ke API untuk assign multiple assets
+      const response = await fetch(`${API_BASE_URL}/api/location/assign-multiple`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      }).then((result) => {
-        if (result.isConfirmed) {
-          localStorage.setItem(
-            "lastSubmittedScan",
-            JSON.stringify(submittedData)
-          );
-          router.push("/validation-verification");
-        }
+        body: JSON.stringify({
+          asset_ids: dataToSubmit.map(item => item.id),
+          location_code: dataToSubmit[0].lokasi, // Asumsi semua memiliki lokasi yang sama
+          scanned_by: "Scanner User", // Ganti dengan user yang login
+          notes: `Batch submission via scanning app - ${dataToSubmit.length} items`
+        }),
       });
+
+      const result = await response.json();
+
+      if (result.success) {
+        const submittedData = dataToSubmit.map((item) => ({
+          ...item,
+          uniqueCode: `V-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+          status: "Pending Validation",
+          submitted: true,
+          submittedAt: new Date().toISOString(),
+        }));
+
+        // Update semua data yang dikirim
+        setCheckHistory((prev) =>
+          prev.map((item) => {
+            const submittedItem = submittedData.find((sub) => sub.id === item.id);
+            return submittedItem ? { ...item, ...submittedItem } : item;
+          })
+        );
+
+        Swal.fire({
+          title: "All Data Successfully Submitted!",
+          html: `
+            <div class="text-center">
+              <p class="text-gray-700 font-grey-700 mb-2 mt-0">${result.success_count} data item(s) have been successfully submitted!</p>
+              <div class="bg-gray-50 p-3 rounded-lg mt-3">
+                <p class="text-sm text-gray-600"><strong>Details:</strong></p>
+                <p class="text-xs text-gray-600">Total items: ${dataToSubmit.length}</p>
+                <p class="text-xs text-gray-600">Success: ${result.success_count}</p>
+                <p class="text-xs text-gray-600">Failed: ${result.failed_count || 0}</p>
+                <p class="text-xs text-gray-600">Status: Awaiting Manager Validation</p>
+              </div>
+            </div>
+          `,
+          icon: "success",
+          showCancelButton: true,
+          confirmButtonColor: "#20a051ff",
+          cancelButtonColor: "#374151",
+          confirmButtonText: "View Verification",
+          cancelButtonText: "Continue Scanning",
+          reverseButtons: true,
+          customClass: {
+            popup: "font-poppins rounded-xl",
+            confirmButton: "px-6 py-2 text-sm font-medium rounded-lg",
+            cancelButton: "px-6 py-2 text-sm font-medium rounded-lg",
+          },
+        }).then((result) => {
+          if (result.isConfirmed) {
+            localStorage.setItem("lastSubmittedScan", JSON.stringify(submittedData));
+            router.push("/validation-verification");
+          }
+        });
+      } else {
+        throw new Error(result.message || "Failed to submit data");
+      }
     } catch (error) {
       console.error("Batch submission error:", error);
-      setIsSubmittingAll(false);
       Swal.fire({
         title: "Submission Failed",
-        text: "Failed to submit data. Please try again.",
+        text: error.message || "Failed to submit data. Please try again.",
         icon: "error",
         confirmButtonText: "OK",
       });
+    } finally {
+      setIsSubmittingAll(false);
     }
   };
 
-  // Fungsi untuk menghapus data dari riwayat
+  // ============================================
+  // FUNGSI DELETE DATA
+  // ============================================
+
   const handleDeleteData = async (scanData) => {
     const result = await Swal.fire({
       title: `Delete ${scanData.jenisAset}?`,
@@ -850,22 +946,18 @@ export default function SerialScanningPage() {
     });
 
     if (result.isConfirmed) {
-      // Hapus data dari state dengan filter yang benar
       setCheckHistory((prev) => {
         const newHistory = prev.filter((item) => item.id !== scanData.id);
 
-        // Update localStorage dengan data yang baru
         if (newHistory.length > 0) {
           localStorage.setItem("scanCheckHistory", JSON.stringify(newHistory));
         } else {
-          // Jika tidak ada data lagi, hapus dari localStorage
           localStorage.removeItem("scanCheckHistory");
         }
 
         return newHistory;
       });
 
-      // Tampilkan SweetAlert sukses
       Swal.fire({
         title: "Deleted Successfully!",
         text: `${scanData.jenisAset} (${scanData.id}) has been successfully deleted.`,
@@ -880,19 +972,18 @@ export default function SerialScanningPage() {
     }
   };
 
-  // Tambahkan fungsi untuk menghapus semua data
   const handleDeleteAll = async () => {
     if (checkHistory.length === 0) return;
 
     const result = await Swal.fire({
       title: "Delete All Detection Results?",
       html: `
-      <div class="text-center">
-        <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-3" />
-        <p class="text-gray-700">You are about to delete <strong>${checkHistory.length} items</strong> from detection history.</p>
-        <p class="text-sm text-red-600 mt-2">This action cannot be undone!</p>
-      </div>
-    `,
+        <div class="text-center">
+          <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-3" />
+          <p class="text-gray-700">You are about to delete <strong>${checkHistory.length} items</strong> from detection history.</p>
+          <p class="text-sm text-red-600 mt-2">This action cannot be undone!</p>
+        </div>
+      `,
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
@@ -908,14 +999,10 @@ export default function SerialScanningPage() {
     });
 
     if (result.isConfirmed) {
-      // Hapus semua data dari state
       setCheckHistory([]);
-      // Hapus dari localStorage
       localStorage.removeItem("scanCheckHistory");
-      // Reset scan result
       setScanResult(null);
 
-      // Tampilkan notifikasi sukses
       Swal.fire({
         title: "All Data Deleted!",
         text: `${checkHistory.length} items have been removed from history.`,
@@ -926,68 +1013,6 @@ export default function SerialScanningPage() {
           popup: "font-poppins rounded-xl",
           confirmButton: "px-6 py-2 text-sm font-medium rounded-lg",
         },
-      });
-    }
-  };
-
-  // Tambahkan fungsi untuk menghapus hanya data yang belum disubmit
-  const handleDeleteUnsubmitted = async () => {
-    const unsubmittedItems = checkHistory.filter((item) => !item.submitted);
-
-    if (unsubmittedItems.length === 0) {
-      Swal.fire({
-        title: "No Unsubmitted Data",
-        text: "All items have already been submitted.",
-        icon: "info",
-        confirmButtonText: "OK",
-      });
-      return;
-    }
-
-    const result = await Swal.fire({
-      title: "Delete Unsubmitted Data?",
-      html: `
-      <div class="text-center">
-        <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-3" />
-        <p class="text-gray-700">Delete <strong>${unsubmittedItems.length} unsubmitted items</strong>?</p>
-        <p class="text-sm text-gray-600 mt-2">Submitted items will be kept.</p>
-      </div>
-    `,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Yes, delete!",
-      cancelButtonText: "Cancel",
-      reverseButtons: true,
-      customClass: {
-        popup: "font-poppins rounded-xl",
-        confirmButton: "px-6 py-2 text-sm font-medium rounded-lg",
-        cancelButton: "px-6 py-2 text-sm font-medium rounded-lg",
-      },
-    });
-
-    if (result.isConfirmed) {
-      // Hanya simpan data yang sudah disubmit
-      const submittedItems = checkHistory.filter((item) => item.submitted);
-      setCheckHistory(submittedItems);
-
-      // Update localStorage
-      if (submittedItems.length > 0) {
-        localStorage.setItem(
-          "scanCheckHistory",
-          JSON.stringify(submittedItems)
-        );
-      } else {
-        localStorage.removeItem("scanCheckHistory");
-      }
-
-      Swal.fire({
-        title: "Unsubmitted Data Deleted!",
-        text: `${unsubmittedItems.length} items have been removed.`,
-        icon: "success",
-        confirmButtonColor: "#10b981",
-        confirmButtonText: "OK",
       });
     }
   };
@@ -1022,13 +1047,13 @@ export default function SerialScanningPage() {
   const getStatusText = (status) => {
     switch (status) {
       case "success":
-        return "Berhasil";
+        return "Success";
       case "error":
         return "Error";
       case "Pending Validation":
-        return "Terkirim";
+        return "Pending Validation";
       case "Checked":
-        return "Dicek";
+        return "Checked";
       default:
         return status;
     }
@@ -1038,6 +1063,13 @@ export default function SerialScanningPage() {
   const readyToSubmitCount = checkHistory.filter(
     (item) => item.status === "Checked" && item.lokasi && !item.submitted
   ).length;
+
+  // Filter hanya item yang bukan error
+  const validCheckHistory = checkHistory.filter(
+    (item) => !item.id.includes("NO-DETECTION") && 
+               !item.id.includes("ERROR") && 
+               !item.id.includes("INVALID")
+  );
 
   return (
     <LayoutDashboard activeMenu={2}>
@@ -1049,13 +1081,8 @@ export default function SerialScanningPage() {
             SCAN IT DEVICES & MATERIALS
           </h1>
           <p className="text-blue-100 text-xs sm:text-sm mt-1 sm:mt-2">
-            Scan IT devices or materials using camera, upload images, select the
-            location, and submit for verification.
+            Scan IT devices or materials using camera, select the location for all items, and submit for verification.
           </p>
-          {/* <div className="mt-2 flex items-center text-sm">
-            <span className="bg-blue-500 px-2 py-1 rounded mr-2">Backend:</span>
-            <span className="font-mono">{API_BASE_URL}</span>
-          </div> */}
         </div>
 
         {/* 1. Camera / Scanner Area */}
@@ -1076,7 +1103,6 @@ export default function SerialScanningPage() {
 
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-4/5 h-4/5 border-4 border-dashed border-white/50 rounded-lg"></div>
-              {/* Scanning guide lines */}
               <div className="absolute top-1/2 left-0 right-0 h-1 bg-red-500/50 animate-pulse"></div>
               <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-red-500/50 animate-pulse"></div>
             </div>
@@ -1091,190 +1117,42 @@ export default function SerialScanningPage() {
             )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
-            <div className="flex items-center">
-              <Cpu className="w-3 h-3 sm:w-4 sm:h-4 mr-2 text-blue-600" />
-              <span>
-                Detects: <strong>Monitor, Laptop, PC, Printer, etc.</strong>
-              </span>
-            </div>
-            <div className="flex items-center">
-              <Cable className="w-3 h-3 sm:w-4 sm:h-4 mr-2 text-green-600" />
-              <span>
-                Detects: <strong>Cable, Connector, Rack, Trunking, etc.</strong>
-              </span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* Capture from Camera Button */}
-            <button
-              onClick={handleCameraCapture}
-              className="flex items-center justify-center px-4 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition shadow-lg disabled:opacity-50 text-sm"
-              disabled={isDetecting || scanResult === "loading"}
-            >
-              {isDetecting ? (
-                <>
-                  <svg
-                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  Detecting Devices...
-                </>
-              ) : (
-                <>
-                  <Camera className="w-4 h-4 mr-2" />
-                  Capture & Detect
-                </>
-              )}
-            </button>
-
-            {/* Upload Image Button */}
-            <button
-              onClick={() => {
-                setShowUploadModal(true);
-                if (fileInputRef.current) {
-                  fileInputRef.current.click();
-                }
-              }}
-              className="flex items-center justify-center px-4 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition shadow-lg disabled:opacity-50 text-sm"
-              disabled={isDetecting}
-            >
-              <Upload className="w-4 h-4 mr-2" />
-              Upload & Detect
-            </button>
-          </div>
-
-          {/* Hidden file input */}
-          <input
-            type="file"
-            ref={fileInputRef}
-            className="hidden"
-            accept="image/*"
-            onChange={handleFileSelect}
-          />
-        </div>
-
-        {/* Upload Modal */}
-        {showUploadModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-                  <Upload className="w-5 h-5 mr-2 text-green-600" />
-                  Upload Image for Detection
-                </h3>
-                <button
-                  onClick={() => setShowUploadModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+          <button
+            onClick={handleCameraCapture}
+            className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition shadow-lg disabled:opacity-50 text-sm"
+            disabled={isDetecting || scanResult === "loading"}
+          >
+            {isDetecting ? (
+              <>
+                <svg
+                  className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
                 >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                {!selectedFile ? (
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                    <Upload className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-600 mb-2">
-                      Click to select an image file
-                    </p>
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                    >
-                      Choose File
-                    </button>
-                    <p className="text-xs text-gray-500 mt-2">
-                      Max file size: 5MB
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="relative">
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="w-full h-48 object-cover rounded-lg"
-                      />
-                      <button
-                        onClick={() => {
-                          setSelectedFile(null);
-                          setImagePreview(null);
-                        }}
-                        className="absolute top-2 right-2 bg-red-600 text-white p-1 rounded-full"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <p className="text-sm text-gray-600">
-                      Selected:{" "}
-                      <span className="font-medium">{selectedFile.name}</span>
-                    </p>
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => setShowUploadModal(false)}
-                        className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleStartUploadDetection}
-                        disabled={isDetecting}
-                        className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center justify-center"
-                      >
-                        {isDetecting ? (
-                          <>
-                            <svg
-                              className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                            >
-                              <circle
-                                className="opacity-25"
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke="currentColor"
-                                strokeWidth="4"
-                              ></circle>
-                              <path
-                                className="opacity-75"
-                                fill="currentColor"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                              ></path>
-                            </svg>
-                            Processing...
-                          </>
-                        ) : (
-                          <>
-                            <ScanLine className="w-4 h-4 mr-2" />
-                            Detect Devices
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Detecting Devices...
+              </>
+            ) : (
+              <>
+                <Camera className="w-4 h-4 mr-2" />
+                Capture & Detect
+              </>
+            )}
+          </button>
+        </div>
 
         {/* 2. Manual Input & Scan Results */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
@@ -1394,23 +1272,13 @@ export default function SerialScanningPage() {
                       <span className="ml-1">{scanResult.kategori}</span>
                     </span>
                   </div>
-                  {scanResult.brand && scanResult.brand !== "N/A" && (
-                    <div className="flex justify-between">
-                      <span className="font-medium text-gray-600">Brand:</span>
-                      <span className="text-blue-600 font-medium">
-                        {scanResult.brand}
-                      </span>
-                    </div>
-                  )}
                   <div className="flex justify-between">
-                    <span className="font-medium text-gray-600">
-                      {scanResult.nomorSeri ? "Serial Number:" : "Barcode:"}
-                    </span>
-                    <span className="font-mono text-blue-600 text-xs sm:text-sm">
-                      {scanResult.nomorSeri || scanResult.barcode}
+                    <span className="font-medium text-gray-600">Brand:</span>
+                    <span className="text-blue-600 font-medium">
+                      {scanResult.brand || "N/A"}
                     </span>
                   </div>
-                  {scanResult.confidencePercent && (
+                  {scanResult.confidencePercent && scanResult.confidencePercent !== "N/A" && (
                     <div className="flex justify-between">
                       <span className="font-medium text-gray-600">
                         Confidence:
@@ -1425,35 +1293,6 @@ export default function SerialScanningPage() {
                 <p className="text-xs sm:text-sm text-gray-600 mt-2 sm:mt-3 border-t pt-2 sm:pt-3">
                   {scanResult.message}
                 </p>
-
-                {/* Show image links if available */}
-                {(scanResult.resultImageUrl || scanResult.originalImageUrl) && (
-                  <div className="mt-2 pt-2 border-t border-gray-200">
-                    <p className="text-xs text-gray-500 mb-1">Images:</p>
-                    <div className="flex gap-2">
-                      {scanResult.originalImageUrl && (
-                        <a
-                          href={`${API_BASE_URL}${scanResult.originalImageUrl}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-blue-600 hover:underline"
-                        >
-                          Original
-                        </a>
-                      )}
-                      {scanResult.resultImageUrl && (
-                        <a
-                          href={`${API_BASE_URL}${scanResult.resultImageUrl}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-green-600 hover:underline"
-                        >
-                          Result
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                )}
               </div>
             )}
 
@@ -1464,7 +1303,7 @@ export default function SerialScanningPage() {
                   No detection results yet
                 </p>
                 <p className="text-xs sm:text-sm mt-1">
-                  Use the Camera Capture or Upload Image to detect devices
+                  Use the Camera Capture to detect devices
                 </p>
               </div>
             )}
@@ -1481,35 +1320,56 @@ export default function SerialScanningPage() {
               </h2>
             </div>
             <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-2">
-              {checkHistory.length > 0 && (
+              <div className="flex gap-2">
+                {/* Tombol Set Location for All */}
                 <button
-                  onClick={handleDeleteAll}
-                  className="flex items-center px-3 py-1.5 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition ml-2"
-                  title="Delete All History"
+                  onClick={handleSetLocationForAll}
+                  className="flex items-center px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition"
+                  title="Set Location for All Items"
+                  disabled={validCheckHistory.length === 0 || isLoadingLocations}
                 >
-                  <Trash2 className="w-3 h-3 mr-1" />
-                  Delete All
+                  {isLoadingLocations ? (
+                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                  ) : (
+                    <MapPin className="w-3 h-3 mr-1" />
+                  )}
+                  Set Location Scanning for All
                 </button>
-              )}
-              <span className="text-xs sm:text-sm text-gray-500">
-                {checkHistory.length} items
-              </span>
-              {readyToSubmitCount > 0 && (
-                <span className="ml-2 px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
-                  {readyToSubmitCount} ready to submit
+
+                {/* Tombol Delete All */}
+                {validCheckHistory.length > 0 && (
+                  <button
+                    onClick={handleDeleteAll}
+                    className="flex items-center px-3 py-1.5 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition"
+                    title="Delete All History"
+                  >
+                    <Trash2 className="w-3 h-3 mr-1" />
+                    Delete All Items
+                  </button>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <span className="text-xs sm:text-sm text-gray-500">
+                  {validCheckHistory.length} items
                 </span>
-              )}
+                {readyToSubmitCount > 0 && (
+                  <span className="ml-2 px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
+                    {readyToSubmitCount} ready to submit
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
-          {checkHistory.length === 0 ? (
+          {validCheckHistory.length === 0 ? (
             <div className="text-center py-6 sm:py-8 text-gray-500">
               <Box className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 text-gray-400" />
               <p className="font-medium text-sm sm:text-base">
                 No detection history yet
               </p>
               <p className="text-xs sm:text-sm mt-1">
-                Use the camera scanner, upload image, or manual input to start
+                Use the camera scanner or manual input to start
               </p>
             </div>
           ) : (
@@ -1524,7 +1384,7 @@ export default function SerialScanningPage() {
                       <th className="py-2 font-medium">Category</th>
                       <th className="py-2 font-medium">Brand</th>
                       <th className="py-2 font-medium">Confidence</th>
-                      <th className="py-2 font-medium">Location</th>
+                      <th className="py-2 font-medium">Scan Location</th>
                       <th className="py-2 font-medium">Status</th>
                       <th className="py-2 font-medium">Date</th>
                       <th className="py-2 font-medium">Time</th>
@@ -1532,7 +1392,7 @@ export default function SerialScanningPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {checkHistory.map((item, index) => (
+                    {validCheckHistory.map((item) => (
                       <tr
                         key={item.id}
                         className="border-b border-gray-100 hover:bg-gray-50 text-gray-800"
@@ -1558,7 +1418,9 @@ export default function SerialScanningPage() {
                           </span>
                         </td>
                         <td className="py-3 text-gray-600 text-sm">
-                          {item.brand || "N/A"}
+                          <span className="font-medium text-blue-600">
+                            {item.brand || "N/A"}
+                          </span>
                         </td>
                         <td className="py-3">
                           <span
@@ -1574,10 +1436,18 @@ export default function SerialScanningPage() {
                           </span>
                         </td>
                         <td className="py-3 text-gray-600 text-sm">
-                          {item.lokasi || (
-                            <span className="text-orange-600 text-xs">
-                              Not selected
-                            </span>
+                          {item.lokasiLabel || item.lokasi ? (
+                            <div className="max-w-[150px] truncate" title={item.lokasiLabel || item.lokasi}>
+                              {item.lokasiLabel || item.lokasi}
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => handleSetLocationForItem(item)}
+                              className="text-xs text-orange-600 hover:text-orange-700 font-medium flex items-center"
+                            >
+                              <MapPin className="w-3 h-3 mr-1" />
+                              Set Location
+                            </button>
                           )}
                         </td>
                         <td className="py-3">
@@ -1597,15 +1467,6 @@ export default function SerialScanningPage() {
                         </td>
                         <td className="py-3">
                           <div className="flex space-x-1 sm:space-x-2">
-                            <button
-                              onClick={() => handleOpenLocationModal(item)}
-                              className="flex items-center px-2 sm:px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition"
-                              title="Select Location"
-                            >
-                              <MapPin className="w-3 h-3 mr-1" />
-                              <span className="hidden sm:inline">Location</span>
-                            </button>
-
                             {item.status === "Checked" && item.lokasi && (
                               <button
                                 onClick={() => handleSubmitSingle(item)}
@@ -1636,7 +1497,7 @@ export default function SerialScanningPage() {
 
               {/* Mobile & Tablet View */}
               <div className="md:hidden space-y-3">
-                {checkHistory.map((item) => (
+                {validCheckHistory.map((item) => (
                   <div
                     key={item.id}
                     className="border border-gray-200 rounded-lg p-3 bg-white hover:bg-gray-50 transition"
@@ -1674,12 +1535,12 @@ export default function SerialScanningPage() {
                           {item.kategori}
                         </span>
                       </div>
-                      {item.brand && item.brand !== "N/A" && (
-                        <div className="flex justify-between">
-                          <span className="font-medium">Brand:</span>
-                          <span className="text-blue-600">{item.brand}</span>
-                        </div>
-                      )}
+                      <div className="flex justify-between">
+                        <span className="font-medium">Brand:</span>
+                        <span className="text-blue-600 font-medium">
+                          {item.brand || "N/A"}
+                        </span>
+                      </div>
                       <div className="flex justify-between">
                         <span className="font-medium">Confidence:</span>
                         <span className="font-bold text-green-600">
@@ -1688,23 +1549,19 @@ export default function SerialScanningPage() {
                       </div>
                       <div className="flex justify-between">
                         <span className="font-medium">Location:</span>
-                        {item.lokasi ? (
+                        {item.lokasiLabel || item.lokasi ? (
                           <span className="text-gray-800 text-right max-w-[120px] truncate">
-                            {item.lokasi}
+                            {item.lokasiLabel || item.lokasi}
                           </span>
                         ) : (
-                          <span className="text-orange-600 text-xs">
-                            Not selected
-                          </span>
+                          <button
+                            onClick={() => handleSetLocationForItem(item)}
+                            className="text-xs text-orange-600 hover:text-orange-700 font-medium flex items-center"
+                          >
+                            <MapPin className="w-3 h-3 mr-1" />
+                            Set Location
+                          </button>
                         )}
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium">
-                          {item.nomorSeri ? "Serial Number:" : "Barcode:"}
-                        </span>
-                        <span className="font-mono text-blue-600 text-xs max-w-[100px] truncate">
-                          {item.nomorSeri || item.barcode}
-                        </span>
                       </div>
                       <div className="flex justify-between text-gray-400">
                         <span>{item.tanggal}</span>
@@ -1713,14 +1570,6 @@ export default function SerialScanningPage() {
                     </div>
 
                     <div className="flex space-x-2 mt-3 pt-2 border-t border-gray-100">
-                      <button
-                        onClick={() => handleOpenLocationModal(item)}
-                        className="flex-1 flex items-center justify-center px-2 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition"
-                      >
-                        <MapPin className="w-3 h-3 mr-1" />
-                        Location
-                      </button>
-
                       {item.status === "Checked" && item.lokasi && (
                         <button
                           onClick={() => handleSubmitSingle(item)}
