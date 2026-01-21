@@ -22,6 +22,7 @@ import {
   Trash2,
   Loader2,
   Hash,
+  Info,
   Barcode,
 } from "lucide-react";
 import Swal from "sweetalert2";
@@ -42,8 +43,6 @@ export default function SerialScanningPage() {
   const [locations, setLocations] = useState([]);
   const [filteredLocations, setFilteredLocations] = useState([]);
   const [locationSearch, setLocationSearch] = useState("");
-  
-  // State untuk scanning serial
   const [isScanningSerial, setIsScanningSerial] = useState(false);
   const [selectedDeviceForSerial, setSelectedDeviceForSerial] = useState(null);
   const [serialScanResult, setSerialScanResult] = useState(null);
@@ -57,7 +56,6 @@ export default function SerialScanningPage() {
   // API Base URL
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
 
-  // Load riwayat dari localStorage saat komponen mount
   useEffect(() => {
     const savedHistory = localStorage.getItem("scanCheckHistory");
     if (savedHistory) {
@@ -65,16 +63,11 @@ export default function SerialScanningPage() {
     }
   }, []);
 
-  // Simpan riwayat ke localStorage setiap kali ada perubahan
   useEffect(() => {
     if (checkHistory.length > 0) {
       localStorage.setItem("scanCheckHistory", JSON.stringify(checkHistory));
     }
   }, [checkHistory]);
-
-  // ============================================
-  // FUNGSI UNTUK MENGAMBIL LOKASI DARI DATABASE
-  // ============================================
 
   const fetchLocations = async (searchTerm = "") => {
     try {
@@ -227,7 +220,7 @@ export default function SerialScanningPage() {
             kategori: item.category,
             lokasi: item.location || "",
             lokasiLabel: "",
-            nomorSeri: item.serial_number || "", // Kosong dulu, akan diisi nanti
+            nomorSeri: item.serial_number || "",
             brand: item.brand,
             confidence: item.confidence,
             confidencePercent: (item.confidence * 100).toFixed(1),
@@ -243,20 +236,18 @@ export default function SerialScanningPage() {
             }),
             resultImageUrl: result.result_image_url,
             originalImageUrl: result.original_image_url,
-            needsSerialScan: true // Flag untuk scanning serial
+            needsSerialScan: true 
           };
 
           return scanData;
         });
 
-        // Tambahkan ke history
         detectedItems.forEach((item) => updateCheckHistory(item));
 
         if (detectedItems.length > 0) {
           setScanResult(detectedItems[0]);
         }
 
-        // Tampilkan dialog untuk pilihan scanning serial
         Swal.fire({
           title: "Device Detection Complete!",
           html: `
@@ -336,7 +327,6 @@ export default function SerialScanningPage() {
   // ============================================
   // FUNGSI SCANNING SERIAL NUMBER
   // ============================================
-
   const showDeviceSelectionForSerial = (devices) => {
     const deviceOptions = devices.map(device => 
       `<option value="${device.id}">${device.jenisAset} (${device.brand}) - ${device.id}</option>`
@@ -420,29 +410,118 @@ export default function SerialScanningPage() {
     }
   };
 
-  const handleSerialCapture = async () => {
-    if (!serialVideoRef.current) {
-      Swal.fire({
-        title: "Camera Error",
-        text: "Serial scan camera not available.",
-        icon: "error",
-        confirmButtonText: "OK",
+const handleSerialCapture = async () => {
+  if (!serialVideoRef.current) return;
+
+  setIsDetectingSerial(true);
+  setSerialScanResult("loading");
+
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = serialVideoRef.current.videoWidth;
+    canvas.height = serialVideoRef.current.videoHeight;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(serialVideoRef.current, 0, 0, canvas.width, canvas.height);
+
+    const imageData = canvas.toDataURL("image/jpeg", 1.0); // Kualitas maksimal
+
+    // 1. Coba gunakan advanced OCR terlebih dahulu
+    const advancedResult = await extractSerialAdvanced(imageData);
+    
+    if (advancedResult && advancedResult.serialNumber) {
+      // Advanced OCR berhasil
+      const detection = {
+        detected_text: advancedResult.serialNumber,
+        confidence: advancedResult.confidence,
+        brand_info: "",
+        extracted_details: {
+          method: advancedResult.method,
+          original_text: advancedResult.originalText
+        }
+      };
+      
+      // Extract brand dari device yang sudah terdeteksi
+      let extractedBrand = selectedDeviceForSerial.brand;
+      
+      // Update device dengan hasil yang lebih akurat
+      const updatedDevice = {
+        ...selectedDeviceForSerial,
+        nomorSeri: advancedResult.serialNumber,
+        brand: extractedBrand,
+        brandDetails: "",
+        status: "serial_scanned",
+        message: `Serial number detected: ${advancedResult.serialNumber}`,
+        confidencePercent: (advancedResult.confidence * 100).toFixed(1),
+        serialConfidence: advancedResult.confidence,
+        extractionMethod: advancedResult.method,
+        extractedDetails: {
+          method: advancedResult.method,
+          original_text: advancedResult.originalText
+        }
+      };
+      
+      // Update history
+      updateCheckHistory(updatedDevice);
+      
+      setSerialScanResult({
+        status: "success",
+        serialNumber: advancedResult.serialNumber,
+        confidence: advancedResult.confidence,
+        brand: extractedBrand,
+        brandDetails: "",
+        device: selectedDeviceForSerial.jenisAset,
+        method: advancedResult.method
       });
-      return;
-    }
 
-    setIsDetectingSerial(true);
-    setSerialScanResult("loading");
-
-    try {
-      const canvas = document.createElement("canvas");
-      canvas.width = serialVideoRef.current.videoWidth;
-      canvas.height = serialVideoRef.current.videoHeight;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(serialVideoRef.current, 0, 0, canvas.width, canvas.height);
-
-      const imageData = canvas.toDataURL("image/jpeg", 0.9); // Kualitas tinggi untuk OCR
-
+      // Tampilkan modal dengan hasil advanced OCR
+      Swal.fire({
+        title: "Serial Number Detected!",
+        html: `
+          <div class="text-center">
+            <Hash className="w-12 h-12 text-green-500 mx-auto mb-3" />
+            <p class="text-lg font-semibold">✓ Advanced Serial Detection</p>
+            <div class="bg-gray-50 p-4 rounded-lg mt-3 space-y-2">
+              <div class="text-left">
+                <p class="text-sm text-gray-600"><strong>Device:</strong> ${selectedDeviceForSerial.jenisAset}</p>
+                <p class="text-sm text-gray-600"><strong>Brand:</strong> ${extractedBrand}</p>
+                <p class="text-sm text-gray-600"><strong>Method:</strong> ${advancedResult.method}</p>
+              </div>
+              <div class="my-3">
+                <p class="text-xs text-gray-500 mb-1">Extracted Serial Number:</p>
+                <p class="text-2xl font-mono text-blue-600 bg-white p-3 rounded border-2 border-blue-300">
+                  ${advancedResult.serialNumber}
+                </p>
+              </div>
+              <div class="text-sm text-gray-500">
+                <p>Confidence: ${(advancedResult.confidence * 100).toFixed(1)}%</p>
+                ${advancedResult.originalText ? 
+                  `<p class="mt-2 text-xs text-gray-600"><strong>Original Text:</strong> ${advancedResult.originalText}</p>` : ''}
+              </div>
+            </div>
+          </div>
+        `,
+        icon: "success",
+        showCancelButton: true,
+        confirmButtonText: "Scan Another Device",
+        cancelButtonText: "Done",
+        customClass: {
+          popup: "font-poppins rounded-xl",
+          title: "text-lg font-semibold",
+          confirmButton: "px-6 py-2 text-sm font-medium rounded-lg bg-blue-600 hover:bg-blue-700",
+          cancelButton: "px-6 py-2 text-sm font-medium rounded-lg bg-green-600 hover:bg-green-700",
+        },
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Reset untuk scanning serial lagi
+          setSelectedDeviceForSerial(null);
+          setSerialScanResult(null);
+        } else {
+          setIsScanningSerial(false);
+        }
+      });
+      
+    } else {
+      // 2. Fallback ke metode lama jika advanced OCR gagal
       const response = await fetch(`${API_BASE_URL}/api/serial/detect/camera`, {
         method: "POST",
         headers: {
@@ -458,17 +537,36 @@ export default function SerialScanningPage() {
         const validSerials = result.serial_detections.filter(s => s.is_valid);
         
         if (validSerials.length > 0) {
-          // Ambil serial pertama yang valid
-          const detectedSerial = validSerials[0].detected_text;
+          // Ambil deteksi dengan confidence tertinggi
+          const detection = validSerials.sort((a, b) => b.confidence - a.confidence)[0];
+          const detectedSerial = detection.detected_text;
+          const brandInfo = detection.brand_info || "";
           
-          // Update device dengan serial number
+          // Extract brand dari brand_info jika ada
+          let extractedBrand = selectedDeviceForSerial.brand;
+          if (brandInfo) {
+            // Cari brand dari brand_info
+            const brands = ["ANVIZ", "DELL", "HP", "LENOVO", "ASUS", "ACER", "SAMSUNG"];
+            for (const brand of brands) {
+              if (brandInfo.toUpperCase().includes(brand)) {
+                extractedBrand = brand;
+                break;
+              }
+            }
+          }
+          
+          // Update device dengan serial number dan brand yang diekstrak
           const updatedDevice = {
             ...selectedDeviceForSerial,
             nomorSeri: detectedSerial,
+            brand: extractedBrand,
+            brandDetails: brandInfo,
             status: "serial_scanned",
             message: `Serial number detected: ${detectedSerial}`,
-            confidencePercent: (validSerials[0].confidence * 100).toFixed(1),
-            serialConfidence: validSerials[0].confidence
+            confidencePercent: (detection.confidence * 100).toFixed(1),
+            serialConfidence: detection.confidence,
+            extractedDetails: detection.extracted_details || {},
+            method: "legacy"
           };
           
           // Update history
@@ -477,20 +575,35 @@ export default function SerialScanningPage() {
           setSerialScanResult({
             status: "success",
             serialNumber: detectedSerial,
-            confidence: validSerials[0].confidence,
+            confidence: detection.confidence,
+            brand: extractedBrand,
+            brandDetails: brandInfo,
             device: selectedDeviceForSerial.jenisAset
           });
 
+          // Tampilkan modal dengan detail yang diekstrak
           Swal.fire({
             title: "Serial Number Detected!",
             html: `
               <div class="text-center">
                 <Hash className="w-12 h-12 text-green-500 mx-auto mb-3" />
                 <p class="text-lg font-semibold">Serial Number Found</p>
-                <div class="bg-gray-50 p-4 rounded-lg mt-3">
-                  <p class="text-sm text-gray-600"><strong>Device:</strong> ${selectedDeviceForSerial.jenisAset}</p>
-                  <p class="text-2xl font-mono text-blue-600 my-2">${detectedSerial}</p>
-                  <p class="text-sm text-gray-500">Confidence: ${(validSerials[0].confidence * 100).toFixed(1)}%</p>
+                <div class="bg-gray-50 p-4 rounded-lg mt-3 space-y-2">
+                  <div class="text-left">
+                    <p class="text-sm text-gray-600"><strong>Device:</strong> ${selectedDeviceForSerial.jenisAset}</p>
+                    <p class="text-sm text-gray-600"><strong>Extracted Brand:</strong> ${extractedBrand}</p>
+                    ${brandInfo ? `<p class="text-sm text-gray-600"><strong>Model Info:</strong> ${brandInfo}</p>` : ''}
+                    <p class="text-xs text-yellow-600 mt-1"><i>Using legacy detection method</i></p>
+                  </div>
+                  <div class="my-3">
+                    <p class="text-xs text-gray-500 mb-1">Serial Number:</p>
+                    <p class="text-2xl font-mono text-blue-600 bg-white p-2 rounded border">${detectedSerial}</p>
+                  </div>
+                  <div class="text-sm text-gray-500">
+                    <p>Confidence: ${(detection.confidence * 100).toFixed(1)}%</p>
+                    ${detection.extracted_details?.brand_model ? 
+                      `<p class="mt-1 text-xs">Additional Info: ${detection.extracted_details.brand_model}</p>` : ''}
+                  </div>
                 </div>
               </div>
             `,
@@ -500,7 +613,7 @@ export default function SerialScanningPage() {
             cancelButtonText: "Done",
             customClass: {
               popup: "font-poppins rounded-xl",
-                  title: "text-lg font-semibold",
+              title: "text-lg font-semibold",
               confirmButton: "px-6 py-2 text-sm font-medium rounded-lg bg-blue-600 hover:bg-blue-700",
               cancelButton: "px-6 py-2 text-sm font-medium rounded-lg bg-green-600 hover:bg-green-700",
             },
@@ -522,9 +635,29 @@ export default function SerialScanningPage() {
 
           Swal.fire({
             title: "No Serial Number Detected",
-            text: "Please position the camera closer to the serial number sticker and ensure good lighting.",
+            html: `
+              <div class="text-center">
+                <AlertCircle className="w-12 h-12 text-yellow-500 mx-auto mb-3" />
+                <p class="text-lg font-semibold">Try Advanced Method?</p>
+                <p class="text-sm text-gray-600 mt-2">
+                  The system couldn't detect a valid serial number. Would you like to try with enhanced image processing?
+                </p>
+              </div>
+            `,
             icon: "info",
-            confirmButtonText: "Try Again",
+            showCancelButton: true,
+            confirmButtonText: "Try Enhanced Processing",
+            cancelButtonText: "Try Again",
+            customClass: {
+              popup: "font-poppins rounded-xl",
+              confirmButton: "px-6 py-2 text-sm font-medium rounded-lg bg-purple-600 hover:bg-purple-700",
+              cancelButton: "px-6 py-2 text-sm font-medium rounded-lg bg-gray-600 hover:bg-gray-700",
+            },
+          }).then((enhancedResult) => {
+            if (enhancedResult.isConfirmed) {
+              // Coba lagi dengan manual processing
+              handleManualImageProcessing(imageData);
+            }
           });
         }
       } else {
@@ -540,23 +673,140 @@ export default function SerialScanningPage() {
           confirmButtonText: "Try Again",
         });
       }
-    } catch (error) {
-      console.error("Serial detection error:", error);
-      setSerialScanResult({
-        status: "error",
-        message: "Failed to process serial image."
-      });
+    }
+  } catch (error) {
+    console.error("Serial detection error:", error);
+    setSerialScanResult({
+      status: "error",
+      message: "Failed to process serial image."
+    });
 
+    Swal.fire({
+      title: "Serial Scan Error",
+      text: "Please check if the backend server is running.",
+      icon: "error",
+      confirmButtonText: "OK",
+    });
+  } finally {
+    setIsDetectingSerial(false);
+  }
+};
+
+// Fungsi untuk manual image processing
+const handleManualImageProcessing = async (imageData) => {
+  setIsDetectingSerial(true);
+  
+  try {
+    // Kirim ke endpoint processing manual
+    const response = await fetch(`${API_BASE_URL}/api/ocr/process-manual`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ 
+        image_data: imageData,
+        device_type: selectedDeviceForSerial?.jenisAset || ""
+      }),
+    });
+
+    const result = await response.json();
+    
+    if (result.success && result.serial_number) {
+      // Update dengan hasil manual processing
+      const updatedDevice = {
+        ...selectedDeviceForSerial,
+        nomorSeri: result.serial_number,
+        status: "serial_scanned",
+        message: `Serial number detected via manual processing: ${result.serial_number}`,
+        confidencePercent: result.confidence ? (result.confidence * 100).toFixed(1) : "N/A",
+        extractionMethod: "manual_processing",
+        extractedDetails: {
+          method: "manual",
+          notes: result.notes || ""
+        }
+      };
+      
+      updateCheckHistory(updatedDevice);
+      
       Swal.fire({
-        title: "Serial Scan Error",
-        text: "Please check if the backend server is running.",
+        title: "Manual Processing Successful!",
+        html: `
+          <div class="text-center">
+            <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+            <p class="text-lg font-semibold">Serial Number Found via Manual Processing</p>
+            <div class="my-3">
+              <p class="text-2xl font-mono text-blue-600">${result.serial_number}</p>
+            </div>
+            ${result.notes ? `<p class="text-sm text-gray-600">${result.notes}</p>` : ''}
+          </div>
+        `,
+        icon: "success",
+        confirmButtonText: "OK",
+      }).then(() => {
+        setIsScanningSerial(false);
+      });
+    } else {
+      Swal.fire({
+        title: "Processing Failed",
+        text: "Could not extract serial number even with manual processing.",
         icon: "error",
         confirmButtonText: "OK",
       });
-    } finally {
-      setIsDetectingSerial(false);
     }
-  };
+  } catch (error) {
+    console.error("Manual processing error:", error);
+    Swal.fire({
+      title: "Error",
+      text: "Manual processing failed. Please try capturing again.",
+      icon: "error",
+      confirmButtonText: "OK",
+    });
+  } finally {
+    setIsDetectingSerial(false);
+  }
+};
+
+// Fungsi extractSerialAdvanced
+const extractSerialAdvanced = async (imageData) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/ocr/extract-serial`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ image_data: imageData }),
+    });
+
+    const result = await response.json();
+    
+    if (result.success && result.extracted_serial) {
+      // Validasi lebih lanjut
+      const validationResponse = await fetch(`${API_BASE_URL}/api/ocr/validate-serial`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ serial_text: result.extracted_serial }),
+      });
+      
+      const validationResult = await validationResponse.json();
+      
+      if (validationResult.success) {
+        return {
+          serialNumber: validationResult.validated_serial,
+          confidence: result.confidence || 0.8,
+          method: result.method || "advanced_ocr",
+          originalText: validationResult.original_text || result.extracted_serial
+        };
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("Advanced serial extraction error:", error);
+    return null;
+  }
+};
 
   const cancelSerialScanning = () => {
     // Stop camera stream
@@ -570,9 +820,9 @@ export default function SerialScanningPage() {
     setSerialScanResult(null);
   };
 
-  // ============================================
-  // FUNGSI LAINNYA (tetap sama)
-  // ============================================
+  const handleScanSerialFromHistory = (item) => {
+    startSerialScanning(item);
+  };
 
   const handleManualCheck = (e) => {
     e.preventDefault();
@@ -638,145 +888,141 @@ export default function SerialScanningPage() {
     }, 1500);
   };
 
-    // ============================================
+  // ============================================
   // FUNGSI UNTUK MENGATUR LOKASI
   // ============================================
 
-// ============================================
-// FUNGSI UNTUK MENGATUR LOKASI
-// ============================================
+  const handleSetLocationForAll = async () => {
+    if (validCheckHistory.length === 0) {
+      Swal.fire({
+        title: "No Data",
+        text: "No items to set location for.",
+        icon: "info",
+        confirmButtonText: "OK",
+      });
+      return;
+    }
 
-const handleSetLocationForAll = async () => {
-  if (validCheckHistory.length === 0) {
-    Swal.fire({
-      title: "No Data",
-      text: "No items to set location for.",
-      icon: "info",
-      confirmButtonText: "OK",
-    });
-    return;
-  }
-
-  const { value: locationValue } = await Swal.fire({
-    title: "Set Location Scanning for All Items",
-    html: `
-      <div class="text-left">
-        <div class="mb-3">
-          <label class="block text-sm font-medium text-gray-700 mb-1">
-            Select Location (Type to search):
-          </label>
-          <div class="relative">
-            <input 
-              id="locationSearchInput"
-              type="text" 
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm mb-2"
-              placeholder="Type to search locations..."
-              value="${locationSearch}"
-            />
-            <div class="absolute right-2 top-2">
-              <Search className="w-4 h-4 text-gray-400" />
+    const { value: locationValue } = await Swal.fire({
+      title: "Set Location Scanning for All Items",
+      html: `
+        <div class="text-left">
+          <div class="mb-3">
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Select Location (Type to search):
+            </label>
+            <div class="relative">
+              <input 
+                id="locationSearchInput"
+                type="text" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm mb-2"
+                placeholder="Type to search locations..."
+                value="${locationSearch}"
+              />
+              <div class="absolute right-2 top-2">
+                <Search className="w-4 h-4 text-gray-400" />
+              </div>
             </div>
+            <select 
+              id="locationSelectAll"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm h-48 overflow-y-auto"
+              size="8"
+            >
+            
+              ${filteredLocations.map(loc => 
+                `<option value="${loc.value}" ${selectedLocation === loc.value ? 'selected' : ''}>
+                  ${loc.label}
+                </option>`
+              ).join('')}
+              ${filteredLocations.length === 0 ? 
+                '<option value="" disabled>No locations found</option>' : 
+                ''}
+            </select>
           </div>
-          <select 
-            id="locationSelectAll"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm h-48 overflow-y-auto"
-            size="8"
-          >
+          <p class="text-xs text-gray-500">
+            This will set the same location for all ${validCheckHistory.length} items.
+          </p>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: "Set Location",
+      cancelButtonText: "Cancel",
+      customClass: {
+        title: "text-lg font-semibold", 
+        popup: "font-poppins rounded-xl",
+        confirmButton: "px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 hover:bg-blue-700",
+        cancelButton: "px-4 py-2 text-sm font-medium rounded-lg bg-gray-600 hover:bg-gray-700",
+      },
+      didOpen: () => {
+        const searchInput = document.getElementById('locationSearchInput');
+        const select = document.getElementById('locationSelectAll');
+        
+        searchInput.focus();
+        
+        searchInput.addEventListener('input', (e) => {
+          const searchTerm = e.target.value.toLowerCase();
+          setLocationSearch(searchTerm);
           
-            ${filteredLocations.map(loc => 
-              `<option value="${loc.value}" ${selectedLocation === loc.value ? 'selected' : ''}>
-                ${loc.label}
-              </option>`
+          const filtered = locations.filter(loc => 
+            loc.label.toLowerCase().includes(searchTerm) ||
+            loc.fullData.area.toLowerCase().includes(searchTerm) ||
+            loc.value.toLowerCase().includes(searchTerm)
+          );
+          
+          setFilteredLocations(filtered);
+          
+          // Clear and update dropdown options
+          select.innerHTML = `
+            <option value="">-- Select Location --</option>
+            ${filtered.map(loc => 
+              `<option value="${loc.value}">${loc.label}</option>`
             ).join('')}
-            ${filteredLocations.length === 0 ? 
+            ${filtered.length === 0 ? 
               '<option value="" disabled>No locations found</option>' : 
               ''}
-          </select>
-        </div>
-        <p class="text-xs text-gray-500">
-          This will set the same location for all ${validCheckHistory.length} items.
-        </p>
-      </div>
-    `,
-    showCancelButton: true,
-    confirmButtonText: "Set Location",
-    cancelButtonText: "Cancel",
-    customClass: {
-      title: "text-lg font-semibold", 
-      popup: "font-poppins rounded-xl",
-      confirmButton: "px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 hover:bg-blue-700",
-      cancelButton: "px-4 py-2 text-sm font-medium rounded-lg bg-gray-600 hover:bg-gray-700",
-    },
-    didOpen: () => {
-      const searchInput = document.getElementById('locationSearchInput');
-      const select = document.getElementById('locationSelectAll');
-      
-      searchInput.focus();
-      
-      searchInput.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase();
-        setLocationSearch(searchTerm);
+          `;
+        });
+      },
+      preConfirm: () => {
+        const select = document.getElementById('locationSelectAll');
+        const locationValue = select.value;
         
-        const filtered = locations.filter(loc => 
-          loc.label.toLowerCase().includes(searchTerm) ||
-          loc.fullData.area.toLowerCase().includes(searchTerm) ||
-          loc.value.toLowerCase().includes(searchTerm)
-        );
+        if (!locationValue) {
+          Swal.showValidationMessage("Please select a location");
+          return false;
+        }
         
-        setFilteredLocations(filtered);
-        
-        // Clear and update dropdown options
-        select.innerHTML = `
-          <option value="">-- Select Location --</option>
-          ${filtered.map(loc => 
-            `<option value="${loc.value}">${loc.label}</option>`
-          ).join('')}
-          ${filtered.length === 0 ? 
-            '<option value="" disabled>No locations found</option>' : 
-            ''}
-        `;
-      });
-    },
-    preConfirm: () => {
-      const select = document.getElementById('locationSelectAll');
-      const locationValue = select.value;
-      
-      if (!locationValue) {
-        Swal.showValidationMessage("Please select a location");
-        return false;
-      }
-      
-      const selected = locations.find(loc => loc.value === locationValue);
-      return { value: locationValue, label: selected.label };
-    },
-  });
-
-  if (locationValue) {
-    // Update semua item dengan lokasi yang dipilih
-    setCheckHistory(prev => prev.map(item => {
-      if (item.id.includes("NO-DETECTION") || item.id.includes("ERROR") || item.id.includes("INVALID")) {
-        return item;
-      }
-      return {
-        ...item,
-        lokasi: locationValue.value,
-        lokasiLabel: locationValue.label,
-        status: "Checked"
-      };
-    }));
-
-    Swal.fire({
-      title: "Location Set!",
-      text: `Location set for ${validCheckHistory.length} items.`,
-      icon: "success",
-      confirmButtonText: "OK",
+        const selected = locations.find(loc => loc.value === locationValue);
+        return { value: locationValue, label: selected.label };
+      },
     });
-  }
-};
+
+    if (locationValue) {
+      // Update semua item dengan lokasi yang dipilih
+      setCheckHistory(prev => prev.map(item => {
+        if (item.id.includes("NO-DETECTION") || item.id.includes("ERROR") || item.id.includes("INVALID")) {
+          return item;
+        }
+        return {
+          ...item,
+          lokasi: locationValue.value,
+          lokasiLabel: locationValue.label,
+          status: "Checked"
+        };
+      }));
+
+      Swal.fire({
+        title: "Location Set!",
+        text: `Location set for ${validCheckHistory.length} items.`,
+        icon: "success",
+        confirmButtonText: "OK",
+      });
+    }
+  };
 
 const handleSetLocationForItem = async (item) => {
   const { value: locationValue } = await Swal.fire({
-    title: "Set Location for Item",
+    title: "<div class='text-lg'>Set Location for Item</div>",
     html: `
       <div class="text-left">
         <div class="mb-2">
@@ -822,6 +1068,7 @@ const handleSetLocationForItem = async (item) => {
     cancelButtonText: "Cancel",
     customClass: {
       popup: "font-poppins rounded-xl",
+      title: "text-lg font-semibold mb-2",
       confirmButton: "px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 hover:bg-blue-700",
       cancelButton: "px-4 py-2 text-sm font-medium rounded-lg bg-gray-600 hover:bg-gray-700",
     },
@@ -890,10 +1137,6 @@ const handleSetLocationForItem = async (item) => {
     });
   }
 };
-
-  // ============================================
-  // FUNGSI SUBMIT DATA
-  // ============================================
 
   const handleSubmitSingle = async (item) => {
     setIsSubmitting(true);
@@ -998,7 +1241,7 @@ const handleSetLocationForItem = async (item) => {
         },
         body: JSON.stringify({
           asset_ids: itemsToSubmit.map(item => item.id),
-          location_code: itemsToSubmit[0].lokasi, // Assuming all have same location
+          location_code: itemsToSubmit[0].lokasi, 
           scanned_by: "Scanner User",
           notes: `Batch submission from scanning page - ${itemsToSubmit.length} items`
         }),
@@ -1050,10 +1293,6 @@ const handleSetLocationForItem = async (item) => {
       setIsSubmittingAll(false);
     }
   };
-
-  // ============================================
-  // FUNGSI DELETE DATA
-  // ============================================
 
   const handleDeleteData = (item) => {
     Swal.fire({
@@ -1193,7 +1432,6 @@ const handleSetLocationForItem = async (item) => {
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold text-gray-800 flex items-center">
-          
                   Serial Number Scanning
                 </h2>
                 <button
@@ -1285,7 +1523,7 @@ const handleSetLocationForItem = async (item) => {
             SCAN IT DEVICES & MATERIALS
           </h1>
           <p className="text-blue-100 text-xs sm:text-sm mt-1 sm:mt-2">
-            Scan IT devices or materials, then scan serial numbers, select locations, and submit for verification.
+            Scan IT devices or materials, then scan serial numbers or barcodes, select locations, and submit for verification.
           </p>
         </div>
 
@@ -1360,7 +1598,7 @@ const handleSetLocationForItem = async (item) => {
           {checkHistory.some(item => item.status === "device_detected" || item.needsSerialScan) && (
             <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
               <p className="text-sm text-yellow-700 flex items-center">
-                <Hash className="w-4 h-4 mr-2" />
+                <Info className="w-4 h-4 mr-2" />
                 Some devices need serial number scanning. Click "Capture & Detect" to start serial scan.
               </p>
             </div>
@@ -1373,7 +1611,7 @@ const handleSetLocationForItem = async (item) => {
           <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200">
             <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center">
               <Clipboard className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-gray-600" />
-              Manual Input (Simulation)
+              Manual Input 
             </h2>
             <form
               onSubmit={handleManualCheck}
@@ -1381,7 +1619,7 @@ const handleSetLocationForItem = async (item) => {
             >
               <div>
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-                  Enter Serial Number or Barcode (Simulation)
+                  Enter Serial Number or Barcode 
                 </label>
                 <input
                   type="text"
@@ -1398,7 +1636,7 @@ const handleSetLocationForItem = async (item) => {
                 disabled={scanResult === "loading" || isSubmitting}
               >
                 <Search className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                Check Validity (Simulate)
+                Check Validity
               </button>
             </form>
           </div>
@@ -1488,19 +1726,19 @@ const handleSetLocationForItem = async (item) => {
                     <span className="font-medium text-gray-600">Category:</span>
                     <span className="flex items-center">
                       {getCategoryIcon(scanResult.kategori)}
-                      <span className="ml-1">{scanResult.kategori}</span>
+                      <span className="ml-1 text-gray-800">{scanResult.kategori}</span>
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="font-medium text-gray-600">Brand:</span>
-                    <span className="text-blue-600 font-medium">
+                    <span className="text-gray-800 font-medium">
                       {scanResult.brand || "N/A"}
                     </span>
                   </div>
                   {scanResult.nomorSeri && (
                     <div className="flex justify-between">
                       <span className="font-medium text-gray-600">Serial Number:</span>
-                      <span className="font-mono text-green-600 font-medium">
+                      <span className="font-mono text-gray-800 font-medium">
                         {scanResult.nomorSeri}
                       </span>
                     </div>
@@ -1510,7 +1748,7 @@ const handleSetLocationForItem = async (item) => {
                       <span className="font-medium text-gray-600">
                         Confidence:
                       </span>
-                      <span className="font-bold text-green-600">
+                      <span className="font-bold text-gray-800">
                         {scanResult.confidencePercent}%
                       </span>
                     </div>
@@ -1545,16 +1783,19 @@ const handleSetLocationForItem = async (item) => {
                 <Calendar className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-gray-600" />
                 Recent Detection History
               </h2>
-              <div className="ml-3 flex gap-2">
-                <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">
-                  {validCheckHistory.filter(item => item.status === "device_detected").length} devices
-                </span>
-                <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
-                  {validCheckHistory.filter(item => item.status === "serial_scanned").length} serials
-                </span>
-              </div>
+
             </div>
             <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-2">
+                 <div className="flex items-center gap-2">
+                <span className="text-xs sm:text-sm text-gray-500">
+                  {validCheckHistory.length} items
+                </span>
+                {readyToSubmitCount > 0 && (
+                  <span className="ml-2 px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
+                    {readyToSubmitCount} ready
+                  </span>
+                )}
+              </div>
               <div className="flex gap-2">
                 {/* Tombol Set Location for All */}
                 <button
@@ -1568,7 +1809,7 @@ const handleSetLocationForItem = async (item) => {
                   ) : (
                     <MapPin className="w-3 h-3 mr-1" />
                   )}
-                  Set Location for All
+                  Set Location Scanning for All 
                 </button>
 
                 {/* Tombol Delete All */}
@@ -1581,17 +1822,6 @@ const handleSetLocationForItem = async (item) => {
                     <Trash2 className="w-3 h-3 mr-1" />
                     Delete All
                   </button>
-                )}
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <span className="text-xs sm:text-sm text-gray-500">
-                  {validCheckHistory.length} items
-                </span>
-                {readyToSubmitCount > 0 && (
-                  <span className="ml-2 px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
-                    {readyToSubmitCount} ready
-                  </span>
                 )}
               </div>
             </div>
@@ -1636,10 +1866,10 @@ const handleSetLocationForItem = async (item) => {
                         <td className="py-3 font-medium">
                           <div className="flex items-center">
                             {getCategoryIcon(item.kategori)}
-                            <span className="ml-2 text-sm">{item.id}</span>
+                            <span className="ml-2 text-sm text-gray-500">{item.id}</span>
                           </div>
                         </td>
-                        <td className="py-3 text-gray-600 text-sm">
+                        <td className="py-3 text-gray-500 text-sm">
                           {item.jenisAset}
                         </td>
                         <td className="py-3">
@@ -1653,8 +1883,8 @@ const handleSetLocationForItem = async (item) => {
                             {item.kategori}
                           </span>
                         </td>
-                        <td className="py-3 text-gray-600 text-sm">
-                          <span className="font-medium text-blue-600">
+                        <td className="py-3 text-gray-500 text-sm">
+                          <span className="font-medium text-gray-500">
                             {item.brand || "N/A"}
                           </span>
                         </td>
@@ -1671,19 +1901,23 @@ const handleSetLocationForItem = async (item) => {
                             {item.confidencePercent || "N/A"}%
                           </span>
                         </td>
-                        <td className="py-3 text-gray-600 text-sm">
+                        <td className="py-3 text-gray-500 text-sm">
                           {item.nomorSeri ? (
-                            <div className="font-mono text-green-600 text-xs">
+                            <div className="font-mono text-gray-500 text-xs">
                               {item.nomorSeri}
                             </div>
                           ) : (
-                            <div className="flex items-center">
-                              <Hash className="w-3 h-3 text-yellow-500 mr-1" />
-                              <span className="text-xs text-yellow-600">Not scanned</span>
-                            </div>
+                            <button
+                              onClick={() => handleScanSerialFromHistory(item)}
+                              className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center hover:underline cursor-pointer"
+                              title="Click to scan serial number"
+                            >
+                              <ScanLine className="w-3 h-3 mr-1" />
+                              <span>Not scanned</span>
+                            </button>
                           )}
                         </td>
-                        <td className="py-3 text-gray-600 text-sm">
+                        <td className="py-3 text-gray-500 text-sm">
                           {item.lokasiLabel || item.lokasi ? (
                             <div className="max-w-[120px] truncate" title={item.lokasiLabel || item.lokasi}>
                               {item.lokasiLabel || item.lokasi}
@@ -1691,7 +1925,7 @@ const handleSetLocationForItem = async (item) => {
                           ) : (
                             <button
                               onClick={() => handleSetLocationForItem(item)}
-                              className="text-xs text-orange-600 hover:text-orange-700 font-medium flex items-center"
+                              className="text-xs text-orange-600 hover:text-orange-700 font-medium flex items-center hover:underline"
                             >
                               <MapPin className="w-3 h-3 mr-1" />
                               Set Location
@@ -1699,21 +1933,18 @@ const handleSetLocationForItem = async (item) => {
                           )}
                         </td>
                         <td className="py-3">
-                          <div className="flex items-center">
-                            {getStatusIcon(item.status)}
-                            <span
-                              className={`px-2 py-1 text-xs rounded-full font-semibold border ml-1 ${getStatusColor(
-                                item.status
-                              )}`}
-                            >
-                              {getStatusText(item.status)}
-                            </span>
-                          </div>
+                          <span
+                            className={`px-2 py-1 text-xs rounded-full font-semibold border ${getStatusColor(
+                              item.status
+                            )}`}
+                          >
+                            {getStatusText(item.status)}
+                          </span>
                         </td>
-                        <td className="py-3 text-gray-600 text-sm">
+                        <td className="py-3 text-gray-500 text-sm">
                           {item.tanggal}
                         </td>
-                        <td className="py-3 text-gray-600 text-sm">
+                        <td className="py-3 text-gray-500 text-sm">
                           {item.waktu}
                         </td>
                         <td className="py-3">
@@ -1756,14 +1987,13 @@ const handleSetLocationForItem = async (item) => {
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex items-center">
                         {getCategoryIcon(item.kategori)}
-                        <div className="font-bold text-sm text-gray-700 ml-2">
+                        <div className="font-bold text-sm text-gray-800 ml-2">
                           {item.id}
                         </div>
                       </div>
                       <div className="flex items-center">
-                        {getStatusIcon(item.status)}
                         <span
-                          className={`px-2 py-1 text-xs rounded-full font-semibold border ml-1 ${getStatusColor(
+                          className={`px-2 py-1 text-xs rounded-full font-semibold border ${getStatusColor(
                             item.status
                           )}`}
                         >
@@ -1774,11 +2004,11 @@ const handleSetLocationForItem = async (item) => {
 
                     <div className="text-xs text-gray-600 space-y-1">
                       <div className="flex justify-between">
-                        <span className="font-medium">Type:</span>{" "}
-                        {item.jenisAset}
+                        <span className="font-medium text-gray-600">Type:</span>{" "}
+                        <span className="text-gray-500">{item.jenisAset}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="font-medium">Category:</span>
+                        <span className="font-medium text-gray-600">Category:</span>
                         <span
                           className={`px-1 rounded text-xs ${
                             item.kategori === "Perangkat"
@@ -1790,47 +2020,51 @@ const handleSetLocationForItem = async (item) => {
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="font-medium">Brand:</span>
-                        <span className="text-blue-600 font-medium">
+                        <span className="font-medium text-gray-600">Brand:</span>
+                        <span className="text-gray-500 font-medium">
                           {item.brand || "N/A"}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="font-medium">Confidence:</span>
-                        <span className="font-bold text-green-600">
+                        <span className="font-medium text-gray-600">Confidence:</span>
+                        <span className="font-bold text-gray-500">
                           {item.confidencePercent}%
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="font-medium">Serial:</span>
+                        <span className="font-medium text-gray-600">Serial:</span>
                         {item.nomorSeri ? (
-                          <span className="font-mono text-green-600 text-xs">
+                          <span className="font-mono text-gray-500 text-xs">
                             {item.nomorSeri}
                           </span>
                         ) : (
-                          <span className="text-xs text-yellow-600 flex items-center">
-                            <Hash className="w-3 h-3 mr-1" />
-                            Not scanned
-                          </span>
+                          <button
+                            onClick={() => handleScanSerialFromHistory(item)}
+                            className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center hover:underline cursor-pointer"
+                            title="Click to scan serial number"
+                          >
+                            <ScanLine className="w-3 h-3 mr-1" />
+                            <span>Not scanned</span>
+                          </button>
                         )}
                       </div>
                       <div className="flex justify-between">
-                        <span className="font-medium">Location:</span>
+                        <span className="font-medium text-gray-600">Location:</span>
                         {item.lokasiLabel || item.lokasi ? (
-                          <span className="text-gray-800 text-right max-w-[120px] truncate">
+                          <span className="text-gray-500 text-right max-w-[120px] truncate">
                             {item.lokasiLabel || item.lokasi}
                           </span>
                         ) : (
                           <button
                             onClick={() => handleSetLocationForItem(item)}
-                            className="text-xs text-orange-600 hover:text-orange-700 font-medium flex items-center"
+                            className="text-xs text-orange-600 hover:text-orange-700 font-medium flex items-center hover:underline"
                           >
                             <MapPin className="w-3 h-3 mr-1" />
                             Set Location
                           </button>
                         )}
                       </div>
-                      <div className="flex justify-between text-gray-400">
+                      <div className="flex justify-between text-gray-500">
                         <span>{item.tanggal}</span>
                         <span>{item.waktu}</span>
                       </div>
@@ -1866,7 +2100,7 @@ const handleSetLocationForItem = async (item) => {
                   <button
                     onClick={handleSubmitAll}
                     disabled={isSubmittingAll}
-                    className="w-full flex items-center justify-center px-3 sm:px-4 py-2 sm:py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-800 transition disabled:opacity-50 text-sm sm:text-base"
+                    className="w-full flex items-center justify-center px-3 sm:px-4 py-2 sm:py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-500 transition disabled:opacity-50 text-sm sm:text-base"
                   >
                     {isSubmittingAll ? (
                       <>
