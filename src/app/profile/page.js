@@ -18,12 +18,11 @@ import {
 import LayoutDashboard from "../components/LayoutDashboard";
 import Swal from "sweetalert2";
 import { useAuth } from "../context/AuthContext";
-
-const API_BASE_URL = "http://localhost:5001";
+import { API_ENDPOINTS } from '../../config/api';
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user } = useAuth(); // Hapus updateUser karena tidak ada
+  const { user } = useAuth(); 
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -104,7 +103,7 @@ export default function ProfilePage() {
       }
 
       // Kirim data ke backend
-      const response = await fetch(`${API_BASE_URL}/api/update-profile`, {
+      const response = await fetch(API_ENDPOINTS.UPDATE_PROFILE, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -208,15 +207,15 @@ export default function ProfilePage() {
         throw new Error("Authentication token not found");
       }
 
-      // Kirim request ganti password ke backend
-      const response = await fetch(`${API_BASE_URL}/api/change-password`, {
+      // Kirim request ganti password 
+     const response = await fetch(API_ENDPOINTS.CHANGE_PASSWORD, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          user_id: user.id, // Kirim user_id dari context
+          user_id: user.id,
           current_password: passwordData.current_password,
           new_password: passwordData.new_password,
         }),

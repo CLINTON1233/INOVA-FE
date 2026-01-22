@@ -5,9 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Swal from 'sweetalert2'
-
-// Gunakan URL langsung ke backend Flask
-const API_BASE_URL = 'http://localhost:5001'
+import { API_ENDPOINTS } from '../../config/api';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -68,7 +66,7 @@ export default function RegisterPage() {
     try {
       console.log('Sending registration data:', formData)
 
-      const response = await fetch(`${API_BASE_URL}/api/register`, {
+      const response = await fetch(API_ENDPOINTS.REGISTER, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

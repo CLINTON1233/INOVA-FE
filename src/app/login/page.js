@@ -6,9 +6,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Swal from 'sweetalert2'
 import { useAuth } from '../context/AuthContext'; 
-
-// URL backend - sesuaikan dengan environment
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'
+import { API_ENDPOINTS } from '../../config/api';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -79,7 +77,7 @@ const handleSubmit = async (e) => {
     })
 
     // Kirim request login ke backend
-    const response = await fetch(`${API_URL}/api/login`, {
+    const response = await fetch(API_ENDPOINTS.LOGIN, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -106,7 +104,7 @@ const handleSubmit = async (e) => {
       // Tutup loading SweetAlert
       Swal.close();
 
-      // Success Notification (SAMA PERSIS dengan profile page)
+      // Success Notification 
       await Swal.fire({
         title: 'Success!',
         text: `Login successful! Welcome back, ${result.user.name || result.user.username}!`,
@@ -132,8 +130,6 @@ const handleSubmit = async (e) => {
 
   } catch (error) {
     console.error('Login error:', error)
-    
-    // Tutup loading SweetAlert jika ada
     Swal.close();
     
     let errorMessage = 'Login failed. Please try again.'
@@ -148,7 +144,7 @@ const handleSubmit = async (e) => {
       errorMessage = error.message
     }
 
-    // Error Notification (dengan style yang sama)
+    // Error Notification 
     Swal.fire({
       title: 'Error',
       text: errorMessage,
