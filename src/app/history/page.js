@@ -39,6 +39,7 @@ import {
   History as HistoryIcon,
 } from "lucide-react";
 import LayoutDashboard from "../components/LayoutDashboard";
+import ProtectedPage from "../components/ProtectedPage";
 import Swal from "sweetalert2";
 
 export default function HistoryPage() {
@@ -501,6 +502,7 @@ export default function HistoryPage() {
   };
 
   return (
+    <ProtectedPage> {
     <LayoutDashboard activeMenu={4}>
       <div className="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-2 space-y-6">
         {/* Header */}
@@ -1057,5 +1059,6 @@ export default function HistoryPage() {
         </div>
       </div>
     </LayoutDashboard>
+    }</ProtectedPage>
   );
 }

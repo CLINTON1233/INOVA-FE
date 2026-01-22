@@ -30,6 +30,7 @@ import {
   List,
 } from "lucide-react";
 import LayoutDashboard from "../components/LayoutDashboard";
+import ProtectedPage from "../components/ProtectedPage";
 import Swal from "sweetalert2";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -985,6 +986,7 @@ export default function ReportsAnalyticsPage() {
   );
 
   return (
+    <ProtectedPage> {
     <LayoutDashboard activeMenu={5}>
       <div className="max-w-7xl mx-auto px-3 md:px-4 py-2 md:py-2 space-y-6">
         <div className="bg-gradient-to-r from-blue-600 to-blue-600 rounded-xl shadow-lg p-6 text-white">
@@ -1334,5 +1336,6 @@ export default function ReportsAnalyticsPage() {
         </div>
       </div>
     </LayoutDashboard>
+    }</ProtectedPage>
   );
 }

@@ -35,6 +35,7 @@ import {
 } from "recharts";
 import { useRouter } from "next/navigation";
 import LayoutDashboard from "../components/LayoutDashboard";
+import ProtectedPage from "../components/ProtectedPage";
 
 export default function DashboardPage() {
   // Statistik
@@ -203,6 +204,7 @@ export default function DashboardPage() {
   };
 
   return (
+    <ProtectedPage> {
     <LayoutDashboard>
       <div className="space-y-4 md:space-y-8">
         {/* Dashboard Header */}
@@ -676,5 +678,6 @@ export default function DashboardPage() {
         </div>
       </div>
     </LayoutDashboard>
+    }</ProtectedPage>
   );
 }

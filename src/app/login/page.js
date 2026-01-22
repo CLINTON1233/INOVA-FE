@@ -1,166 +1,172 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import Image from 'next/image'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import Swal from 'sweetalert2'
-import { useAuth } from '../context/AuthContext'; 
-import { API_ENDPOINTS } from '../../config/api';
+import { useState, useEffect } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import Swal from "sweetalert2";
+import { useAuth } from "../context/AuthContext";
+import { API_ENDPOINTS } from "../../config/api";
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  })
-  const [rememberMe, setRememberMe] = useState(false)
-  const [currentImage, setCurrentImage] = useState(0)
-  const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
-const { login } = useAuth();
+    email: "",
+    password: "",
+  });
+  const [rememberMe, setRememberMe] = useState(false);
+  const [currentImage, setCurrentImage] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const { login } = useAuth();
   // Carousel images
-  const images = ['/bg_seatrium 3.png', '/smoe_images2.png', '/offshore.jpg']
+  const images = ["/bg_seatrium 3.png", "/smoe_images2.png", "/offshore.jpg"];
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentImage((prev) => (prev + 1) % images.length)
-    }, 4000)
-    return () => clearInterval(interval)
-  }, [images.length])
+      setCurrentImage((prev) => (prev + 1) % images.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [images.length]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
+    const { name, value } = e.target;
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
-    }))
-  }
+      [name]: value,
+    }));
+  };
 
-const handleSubmit = async (e) => {
-  e.preventDefault()
-  setIsLoading(true)
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-  try {
-    // Validasi form
-    if (!formData.email || !formData.password) {
+    try {
+      // Validasi form
+      if (!formData.email || !formData.password) {
+        Swal.fire({
+          title: "Validation Error",
+          text: "Please fill in all required fields.",
+          icon: "error",
+          confirmButtonColor: "#1e40af",
+          background: "#ffffff",
+          color: "#333333",
+          customClass: {
+            popup: "rounded-xl font-poppins",
+            confirmButton: "px-4 py-2 text-sm font-medium rounded-lg",
+          },
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Show loading (sama seperti di profile page)
       Swal.fire({
-        title: 'Validation Error',
-        text: 'Please fill in all required fields.',
-        icon: 'error',
-        confirmButtonColor: '#1e40af',
-        background: '#ffffff',
-        color: '#333333',
+        title: "Authenticating...",
+        text: "Please wait while we verify your credentials.",
+        icon: "info",
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        background: "#ffffff",
+        color: "#333333",
         customClass: {
-          popup: 'rounded-xl font-poppins',
-          confirmButton: 'px-4 py-2 text-sm font-medium rounded-lg'
-        }
-      })
-      setIsLoading(false)
-      return
-    }
-
-    // Show loading (sama seperti di profile page)
-    Swal.fire({
-      title: 'Authenticating...',
-      text: 'Please wait while we verify your credentials.',
-      icon: 'info',
-      showConfirmButton: false,
-      allowOutsideClick: false,
-      background: '#ffffff',
-      color: '#333333',
-      customClass: {
-        popup: 'rounded-xl font-poppins'
-      },
-      didOpen: () => {
-        Swal.showLoading()
-      }
-    })
-
-    // Kirim request login ke backend
-    const response = await fetch(API_ENDPOINTS.LOGIN, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(formData)
-    })
-
-    const result = await response.json()
-
-    if (response.ok && result.success) {
-      // Simpan token dan user data
-      if (result.token) {
-        localStorage.setItem('auth_token', result.token);
-        localStorage.setItem('user_data', JSON.stringify(result.user));
-        
-        // Panggil login function dari context
-        login(result.user, result.token);
-        
-        if (rememberMe) {
-          localStorage.setItem('remember_me', 'true');
-        }
-      }
-
-      // Tutup loading SweetAlert
-      Swal.close();
-
-      // Success Notification 
-      await Swal.fire({
-        title: 'Success!',
-        text: `Login successful! Welcome back, ${result.user.name || result.user.username}!`,
-        icon: 'success',
-        confirmButtonColor: '#1e40af',
-        background: '#ffffff',
-        color: '#333333',
-        customClass: {
-          popup: 'rounded-xl font-poppins',
-          confirmButton: 'px-4 py-2 text-sm font-medium rounded-lg'
+          popup: "rounded-xl font-poppins",
         },
-        timer: 1500,
-        showConfirmButton: false
+        didOpen: () => {
+          Swal.showLoading();
+        },
       });
 
-      // Redirect ke dashboard
-      router.push('/dashboard');
-      
-    } else {
-      // Error dari backend
-      throw new Error(result.message || 'Login failed')
-    }
+      // Kirim request login ke backend
+      const response = await fetch(API_ENDPOINTS.LOGIN, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
 
-  } catch (error) {
-    console.error('Login error:', error)
-    Swal.close();
-    
-    let errorMessage = 'Login failed. Please try again.'
-    
-    if (error.message.includes('Invalid email') || error.message.includes('Invalid username')) {
-      errorMessage = 'Invalid email/username or password.'
-    } else if (error.message.includes('account is not active')) {
-      errorMessage = 'Your account is not active. Please contact administrator.'
-    } else if (error.message.includes('Network') || error.message.includes('fetch')) {
-      errorMessage = 'Cannot connect to server. Please check your connection.'
-    } else {
-      errorMessage = error.message
-    }
+      const result = await response.json();
 
-    // Error Notification 
-    Swal.fire({
-      title: 'Error',
-      text: errorMessage,
-      icon: 'error',
-      confirmButtonColor: '#1e40af',
-      background: '#ffffff',
-      color: '#333333',
-      customClass: {
-        popup: 'rounded-xl font-poppins',
-        confirmButton: 'px-4 py-2 text-sm font-medium rounded-lg'
+      if (response.ok && result.success) {
+        // Simpan token dan user data
+        if (result.token) {
+          localStorage.setItem("auth_token", result.token);
+          localStorage.setItem("user_data", JSON.stringify(result.user));
+          document.cookie = `auth_token=${result.token}; path=/; max-age=86400`; // 1 hari
+
+          login(result.user, result.token);
+
+          if (rememberMe) {
+            localStorage.setItem("remember_me", "true");
+          }
+        }
+
+        // Tutup loading SweetAlert
+        Swal.close();
+
+        // Success Notification
+        await Swal.fire({
+          title: "Success!",
+          text: `Login successful! Welcome back, ${result.user.name || result.user.username}!`,
+          icon: "success",
+          confirmButtonColor: "#1e40af",
+          background: "#ffffff",
+          color: "#333333",
+          customClass: {
+            popup: "rounded-xl font-poppins",
+            confirmButton: "px-4 py-2 text-sm font-medium rounded-lg",
+          },
+          timer: 1500,
+          showConfirmButton: false,
+        });
+
+        // Redirect ke dashboard
+        router.push("/dashboard");
+      } else {
+        // Error dari backend
+        throw new Error(result.message || "Login failed");
       }
-    })
-  } finally {
-    setIsLoading(false)
-  }
-}
+    } catch (error) {
+      console.error("Login error:", error);
+      Swal.close();
+
+      let errorMessage = "Login failed. Please try again.";
+
+      if (
+        error.message.includes("Invalid email") ||
+        error.message.includes("Invalid username")
+      ) {
+        errorMessage = "Invalid email/username or password.";
+      } else if (error.message.includes("account is not active")) {
+        errorMessage =
+          "Your account is not active. Please contact administrator.";
+      } else if (
+        error.message.includes("Network") ||
+        error.message.includes("fetch")
+      ) {
+        errorMessage =
+          "Cannot connect to server. Please check your connection.";
+      } else {
+        errorMessage = error.message;
+      }
+
+      // Error Notification
+      Swal.fire({
+        title: "Error",
+        text: errorMessage,
+        icon: "error",
+        confirmButtonColor: "#1e40af",
+        background: "#ffffff",
+        color: "#333333",
+        customClass: {
+          popup: "rounded-xl font-poppins",
+          confirmButton: "px-4 py-2 text-sm font-medium rounded-lg",
+        },
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row relative bg-white">
@@ -184,7 +190,7 @@ const handleSubmit = async (e) => {
             alt={`Carousel ${index}`}
             fill
             className={`object-cover transition-opacity duration-1000 ease-in-out ${
-              index === currentImage ? 'opacity-100' : 'opacity-0'
+              index === currentImage ? "opacity-100" : "opacity-0"
             }`}
             priority={index === 0}
           />
@@ -199,7 +205,7 @@ const handleSubmit = async (e) => {
             <div
               key={index}
               className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all ${
-                index === currentImage ? 'bg-white w-5 sm:w-8' : 'bg-white/50'
+                index === currentImage ? "bg-white w-5 sm:w-8" : "bg-white/50"
               }`}
             />
           ))}
@@ -301,19 +307,19 @@ const handleSubmit = async (e) => {
                   type="submit"
                   disabled={isLoading}
                   className={`w-full flex justify-center py-2 sm:py-3 px-3 sm:px-4 text-xs sm:text-sm font-medium rounded-md text-white transition ${
-                    isLoading 
-                      ? 'bg-gray-400 cursor-not-allowed' 
-                      : 'bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+                    isLoading
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   }`}
                 >
-                  {isLoading ? 'Logging in...' : 'Login'}
+                  {isLoading ? "Logging in..." : "Login"}
                 </button>
               </div>
 
               {/* Register Link */}
               <div className="text-center">
                 <span className="text-gray-600 text-xs sm:text-sm">
-                  Don't have an account?{' '}
+                  Don't have an account?{" "}
                   <Link
                     href="/register"
                     className="text-blue-600 hover:text-blue-500 font-medium"
@@ -328,9 +334,9 @@ const handleSubmit = async (e) => {
 
         {/* Footer */}
         <footer className="text-center py-3 sm:py-4 text-xs sm:text-sm text-gray-500 border-t">
-          IT Inventory System 2025 
+          IT Inventory System 2025
         </footer>
       </div>
     </div>
-  )
+  );
 }

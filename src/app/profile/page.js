@@ -19,6 +19,7 @@ import LayoutDashboard from "../components/LayoutDashboard";
 import Swal from "sweetalert2";
 import { useAuth } from "../context/AuthContext";
 import { API_ENDPOINTS } from '../../config/api';
+import ProtectedPage from "../components/ProtectedPage";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -284,6 +285,7 @@ export default function ProfilePage() {
   }
 
   return (
+    <ProtectedPage> {
     <LayoutDashboard activeMenu={7}>
       <div className="min-h-screen bg-gray-50 py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -699,5 +701,6 @@ export default function ProfilePage() {
         </div>
       </div>
     </LayoutDashboard>
+    }</ProtectedPage>
   );
 }

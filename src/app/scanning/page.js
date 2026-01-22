@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import Swal from "sweetalert2";
 import LayoutDashboard from "../components/LayoutDashboard";
+import ProtectedPage from "../components/ProtectedPage";
 import API_BASE_URL, { API_ENDPOINTS } from "../../config/api";
 import { debounce, throttle } from "lodash";
 
@@ -1379,6 +1380,7 @@ export default function SerialScanningPage() {
   );
 
   return (
+    <ProtectedPage> {
     <LayoutDashboard activeMenu={2}>
       {/* Modal untuk Scanning Serial Number */}
       {isScanningSerial && (
@@ -2134,5 +2136,6 @@ export default function SerialScanningPage() {
         </div>
       </div>
     </LayoutDashboard>
+    }</ProtectedPage>
   );
 }

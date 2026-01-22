@@ -31,12 +31,14 @@ import {
   ChevronUp,
 } from "lucide-react";
 import LayoutDashboard from "../components/LayoutDashboard";
-
+import ProtectedPage from "../components/ProtectedPage";
 export default function SystemSettingsPage() {
 
 
   return (
+       <ProtectedPage> {
     <LayoutDashboard activeMenu={3}>
     </LayoutDashboard>
+        }</ProtectedPage>
   );
 }

@@ -27,6 +27,7 @@ import {
   X,
 } from "lucide-react";
 import LayoutDashboard from "../components/LayoutDashboard";
+import ProtectedPage from "../components/ProtectedPage";
 import Swal from "sweetalert2";
 
 export default function InventoryDataPage() {
@@ -156,7 +157,9 @@ export default function InventoryDataPage() {
   // Toggle select item
   const toggleSelectItem = (id) => {
     setSelectedItems((prev) =>
-      prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]
+      prev.includes(id)
+        ? prev.filter((itemId) => itemId !== id)
+        : [...prev, id],
     );
   };
 
@@ -170,10 +173,10 @@ export default function InventoryDataPage() {
   };
 
   // Fungsi untuk menampilkan detail dengan SweetAlert
- const handleShowDetail = (item) => {
-  Swal.fire({
-    title: `<div class="font-poppins text-lg font-semibold text-black">IT Asset Details</div>`,
-    html: `
+  const handleShowDetail = (item) => {
+    Swal.fire({
+      title: `<div class="font-poppins text-lg font-semibold text-black">IT Asset Details</div>`,
+      html: `
       <div class="font-poppins text-left space-y-3 max-h-[50vh] overflow-y-auto pr-2">
         <!-- Header Info -->
         <div>
@@ -262,19 +265,19 @@ export default function InventoryDataPage() {
         </div>
       </div>
     `,
-    width: "500px",
-    padding: "16px",
-    showCloseButton: true,
-    showConfirmButton: true,
-    confirmButtonText: "Close",
-    confirmButtonColor: "#2563eb",
-    customClass: {
-      popup: "rounded-xl font-poppins",
-      closeButton: "text-gray-400 hover:text-gray-600 text-lg -mt-1 -mr-1",
-      confirmButton: "font-poppins font-medium text-sm px-10 py-2",
-    },
-  });
-};
+      width: "500px",
+      padding: "16px",
+      showCloseButton: true,
+      showConfirmButton: true,
+      confirmButtonText: "Close",
+      confirmButtonColor: "#2563eb",
+      customClass: {
+        popup: "rounded-xl font-poppins",
+        closeButton: "text-gray-400 hover:text-gray-600 text-lg -mt-1 -mr-1",
+        confirmButton: "font-poppins font-medium text-sm px-10 py-2",
+      },
+    });
+  };
 
   // Fungsi untuk menutup modal detail
   const handleCloseDetail = () => {
@@ -283,32 +286,32 @@ export default function InventoryDataPage() {
   };
 
   // Function to delete an item with confirmation
-const handleDeleteItem = (item) => {
-  Swal.fire({
-    title: "Delete Asset?",
-    text: `Are you sure you want to delete ${item.nama} (${item.id})?`,
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonColor: "#28a745",
-    cancelButtonColor: "#d65130",
-    confirmButtonText: "Yes, Delete!",
-    cancelButtonText: "Cancel",
-    reverseButtons: true,
-  }).then((result) => {
-    if (result.isConfirmed) {
-      // Delete logic goes here
-      // Example: remove from state or make an API call
+  const handleDeleteItem = (item) => {
+    Swal.fire({
+      title: "Delete Asset?",
+      text: `Are you sure you want to delete ${item.nama} (${item.id})?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#28a745",
+      cancelButtonColor: "#d65130",
+      confirmButtonText: "Yes, Delete!",
+      cancelButtonText: "Cancel",
+      reverseButtons: true,
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Delete logic goes here
+        // Example: remove from state or make an API call
 
-      Swal.fire({
-        title: "Success!",
-        text: `The asset ${item.nama} has been successfully deleted.`,
-        icon: "success",
-        confirmButtonColor: "#3085d6",
-        confirmButtonText: "OK",
-      });
-    }
-  });
-};
+        Swal.fire({
+          title: "Success!",
+          text: `The asset ${item.nama} has been successfully deleted.`,
+          icon: "success",
+          confirmButtonColor: "#3085d6",
+          confirmButtonText: "OK",
+        });
+      }
+    });
+  };
 
   const getCategoryIcon = (kategori, jenisAset) => {
     if (kategori === "Material") {
@@ -447,291 +450,306 @@ const handleDeleteItem = (item) => {
   );
 
   return (
-    <LayoutDashboard activeMenu={1}>
-      <div className="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-2 space-y-4 md:space-y-6">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-600 rounded-xl shadow-lg p-4 md:p-6 text-white">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-center">
-              <Box className="w-6 h-6 md:w-6 md:h-6 mr-2 md:mr-3" />
-              <div>
-                <h1 className="text-xl md:text-2xl font-semibold">
-                  IT ASSET INVENTORY
-                </h1>
-                <p className="text-blue-100 mt-1 text-xs md:text-sm">
-                  A complete list of all company IT devices and materials
-                </p>
+    <ProtectedPage>
+      {" "}
+      {
+        <LayoutDashboard activeMenu={1}>
+          <div className="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-2 space-y-4 md:space-y-6">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-blue-600 rounded-xl shadow-lg p-4 md:p-6 text-white">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex items-center">
+                  <Box className="w-6 h-6 md:w-6 md:h-6 mr-2 md:mr-3" />
+                  <div>
+                    <h1 className="text-xl md:text-2xl font-semibold">
+                      IT ASSET INVENTORY
+                    </h1>
+                    <p className="text-blue-100 mt-1 text-xs md:text-sm">
+                      A complete list of all company IT devices and materials
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 lg:mt-0 flex gap-2 md:gap-3">
+                  <button
+                    onClick={() => router.push("/scanning")}
+                    className="flex items-center px-3 py-2 md:px-4 md:py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition font-semibold text-xs md:text-sm"
+                  >
+                    <ScanLine className="w-4 h-4 mr-1 md:mr-2" />
+                    <span className="hidden sm:inline">Scan New Asset</span>
+                    <span className="sm:hidden">Scan</span>
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div className="mt-4 lg:mt-0 flex gap-2 md:gap-3">
-              <button
-                onClick={() => router.push("/scanning")}
-                className="flex items-center px-3 py-2 md:px-4 md:py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition font-semibold text-xs md:text-sm"
-              >
-                <ScanLine className="w-4 h-4 mr-1 md:mr-2" />
-                <span className="hidden sm:inline">Scan New Asset</span>
-                <span className="sm:hidden">Scan</span>
-              </button>
+            {/* Quick Stats - Refined Layout */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* IT Devices Card */}
+              <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-base md:text-lg font-semibold text-gray-800">
+                      IT Devices
+                    </div>
+                    <div className="text-3xl md:text-4xl font-bold text-gray-900 mt-1">
+                      {stats.perangkat}
+                    </div>
+                    <div className="text-sm text-gray-500 mt-1">
+                      Total registered devices: Computers, Servers, CCTV, and
+                      more
+                    </div>
+                  </div>
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <Cpu className="w-7 h-7 text-blue-600" />
+                  </div>
+                </div>
+              </div>
+
+              {/* IT Materials Card */}
+              <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-base md:text-lg font-semibold text-gray-800">
+                      IT Materials
+                    </div>
+                    <div className="text-3xl md:text-4xl font-bold text-gray-900 mt-1">
+                      {stats.material}
+                    </div>
+                    <div className="text-sm text-gray-500 mt-1">
+                      Total registered materials: Cables, trunking, network
+                      pipes, and accessories
+                    </div>
+                  </div>
+                  <div className="p-3 bg-green-50 rounded-lg">
+                    <Cable className="w-7 h-7 text-green-600" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Inventory Table */}
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+              {/* Search and Filter Section */}
+              <div className="p-4 md:p-6 border-b border-gray-200">
+                <div className="flex flex-col space-y-3 md:space-y-0 md:flex-row gap-3 md:gap-4">
+                  {/* Search Input */}
+                  <div className="flex-1">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <input
+                        type="text"
+                        placeholder="Search by ID, asset name, location, or identification number..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Filters */}
+                  <div className="flex flex-col md:flex-row gap-2">
+                    {!isMobile ? (
+                      <>
+                        <select
+                          value={selectedCategory}
+                          onChange={(e) => setSelectedCategory(e.target.value)}
+                          className="px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
+                        >
+                          <option value="all">All Categories</option>
+                          <option value="Perangkat">Perangkat</option>
+                          <option value="Material">Material</option>
+                        </select>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => setShowFilters(!showFilters)}
+                          className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm"
+                        >
+                          <Filter className="w-4 h-4 mr-2" />
+                          Filter
+                          {showFilters ? (
+                            <ChevronUp className="w-4 h-4 ml-2" />
+                          ) : (
+                            <ChevronDown className="w-4 h-4 ml-2" />
+                          )}
+                        </button>
+
+                        {showFilters && (
+                          <div className="flex gap-2 mt-2">
+                            <select
+                              value={selectedCategory}
+                              onChange={(e) =>
+                                setSelectedCategory(e.target.value)
+                              }
+                              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
+                            >
+                              <option value="all">All Categories</option>
+                              <option value="Device">Device</option>
+                              <option value="Material">Material</option>
+                            </select>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Table/Cards Section */}
+              {!isMobile ? (
+                /* Desktop Table View */
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-gray-700 font-medium">
+                          Asset ID
+                        </th>
+                        <th className="px-4 py-3 text-left text-gray-700 font-medium">
+                          Asset Details
+                        </th>
+                        <th className="px-4 py-3 text-left text-gray-700 font-medium">
+                          Identification
+                        </th>
+                        <th className="px-4 py-3 text-left text-gray-700 font-medium">
+                          Location
+                        </th>
+                        <th className="px-4 py-3 text-left text-gray-700 font-medium">
+                          Last Updated
+                        </th>
+                        <th className="px-4 py-3 text-left text-gray-700 font-medium">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {filteredItems.map((item) => (
+                        <tr
+                          key={item.id}
+                          className="hover:bg-gray-50 transition-colors"
+                        >
+                          <td className="px-4 py-4">
+                            <div className="flex items-center">
+                              <div>
+                                <div className="font-bold text-blue-700">
+                                  {item.id}
+                                </div>
+                                <div className="text-xs text-gray-500 mt-1 flex items-center">
+                                  {getCategoryIcon(
+                                    item.kategori,
+                                    item.jenisAset,
+                                  )}
+                                  <span className="ml-1">{item.kategori}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="font-semibold text-gray-900">
+                              {item.nama}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              {item.jenisAset}
+                            </div>
+                            <div className="text-xs text-gray-400 mt-1">
+                              {item.spesifikasi}
+                            </div>
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="space-y-1">
+                              <div className="text-sm">
+                                <span className="text-blue-600 font-mono">
+                                  {item.kodeUnik}
+                                </span>
+                              </div>
+                              {item.serialNumber && (
+                                <div className="text-xs text-gray-600">
+                                  <span className="font-mono">
+                                    {item.serialNumber}
+                                  </span>
+                                </div>
+                              )}
+                              {item.barcode && (
+                                <div className="text-xs text-gray-600">
+                                  <span className="font-mono">
+                                    {item.barcode}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="flex items-center text-gray-700">
+                              <MapPin className="w-4 h-4 mr-1 text-gray-400" />
+                              {item.lokasi}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              {item.departemen}
+                            </div>
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="text-xs text-gray-500">
+                              <div className="flex items-center">
+                                <Calendar className="w-3 h-3 mr-1" />
+                                {item.tanggalPengecekan}
+                              </div>
+                              <div className="flex items-center mt-1">
+                                <User className="w-3 h-3 mr-1" />
+                                {item.diperbaruiOleh}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleShowDetail(item)}
+                                className="flex items-center px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-xs"
+                              >
+                                <Eye className="w-3 h-3 mr-1" />
+                                Details
+                              </button>
+                              <button
+                                onClick={() => handleDeleteItem(item)}
+                                className="flex items-center px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-xs"
+                              >
+                                <Trash2 className="w-3 h-3 mr-1" />
+                                Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                /* Mobile Card View */
+                <div className="p-3 md:p-4">
+                  {filteredItems.map((item) => (
+                    <MobileItemCard key={item.id} item={item} />
+                  ))}
+                </div>
+              )}
+            </div>
+            <div>
+              {/* Empty State */}
+              {filteredItems.length === 0 && (
+                <div className="text-center py-8 md:py-12">
+                  <Box className="w-10 h-10 md:w-12 md:h-12 text-gray-400 mx-auto mb-3 md:mb-4" />
+                  <p className="text-gray-500 text-base md:text-lg">
+                    No inventory data found
+                  </p>
+                  <p className="text-gray-400 text-sm mt-1 md:mt-2">
+                    Try adjusting your search or filters
+                  </p>
+                </div>
+              )}
             </div>
           </div>
-        </div>
-
-      {/* Quick Stats - Refined Layout */}
-<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-  {/* IT Devices Card */}
-  <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
-    <div className="flex items-center justify-between">
-      <div>
-        <div className="text-base md:text-lg font-semibold text-gray-800">
-          IT Devices
-        </div>
-        <div className="text-3xl md:text-4xl font-bold text-gray-900 mt-1">
-          {stats.perangkat}
-        </div>
-        <div className="text-sm text-gray-500 mt-1">
-          Total registered devices: Computers, Servers, CCTV, and more
-        </div>
-      </div>
-      <div className="p-3 bg-blue-50 rounded-lg">
-        <Cpu className="w-7 h-7 text-blue-600" />
-      </div>
-    </div>
-  </div>
-
-  {/* IT Materials Card */}
-  <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
-    <div className="flex items-center justify-between">
-      <div>
-        <div className="text-base md:text-lg font-semibold text-gray-800">
-          IT Materials
-        </div>
-        <div className="text-3xl md:text-4xl font-bold text-gray-900 mt-1">
-          {stats.material}
-        </div>
-        <div className="text-sm text-gray-500 mt-1">
-          Total registered materials: Cables, trunking, network pipes, and accessories
-        </div>
-      </div>
-      <div className="p-3 bg-green-50 rounded-lg">
-        <Cable className="w-7 h-7 text-green-600" />
-      </div>
-    </div>
-  </div>
-</div>
-
-{/* Inventory Table */}
-<div className="bg-white rounded-xl shadow-lg overflow-hidden">
-  {/* Search and Filter Section */}
-  <div className="p-4 md:p-6 border-b border-gray-200">
-    <div className="flex flex-col space-y-3 md:space-y-0 md:flex-row gap-3 md:gap-4">
-      {/* Search Input */}
-      <div className="flex-1">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <input
-            type="text"
-            placeholder="Search by ID, asset name, location, or identification number..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
-          />
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-2">
-        {!isMobile ? (
-          <>
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
-            >
-              <option value="all">All Categories</option>
-              <option value="Perangkat">Perangkat</option>
-              <option value="Material">Material</option>
-            </select>
-          </>
-        ) : (
-          <>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm"
-            >
-              <Filter className="w-4 h-4 mr-2" />
-              Filter
-              {showFilters ? (
-                <ChevronUp className="w-4 h-4 ml-2" />
-              ) : (
-                <ChevronDown className="w-4 h-4 ml-2" />
-              )}
-            </button>
-
-            {showFilters && (
-              <div className="flex gap-2 mt-2">
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
-                >
-                  <option value="all">All Categories</option>
-                  <option value="Device">Device</option>
-                  <option value="Material">Material</option>
-                </select>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-    </div>
-  </div>
-
-  {/* Table/Cards Section */}
-  {!isMobile ? (
-    /* Desktop Table View */
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-4 py-3 text-left text-gray-700 font-medium">
-              Asset ID
-            </th>
-            <th className="px-4 py-3 text-left text-gray-700 font-medium">
-              Asset Details
-            </th>
-            <th className="px-4 py-3 text-left text-gray-700 font-medium">
-              Identification
-            </th>
-            <th className="px-4 py-3 text-left text-gray-700 font-medium">
-              Location
-            </th>
-            <th className="px-4 py-3 text-left text-gray-700 font-medium">
-              Last Updated
-            </th>
-            <th className="px-4 py-3 text-left text-gray-700 font-medium">
-              Actions
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-200">
-          {filteredItems.map((item) => (
-            <tr
-              key={item.id}
-              className="hover:bg-gray-50 transition-colors"
-            >
-              <td className="px-4 py-4">
-                <div className="flex items-center">
-                  <div>
-                    <div className="font-bold text-blue-700">
-                      {item.id}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1 flex items-center">
-                      {getCategoryIcon(item.kategori, item.jenisAset)}
-                      <span className="ml-1">{item.kategori}</span>
-                    </div>
-                  </div>
-                </div>
-              </td>
-              <td className="px-4 py-4">
-                <div className="font-semibold text-gray-900">
-                  {item.nama}
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  {item.jenisAset}
-                </div>
-                <div className="text-xs text-gray-400 mt-1">
-                  {item.spesifikasi}
-                </div>
-              </td>
-              <td className="px-4 py-4">
-                <div className="space-y-1">
-                  <div className="text-sm">
-                    <span className="text-blue-600 font-mono">
-                      {item.kodeUnik}
-                    </span>
-                  </div>
-                  {item.serialNumber && (
-                    <div className="text-xs text-gray-600">
-                      <span className="font-mono">{item.serialNumber}</span>
-                    </div>
-                  )}
-                  {item.barcode && (
-                    <div className="text-xs text-gray-600">
-                      <span className="font-mono">{item.barcode}</span>
-                    </div>
-                  )}
-                </div>
-              </td>
-              <td className="px-4 py-4">
-                <div className="flex items-center text-gray-700">
-                  <MapPin className="w-4 h-4 mr-1 text-gray-400" />
-                  {item.lokasi}
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  {item.departemen}
-                </div>
-              </td>
-              <td className="px-4 py-4">
-                <div className="text-xs text-gray-500">
-                  <div className="flex items-center">
-                    <Calendar className="w-3 h-3 mr-1" />
-                    {item.tanggalPengecekan}
-                  </div>
-                  <div className="flex items-center mt-1">
-                    <User className="w-3 h-3 mr-1" />
-                    {item.diperbaruiOleh}
-                  </div>
-                </div>
-              </td>
-              <td className="px-4 py-4">
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleShowDetail(item)}
-                    className="flex items-center px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-xs"
-                  >
-                    <Eye className="w-3 h-3 mr-1" />
-                    Details
-                  </button>
-                  <button
-                    onClick={() => handleDeleteItem(item)}
-                    className="flex items-center px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-xs"
-                  >
-                    <Trash2 className="w-3 h-3 mr-1" />
-                    Delete
-                  </button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  ) : (
-    /* Mobile Card View */
-    <div className="p-3 md:p-4">
-      {filteredItems.map((item) => (
-        <MobileItemCard key={item.id} item={item} />
-      ))}
-    </div>
-  )}
-</div>
-        <div>
-       {/* Empty State */}
-{filteredItems.length === 0 && (
-  <div className="text-center py-8 md:py-12">
-    <Box className="w-10 h-10 md:w-12 md:h-12 text-gray-400 mx-auto mb-3 md:mb-4" />
-    <p className="text-gray-500 text-base md:text-lg">
-      No inventory data found
-    </p>
-    <p className="text-gray-400 text-sm mt-1 md:mt-2">
-      Try adjusting your search or filters
-    </p>
-  </div>
-)}
-</div>
-
-      </div>
-    </LayoutDashboard>
+        </LayoutDashboard>
+      }
+    </ProtectedPage>
   );
 }

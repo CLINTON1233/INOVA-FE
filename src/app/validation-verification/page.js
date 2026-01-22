@@ -32,6 +32,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import LayoutDashboard from "../components/LayoutDashboard";
+import ProtectedPage from "../components/ProtectedPage";
 import Swal from "sweetalert2";
 
 export default function ValidationVerificationPage() {
@@ -614,6 +615,7 @@ export default function ValidationVerificationPage() {
   );
 
   return (
+       <ProtectedPage> {
     <LayoutDashboard activeMenu={3}>
       <div className="max-w-7xl mx-auto px-3 md:px-4 py-2 md:py-2 space-y-4 md:space-y-6">
         {/* Header with gradient - Mobile Optimized */}
@@ -1098,5 +1100,6 @@ export default function ValidationVerificationPage() {
         </div>
       </div>
     </LayoutDashboard>
+        }</ProtectedPage>
   );
 }
