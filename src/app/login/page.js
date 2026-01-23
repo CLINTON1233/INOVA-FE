@@ -18,6 +18,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { login } = useAuth();
+
   // Carousel images
   const images = ["/bg_seatrium 3.png", "/smoe_images2.png", "/offshore.jpg"];
 
@@ -27,6 +28,23 @@ export default function LoginPage() {
     }, 4000);
     return () => clearInterval(interval);
   }, [images.length]);
+
+  // Cek remember me pada mount
+  useEffect(() => {
+    const savedRemember = localStorage.getItem("remember_me");
+    if (savedRemember === "true") {
+      setRememberMe(true);
+
+      // Coba ambil credential dari localStorage jika ada
+      const savedEmail = localStorage.getItem("saved_email");
+      if (savedEmail) {
+        setFormData((prev) => ({
+          ...prev,
+          email: savedEmail,
+        }));
+      }
+    }
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -59,7 +77,7 @@ export default function LoginPage() {
         return;
       }
 
-      // Show loading (sama seperti di profile page)
+      // Show loading
       Swal.fire({
         title: "Authenticating...",
         text: "Please wait while we verify your credentials.",
@@ -88,26 +106,48 @@ export default function LoginPage() {
       const result = await response.json();
 
       if (response.ok && result.success) {
+        // Simpan email jika remember me di-check
+        if (rememberMe) {
+          localStorage.setItem("saved_email", formData.email);
+          localStorage.setItem("remember_me", "true");
+        } else {
+          localStorage.removeItem("saved_email");
+          localStorage.removeItem("remember_me");
+        }
+
         // Simpan token dan user data
         if (result.token) {
           localStorage.setItem("auth_token", result.token);
           localStorage.setItem("user_data", JSON.stringify(result.user));
           document.cookie = `auth_token=${result.token}; path=/; max-age=86400`; // 1 hari
 
-          login(result.user, result.token);
-
-          if (rememberMe) {
-            localStorage.setItem("remember_me", "true");
+          // Tambahkan role ke user data jika belum ada (untuk backward compatibility)
+          if (!result.user.role) {
+            result.user.role = "karyawan"; // Default role
           }
+
+          login(result.user, result.token);
         }
 
         // Tutup loading SweetAlert
         Swal.close();
 
-        // Success Notification
+        // Success Notification dengan role info
+        const userRole =
+          result.user.role === "manager" ? "Manager" : "Karyawan";
+        const greeting =
+          result.user.role === "manager"
+            ? `Welcome, Manager ${result.user.name || result.user.username}!`
+            : `Welcome back, ${result.user.name || result.user.username}!`;
+
         await Swal.fire({
-          title: "Success!",
-          text: `Login successful! Welcome back, ${result.user.name || result.user.username}!`,
+          title: "Login Successful!",
+          html: `
+            <div class="text-center">
+              <p class="mb-2">${greeting}</p>
+              
+            </div>
+          `,
           icon: "success",
           confirmButtonColor: "#1e40af",
           background: "#ffffff",
@@ -120,8 +160,14 @@ export default function LoginPage() {
           showConfirmButton: false,
         });
 
-        // Redirect ke dashboard
-        router.push("/dashboard");
+        // Redirect berdasarkan role
+        if (result.user.role === "manager") {
+          // Bisa redirect ke dashboard khusus manager
+          router.push("/dashboard");
+        } else {
+          // Redirect ke dashboard karyawan
+          router.push("/dashboard");
+        }
       } else {
         // Error dari backend
         throw new Error(result.message || "Login failed");
@@ -146,6 +192,8 @@ export default function LoginPage() {
       ) {
         errorMessage =
           "Cannot connect to server. Please check your connection.";
+      } else if (error.message.includes("role")) {
+        errorMessage = "Account configuration error. Please contact admin.";
       } else {
         errorMessage = error.message;
       }
@@ -238,7 +286,7 @@ export default function LoginPage() {
                     htmlFor="email"
                     className="block text-xs sm:text-sm font-medium text-gray-700 mb-1"
                   >
-                    Email or Username *
+                    Email or Username
                   </label>
                   <input
                     id="email"
@@ -260,14 +308,14 @@ export default function LoginPage() {
                       htmlFor="password"
                       className="block text-xs sm:text-sm font-medium text-gray-700"
                     >
-                      Password *
+                      Password
                     </label>
-                    <Link
+                    {/* <Link
                       href="/forgot-password"
                       className="text-xs sm:text-sm text-blue-600 hover:text-blue-500"
                     >
                       Forgot password?
-                    </Link>
+                    </Link> */}
                   </div>
                   <input
                     id="password"
@@ -317,8 +365,8 @@ export default function LoginPage() {
               </div>
 
               {/* Register Link */}
-              <div className="text-center">
-                <span className="text-gray-600 text-xs sm:text-sm">
+              <div className="text-center pt-2">
+                <p className="text-gray-600 text-xs sm:text-sm mb-2">
                   Don't have an account?{" "}
                   <Link
                     href="/register"
@@ -326,16 +374,30 @@ export default function LoginPage() {
                   >
                     Sign up
                   </Link>
-                </span>
+                </p>
               </div>
             </form>
           </div>
         </div>
 
         {/* Footer */}
-        <footer className="text-center py-3 sm:py-4 text-xs sm:text-sm text-gray-500 border-t">
-          IT Inventory System 2025
-        </footer>
+    <footer className="text-center py-3 sm:py-4 text-xs sm:text-sm text-gray-500 border-t">
+  <div className="font-medium">
+    © 2025 IT Asset Management System
+  </div>
+  <div>
+    <a
+      href="https://seatrium.com"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-gray-500 hover:text-gray-700 font-medium"
+    >
+      Seatrium
+    </a>{" "}
+    <span className="text-gray-400">• All rights reserved.</span>
+  </div>
+</footer>
+
       </div>
     </div>
   );

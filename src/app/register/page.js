@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Swal from 'sweetalert2'
-import { API_ENDPOINTS } from '../../config/api';
+import { API_ENDPOINTS } from '../../config/api'
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -13,7 +13,8 @@ export default function RegisterPage() {
     password: '',
     no_badge: '',
     department: '',
-    username: ''
+    username: '',
+    role: 'karyawan'
   })
   const [agree, setAgree] = useState(false)
   const [currentImage, setCurrentImage] = useState(0)
@@ -76,7 +77,8 @@ export default function RegisterPage() {
           password: formData.password,
           no_badge: formData.no_badge,
           department: formData.department,
-          username: formData.username
+          username: formData.username,
+          role: formData.role
         })
       })
 
@@ -290,6 +292,27 @@ export default function RegisterPage() {
                     className="w-full px-2 py-2 sm:px-3 sm:py-3 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Enter your department"
                   />
+                </div>
+
+                {/* Role Selection */}
+                <div>
+                  <label
+                    htmlFor="role"
+                    className="block text-xs sm:text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Role *
+                  </label>
+                  <select
+                    id="role"
+                    name="role"
+                    value={formData.role}
+                    onChange={handleChange}
+                    className="w-full px-2 py-2 sm:px-3 sm:py-3 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  >
+                    <option value="karyawan">Karyawan</option>
+                    <option value="manager">Manager</option>
+                  </select>
                 </div>
 
               </div>
